@@ -20,7 +20,7 @@
 
 package main
 
-type Namepair struct {
+type Pathsplit struct {
 	Dirname  string
 	Filename string
 }

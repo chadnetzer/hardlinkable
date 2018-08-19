@@ -31,13 +31,19 @@ func init() {
 }
 
 type LinkDestinations struct {
-	size      int64
-	namepairs []Namepair
+	size  int64
+	paths []Pathsplit
 }
 
 type LinkPair struct {
-	Src Namepair
-	Dst Namepair
+	Src Pathsplit
+	Dst Pathsplit
+}
+
+type ExistingLink struct {
+	Src         Pathsplit
+	Dst         Pathsplit
+	SrcFileinfo os.FileInfo
 }
 
 type LinkingStats struct {
@@ -55,18 +61,12 @@ type LinkingStats struct {
 	numHashMismatches   int64
 
 	linkPairs         []LinkPair
-	existingHardlinks map[Namepair]LinkDestinations
-}
-
-type ExistingLink struct {
-	SrcNamepair Namepair
-	DstNamepair Namepair
-	SrcFileinfo os.FileInfo
+	existingHardlinks map[Pathsplit]LinkDestinations
 }
 
 func NewLinkingStats() LinkingStats {
 	ls := LinkingStats{
-		existingHardlinks: make(map[Namepair]LinkDestinations),
+		existingHardlinks: make(map[Pathsplit]LinkDestinations),
 	}
 	return ls
 }
@@ -119,20 +119,20 @@ func (s *LinkingStats) FoundEqualFiles() {
 	s.numEqualComparisons += 1
 }
 
-func (s *LinkingStats) FoundHardlinkableFiles(f1, f2 Namepair) {
-	s.linkPairs = append(s.linkPairs, LinkPair{f1, f2})
+func (s *LinkingStats) FoundHardlinkableFiles(p1, p2 Pathsplit) {
+	s.linkPairs = append(s.linkPairs, LinkPair{p1, p2})
 }
 
 func (s *LinkingStats) FoundExistingHardlink(existing ExistingLink) {
-	srcNamepair := existing.SrcNamepair
-	dstNamepair := existing.DstNamepair
+	srcPath := existing.Src
+	dstPath := existing.Dst
 	srcFileinfo := existing.SrcFileinfo
-	linkDestinations, exists := s.existingHardlinks[srcNamepair]
+	linkDestinations, exists := s.existingHardlinks[srcPath]
 	if !exists {
 		size := srcFileinfo.Size()
-		linkDestinations = LinkDestinations{size, make([]Namepair, 0)}
+		linkDestinations = LinkDestinations{size, make([]Pathsplit, 0)}
 	}
-	linkDestinations.namepairs = append(linkDestinations.namepairs, dstNamepair)
-	s.existingHardlinks[srcNamepair] = linkDestinations
-	//fmt.Println("currently linked: ", srcNamepair, linkDestinations)
+	linkDestinations.paths = append(linkDestinations.paths, dstPath)
+	s.existingHardlinks[srcPath] = linkDestinations
+	//fmt.Println("currently linked: ", srcPath, linkDestinations)
 }
