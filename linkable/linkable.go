@@ -60,43 +60,29 @@ func (ln *Linkable) FindIdenticalFiles(pathname string) {
 	if err != nil {
 		os.Exit(2)
 	}
-	stat, ok := fi.Sys().(*syscall.Stat_t)
+	sysStat, ok := fi.Sys().(*syscall.Stat_t)
 	if !ok {
 		os.Exit(2)
 	}
-	//fmt.Printf("%+v\n", stat)
-	fsdev := ln.Dev(int64(stat.Dev))
-
-	if _, ok := fsdev.InoHashes[stat.Ino]; !ok {
-		stats.Stats.FoundInode()
-	}
-
-	inoHash := InoHash(*stat, options.MyOptions)
-	if _, ok := fsdev.InoHashes[inoHash]; !ok {
-		stats.Stats.MissedHash()
-		fsdev.InoHashes[inoHash] = NewInoSet()
-	} else {
-		stats.Stats.FoundHash()
-		if _, ok := fsdev.InoHashes[stat.Ino]; ok {
-			// Found existing hardlink?
-		}
-	}
+	//fmt.Printf("%+v\n", sysStat)
+	fsdev := ln.Dev(int64(sysStat.Dev))
+	fsdev.findIdenticalFiles(pathname, fi)
 }
 
 func Run(dirs []string) {
 	var options *options.Options = &options.MyOptions
 	c := tree.MatchedPathnames(dirs)
 	for pathname := range c {
-		statinfo, err := os.Lstat(pathname)
+		fi, err := os.Lstat(pathname)
 		if err != nil {
 			continue
 		}
-		if statinfo.Size() < options.MinFileSize {
+		if fi.Size() < options.MinFileSize {
 			stats.Stats.FoundFileTooSmall()
 			continue
 		}
 		if options.MaxFileSize > 0 &&
-			statinfo.Size() > options.MaxFileSize {
+			fi.Size() > options.MaxFileSize {
 			stats.Stats.FoundFileTooLarge()
 			continue
 		}
@@ -105,8 +91,9 @@ func Run(dirs []string) {
 		stats.Stats.FoundFile()
 
 		//fmt.Printf("%+v %s\n", stat, pathname)
-		fmt.Println(pathname)
+		//fmt.Println(pathname)
 		MyLinkable.FindIdenticalFiles(pathname)
 	}
-	fmt.Printf("%+v\n", stats.Stats)
+	//fmt.Printf("\n%+v\n", MyLinkable)
+	fmt.Printf("\n%+v\n", stats.Stats)
 }

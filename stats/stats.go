@@ -20,17 +20,57 @@
 
 package stats
 
-type LinkingStats struct {
-	numDirs          int
-	numFiles         int
-	numFilesTooSmall int
-	numFilesTooLarge int
-	numInodes        int
-	numMissedHashes  int
-	numFoundHashes   int
-}
+import (
+	np "hardlinkable/namepair"
+	"os"
+)
 
 var Stats LinkingStats
+
+func init() {
+	Stats = NewLinkingStats()
+}
+
+type LinkDestinations struct {
+	size      int64
+	namepairs []np.Namepair
+}
+
+type LinkPair struct {
+	Src np.Namepair
+	Dst np.Namepair
+}
+
+type LinkingStats struct {
+	numDirs             int64
+	numFiles            int64
+	numFilesTooSmall    int64
+	numFilesTooLarge    int64
+	numInodes           int64
+	numComparisons      int64
+	numEqualComparisons int64
+	numMissedHashes     int64
+	numFoundHashes      int64
+	numInoSeqSearches   int64
+	numInoSeqIterations int64
+	numHashMismatches   int64
+
+	linkPairs         []LinkPair
+	existingHardlinks map[np.Namepair]LinkDestinations
+}
+
+type ExistingLink struct {
+	SrcNamepair np.Namepair
+	DstNamepair np.Namepair
+	SrcFileinfo os.FileInfo
+}
+
+func NewLinkingStats() LinkingStats {
+	ls := LinkingStats{
+		existingHardlinks: make(map[np.Namepair]LinkDestinations),
+	}
+	return ls
+}
 
 func (s *LinkingStats) FoundDirectory() {
 	s.numDirs += 1
@@ -58,4 +98,42 @@ func (s *LinkingStats) MissedHash() {
 
 func (s *LinkingStats) FoundHash() {
 	s.numFoundHashes += 1
+}
+
+func (s *LinkingStats) SearchedInoSeq() {
+	s.numInoSeqSearches += 1
+}
+
+func (s *LinkingStats) IncInoSeqIterations() {
+	s.numInoSeqIterations += 1
+}
+
+func (s *LinkingStats) NoHashMatch() {
+	s.numHashMismatches += 1
+}
+
+func (s *LinkingStats) DidComparison() {
+	s.numComparisons += 1
+}
+
+func (s *LinkingStats) FoundEqualFiles() {
+	s.numEqualComparisons += 1
+}
+
+func (s *LinkingStats) FoundHardlinkableFiles(f1, f2 np.Namepair) {
+	s.linkPairs = append(s.linkPairs, LinkPair{f1, f2})
+}
+
+func (s *LinkingStats) FoundExistingHardlink(existing ExistingLink) {
+	srcNamepair := existing.SrcNamepair
+	dstNamepair := existing.DstNamepair
+	srcFileinfo := existing.SrcFileinfo
+	linkDestinations, exists := s.existingHardlinks[srcNamepair]
+	if !exists {
+		size := srcFileinfo.Size()
+		linkDestinations = LinkDestinations{size, make([]np.Namepair, 0)}
+	}
+	linkDestinations.namepairs = append(linkDestinations.namepairs, dstNamepair)
+	s.existingHardlinks[srcNamepair] = linkDestinations
+	//fmt.Println("currently linked: ", srcNamepair, linkDestinations)
 }
