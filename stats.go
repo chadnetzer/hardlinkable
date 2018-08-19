@@ -18,10 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package stats
+package main
 
 import (
-	np "hardlinkable/namepair"
 	"os"
 )
 
@@ -33,12 +32,12 @@ func init() {
 
 type LinkDestinations struct {
 	size      int64
-	namepairs []np.Namepair
+	namepairs []Namepair
 }
 
 type LinkPair struct {
-	Src np.Namepair
-	Dst np.Namepair
+	Src Namepair
+	Dst Namepair
 }
 
 type LinkingStats struct {
@@ -56,18 +55,18 @@ type LinkingStats struct {
 	numHashMismatches   int64
 
 	linkPairs         []LinkPair
-	existingHardlinks map[np.Namepair]LinkDestinations
+	existingHardlinks map[Namepair]LinkDestinations
 }
 
 type ExistingLink struct {
-	SrcNamepair np.Namepair
-	DstNamepair np.Namepair
+	SrcNamepair Namepair
+	DstNamepair Namepair
 	SrcFileinfo os.FileInfo
 }
 
 func NewLinkingStats() LinkingStats {
 	ls := LinkingStats{
-		existingHardlinks: make(map[np.Namepair]LinkDestinations),
+		existingHardlinks: make(map[Namepair]LinkDestinations),
 	}
 	return ls
 }
@@ -120,7 +119,7 @@ func (s *LinkingStats) FoundEqualFiles() {
 	s.numEqualComparisons += 1
 }
 
-func (s *LinkingStats) FoundHardlinkableFiles(f1, f2 np.Namepair) {
+func (s *LinkingStats) FoundHardlinkableFiles(f1, f2 Namepair) {
 	s.linkPairs = append(s.linkPairs, LinkPair{f1, f2})
 }
 
@@ -131,7 +130,7 @@ func (s *LinkingStats) FoundExistingHardlink(existing ExistingLink) {
 	linkDestinations, exists := s.existingHardlinks[srcNamepair]
 	if !exists {
 		size := srcFileinfo.Size()
-		linkDestinations = LinkDestinations{size, make([]np.Namepair, 0)}
+		linkDestinations = LinkDestinations{size, make([]Namepair, 0)}
 	}
 	linkDestinations.namepairs = append(linkDestinations.namepairs, dstNamepair)
 	s.existingHardlinks[srcNamepair] = linkDestinations

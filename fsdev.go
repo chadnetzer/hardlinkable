@@ -18,14 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package linkable
+package main
 
 import (
 	"bytes"
 	"fmt"
-	np "hardlinkable/namepair"
-	"hardlinkable/options"
-	"hardlinkable/stats"
 	"io"
 	"os"
 	"path"
@@ -40,10 +37,10 @@ type InoSet map[Ino]struct{}
 
 type FileInfos map[string]os.FileInfo
 
-type FileNamePairs map[string][]np.Namepair
+type FileNamePairs map[string][]Namepair
 
 type PathStat struct {
-	Namepair np.Namepair
+	Namepair Namepair
 	FileInfo os.FileInfo
 }
 
@@ -122,7 +119,7 @@ func NewFSDev(dev int64) FSDev {
 
 // Produce an equal hash for potentially equal files, based only on Inode
 // metadata (size, time, etc.)
-func InoHash(stat syscall.Stat_t, opt options.Options) Hash {
+func InoHash(stat syscall.Stat_t, opt Options) Hash {
 	var value Hash
 	size := Hash(stat.Size)
 	mtim := stat.Mtimespec
@@ -142,27 +139,27 @@ func (f *FSDev) findIdenticalFiles(pathname string, fileInfo os.FileInfo) {
 	sysStat := *fileInfo.Sys().(*syscall.Stat_t)
 	//fmt.Println("pathname: ", pathname)
 	dirname, filename := path.Split(pathname)
-	namepair := np.Namepair{ dirname, filename }
+	namepair := Namepair{ dirname, filename }
 	pathStat := PathStat { namepair, fileInfo }
 
 	if _, ok := f.InoFileInfo[sysStat.Ino]; !ok {
 		//fmt.Println("find inode: ", pathname, sysStat.Ino)
-		stats.Stats.FoundInode()
+		Stats.FoundInode()
 	}
 
-	inoHash := InoHash(sysStat, options.MyOptions)
+	inoHash := InoHash(sysStat, MyOptions)
 	//fmt.Println("hash and inode: ", inoHash, sysStat.Ino)
 	if _, ok := f.InoHashes[inoHash]; !ok {
-		stats.Stats.MissedHash()
+		Stats.MissedHash()
 		f.InoHashes[inoHash] = NewInoSet(sysStat.Ino)
 		//fmt.Println("new inode set: ", inoHash, sysStat.Ino, f.InoHashes[inoHash])
 	} else {
-		stats.Stats.FoundHash()
+		Stats.FoundHash()
 		if _, ok := f.InoFileInfo[sysStat.Ino]; ok {
 			prevNamepair := f.ArbitraryNamepair(sysStat.Ino)
 			prevFileinfo := f.InoFileInfo[sysStat.Ino]
-			existingLinkInfo := stats.ExistingLink{ prevNamepair, namepair, prevFileinfo }
-			stats.Stats.FoundExistingHardlink(existingLinkInfo)
+			existingLinkInfo := ExistingLink{ prevNamepair, namepair, prevFileinfo }
+			Stats.FoundExistingHardlink(existingLinkInfo)
 			//fmt.Println("prevNamepair: ", prevNamepair, prevFileinfo)
 		}
 		linkedInos := f.linkedInoSet(sysStat.Ino)
@@ -173,11 +170,11 @@ func (f *FSDev) findIdenticalFiles(pathname string, fileInfo os.FileInfo) {
 		//fmt.Printf("linkedHashedInos %+v\n", linkedHashedInos)
 		foundLinkedHashedInos := len(linkedHashedInos) > 0
 		if !foundLinkedHashedInos {
-			stats.Stats.SearchedInoSeq()
+			Stats.SearchedInoSeq()
 			cachedInoSet := f.InoHashes[inoHash]
 			loopEndedEarly := false
 			for cachedIno := range cachedInoSet {
-				stats.Stats.IncInoSeqIterations()
+				Stats.IncInoSeqIterations()
 				cachedPathStat := f.PathStatFromIno(cachedIno)
 				if areFilesHardlinkable(cachedPathStat, pathStat) {
 					//fmt.Println("Matching files: ", pathStat, cachedPathStat)
@@ -187,7 +184,7 @@ func (f *FSDev) findIdenticalFiles(pathname string, fileInfo os.FileInfo) {
 				}
 			}
 			if !loopEndedEarly {
-				stats.Stats.NoHashMatch()
+				Stats.NoHashMatch()
 				inoSet := f.InoHashes[inoHash]
 				inoSet.Add(sysStat.Ino)
 				f.InoFileInfo[sysStat.Ino] = fileInfo
@@ -228,26 +225,26 @@ func (f *FSDev) linkedInoSet(ino Ino) InoSet {
 	return resultSet
 }
 
-func (f *FSDev) ArbitraryNamepair(ino Ino) np.Namepair {
+func (f *FSDev) ArbitraryNamepair(ino Ino) Namepair {
 	m := f.InoNamepairs[ino]
-	var v []np.Namepair
+	var v []Namepair
 	for _, v = range m {
 		return v[0]
 	}
-	return np.Namepair{ "foo", "bar" }
+	return Namepair{ "foo", "bar" }
 }
 
 func (f *FSDev) InoAppendPathname(ino Ino, pathname string) {
 	dirname, filename := path.Split(pathname)
-	namepair := np.Namepair{ dirname, filename }
+	namepair := Namepair{ dirname, filename }
 	fileNamePairs, ok := f.InoNamepairs[ino]
 	if !ok {
 		fileNamePairs = make(FileNamePairs)
 	}
-	var namepairs []np.Namepair
+	var namepairs []Namepair
 	namepairs, ok = fileNamePairs[filename]
 	if !ok  {
-		namepairs = make([]np.Namepair, 0)
+		namepairs = make([]Namepair, 0)
 	}
 	namepairs = append(namepairs, namepair)
 	fileNamePairs[filename] = namepairs
@@ -280,7 +277,7 @@ func (f *FSDev) foundHardlinkableFiles(fs1, fs2 PathStat) {
 	} else {
 		inoSet2.Add(ino1)
 	}
-	stats.Stats.FoundHardlinkableFiles(fs1.Namepair, fs2.Namepair)
+	Stats.FoundHardlinkableFiles(fs1.Namepair, fs2.Namepair)
 }
 
 func areFilesHardlinkable(ps1 PathStat, ps2 PathStat) bool {
@@ -301,11 +298,11 @@ func areFilesHardlinkable(ps1 PathStat, ps2 PathStat) bool {
 	pathname1 := path.Join(ps1.Namepair.Dirname, ps1.Namepair.Filename)
 	pathname2 := path.Join(ps2.Namepair.Dirname, ps2.Namepair.Filename)
 
-	stats.Stats.DidComparison()
+	Stats.DidComparison()
 	// error handling deferred
 	eq, _ := areFileContentsEqual(pathname1, pathname2)
 	if eq {
-		stats.Stats.FoundEqualFiles()
+		Stats.FoundEqualFiles()
 	}
 	return eq
 }

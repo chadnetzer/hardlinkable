@@ -18,20 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package options
+package main
 
-type Options struct {
-	Verbosity             int
-	StatsOutputEnabled    bool
-	ProgressOutputEnabled bool
-	JSONOutputEnabled     bool
-	SameName              bool
-	ContentOnly           bool
-	IgnoreTime            bool
-	IgnorePerms           bool
-	IgnoreXattr           bool
-	MinFileSize           int64
-	MaxFileSize           int64
+type Namepair struct {
+	Dirname  string
+	Filename string
 }
-
-var MyOptions Options

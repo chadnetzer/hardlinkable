@@ -18,12 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package main
 
 import (
 	"fmt"
-	"hardlinkable/linkable"
-	"hardlinkable/options"
 	"os"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -43,7 +41,7 @@ linking identical files.  It can also perform the linking.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		i, ok := ArgsAreDirs(args)
 		if ok {
-			linkable.Run(args)
+			Run(args)
 		} else {
 			fmt.Fprintf(os.Stderr, "'%v' is not a directory.", args[i])
 			os.Exit(2)
@@ -82,7 +80,7 @@ func init() {
 
 	// Local flags
 	flg := rootCmd.Flags()
-	var o *options.Options = &options.MyOptions
+	var o *Options = &MyOptions
 	flg.CountVarP(&o.Verbosity, "verbose", "v", "Increase verbosity level")
 	flg.BoolVar(&o.StatsOutputEnabled, "no-stats", false, "Do not print the final stats")
 	flg.BoolVar(&o.ProgressOutputEnabled, "no-progress", false, "Disable progress output while processing")

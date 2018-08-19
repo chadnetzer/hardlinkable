@@ -18,13 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package linkable
+package main
 
 import (
 	"fmt"
-	"hardlinkable/options"
-	"hardlinkable/stats"
-	"hardlinkable/tree"
 	"os"
 	"syscall"
 )
@@ -70,30 +67,30 @@ func (ln *Linkable) FindIdenticalFiles(pathname string) {
 }
 
 func Run(dirs []string) {
-	var options *options.Options = &options.MyOptions
-	c := tree.MatchedPathnames(dirs)
+	var options *Options = &MyOptions
+	c := MatchedPathnames(dirs)
 	for pathname := range c {
 		fi, err := os.Lstat(pathname)
 		if err != nil {
 			continue
 		}
 		if fi.Size() < options.MinFileSize {
-			stats.Stats.FoundFileTooSmall()
+			Stats.FoundFileTooSmall()
 			continue
 		}
 		if options.MaxFileSize > 0 &&
 			fi.Size() > options.MaxFileSize {
-			stats.Stats.FoundFileTooLarge()
+			Stats.FoundFileTooLarge()
 			continue
 		}
 		// If the file hasn't been rejected by this
 		// point, add it to the found count
-		stats.Stats.FoundFile()
+		Stats.FoundFile()
 
 		//fmt.Printf("%+v %s\n", stat, pathname)
 		//fmt.Println(pathname)
 		MyLinkable.FindIdenticalFiles(pathname)
 	}
 	//fmt.Printf("\n%+v\n", MyLinkable)
-	fmt.Printf("\n%+v\n", stats.Stats)
+	fmt.Printf("\n%+v\n", Stats)
 }

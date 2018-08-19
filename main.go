@@ -20,8 +20,6 @@
 
 package main
 
-import "hardlinkable/cmd"
-
 func main() {
-	cmd.Execute()
+	Execute()
 }

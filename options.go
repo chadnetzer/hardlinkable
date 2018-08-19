@@ -18,36 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package tree
+package main
 
-import (
-	"fmt"
-
-	"hardlinkable/stats"
-
-	"github.com/karrick/godirwalk"
-)
-
-// Return allowed pathnames through the given channel.
-func MatchedPathnames(directories []string) <-chan string {
-	out := make(chan string)
-	go func() {
-		for _, dir := range directories {
-			err := godirwalk.Walk(dir, &godirwalk.Options{
-				Callback: func(osPathname string, de *godirwalk.Dirent) error {
-					if de.ModeType().IsDir() {
-						stats.Stats.FoundDirectory()
-					} else if de.ModeType().IsRegular() {
-						out <- osPathname
-					}
-					return nil
-				},
-			})
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-		close(out)
-	}()
-	return out
+type Options struct {
+	Verbosity             int
+	StatsOutputEnabled    bool
+	ProgressOutputEnabled bool
+	JSONOutputEnabled     bool
+	SameName              bool
+	ContentOnly           bool
+	IgnoreTime            bool
+	IgnorePerms           bool
+	IgnoreXattr           bool
+	MinFileSize           int64
+	MaxFileSize           int64
 }
+
+var MyOptions Options

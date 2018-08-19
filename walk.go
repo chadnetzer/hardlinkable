@@ -18,9 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package namepair
+package main
 
-type Namepair struct {
-	Dirname  string
-	Filename string
+import (
+	"fmt"
+
+	"github.com/karrick/godirwalk"
+)
+
+// Return allowed pathnames through the given channel.
+func MatchedPathnames(directories []string) <-chan string {
+	out := make(chan string)
+	go func() {
+		for _, dir := range directories {
+			err := godirwalk.Walk(dir, &godirwalk.Options{
+				Callback: func(osPathname string, de *godirwalk.Dirent) error {
+					if de.ModeType().IsDir() {
+						Stats.FoundDirectory()
+					} else if de.ModeType().IsRegular() {
+						out <- osPathname
+					}
+					return nil
+				},
+			})
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+		close(out)
+	}()
+	return out
 }
