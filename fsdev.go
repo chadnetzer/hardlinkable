@@ -226,12 +226,20 @@ func (f *FSDev) linkedInoSet(ino Ino) InoSet {
 }
 
 func (f *FSDev) ArbitraryPath(ino Ino) Pathsplit {
-	m := f.InoPaths[ino]
+	// ino must exist in f.InoPaths.  If it does, there will be at least
+	// one pathname to return
+	filenamePaths := f.InoPaths[ino]
 	var v []Pathsplit
-	for _, v = range m {
+	for _, v = range filenamePaths {
 		return v[0]
 	}
-	return Pathsplit{ "foo", "bar" }
+}
+
+func (f *FSDev) ArbitraryFilenamePath(ino Ino, filename string) Pathsplit {
+	filenamePaths := f.InoPaths[ino]
+	// Note - filename must exist in map, and if so len(paths) will be > 0
+	paths = filenamePaths[filename]
+	return paths[0]
 }
 
 func (f *FSDev) InoAppendPathname(ino Ino, pathname string) {
