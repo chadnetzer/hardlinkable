@@ -41,8 +41,7 @@ type LinkPair struct {
 }
 
 type ExistingLink struct {
-	Src         Pathsplit
-	Dst         Pathsplit
+	LinkPair
 	SrcFileinfo os.FileInfo
 }
 

@@ -37,7 +37,7 @@ type FileInfos map[string]os.FileInfo
 type FilenamePaths map[string][]Pathsplit
 
 type PathStat struct {
-	Path     Pathsplit
+	Pathsplit
 	FileInfo os.FileInfo
 }
 
@@ -160,7 +160,8 @@ func (f *FSDev) findIdenticalFiles(pathname string, fileInfo os.FileInfo) {
 		if _, ok := f.InoFileInfo[sysStat.Ino]; ok {
 			prevPath := f.ArbitraryPath(sysStat.Ino)
 			prevFileinfo := f.InoFileInfo[sysStat.Ino]
-			existingLinkInfo := ExistingLink{ prevPath, curPath, prevFileinfo }
+			linkPair := LinkPair{ prevPath, curPath }
+			existingLinkInfo := ExistingLink{ linkPair, prevFileinfo }
 			Stats.FoundExistingHardlink(existingLinkInfo)
 			//fmt.Println("prevPath: ", prevPath, prevFileinfo)
 		}
@@ -340,7 +341,7 @@ func (f *FSDev) foundHardlinkableFiles(ps1, ps2 PathStat) {
 	} else {
 		inoSet2.Add(ino1)
 	}
-	Stats.FoundHardlinkableFiles(ps1.Path, ps2.Path)
+	Stats.FoundHardlinkableFiles(ps1.Pathsplit, ps2.Pathsplit)
 }
 
 func areFilesHardlinkable(ps1 PathStat, ps2 PathStat) bool {
@@ -358,8 +359,8 @@ func areFilesHardlinkable(ps1 PathStat, ps2 PathStat) bool {
 	// Add options checking later (time/perms/ownership/etc)
 
 	// assert(st1.Dev == st2.Dev && st1.Ino != st2.Ino && st1.Size == st2.Size)
-	pathname1 := path.Join(ps1.Path.Dirname, ps1.Path.Filename)
-	pathname2 := path.Join(ps2.Path.Dirname, ps2.Path.Filename)
+	pathname1 := path.Join(ps1.Dirname, ps1.Filename)
+	pathname2 := path.Join(ps2.Dirname, ps2.Filename)
 
 	Stats.DidComparison()
 	// error handling deferred
