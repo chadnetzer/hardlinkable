@@ -41,6 +41,11 @@ type PathStat struct {
 	FileInfo os.FileInfo
 }
 
+type PathStatPair struct {
+	Src PathStat
+	Dst PathStat
+}
+
 type FSDev struct {
 	Dev            int64
 	MaxNLinks      uint64
@@ -222,6 +227,43 @@ func (f *FSDev) linkedInoSet(ino Ino) InoSet {
 	return resultSet
 }
 
+func (f *FSDev) linkedInoSets() <-chan InoSet {
+	out := make(chan InoSet)
+	go func() {
+		defer close(out)
+		remainingInos := f.LinkedInosCopy()
+		for startIno := range f.LinkedInos {
+			if _, ok := remainingInos[startIno]; !ok {
+				continue
+			}
+			resultSet := NewInoSet()
+			pending := append(make([]Ino, 0, 1), startIno)
+			for len(pending) > 0 {
+				// Pop last item from pending as ino
+				ino := pending[len(pending) - 1]
+				pending = pending[:len(pending) - 1]
+
+				// Add ino to results
+				resultSet[ino] = exists
+				// Add connected inos to pending
+				if _, ok := remainingInos[ino]; ok {
+					linkedInos := remainingInos[ino]
+					delete(remainingInos, ino)
+					linkedInoSlice := make([]Ino, len(linkedInos))
+					i := 0
+					for k := range linkedInos {
+						linkedInoSlice[i] = k
+						i++
+					}
+					pending = append(pending, linkedInoSlice...)
+				}
+			}
+			out <- resultSet
+		}
+	}()
+	return out
+}
+
 func (f *FSDev) ArbitraryPath(ino Ino) Pathsplit {
 	// ino must exist in f.InoPaths.  If it does, there will be at least
 	// one pathname to return
@@ -262,6 +304,21 @@ func (f *FSDev) PathStatFromIno(ino Ino) PathStat {
 	pathsplit := f.ArbitraryPath(ino)
 	fi := f.InoFileInfo[ino]
 	return PathStat { pathsplit, fi }
+}
+
+func (f *FSDev) allInoPaths(ino Ino) <-chan Pathsplit {
+	out := make(chan Pathsplit)
+	filenamePaths := f.InoPaths[ino]
+	//deepcopy filenamePaths
+	go func() {
+		defer close(out)
+		for _, paths := range filenamePaths {
+			for _, path := range paths {
+				out <- path
+			}
+		}
+	}()
+	return out
 }
 
 func (f *FSDev) foundHardlinkableFiles(ps1, ps2 PathStat) {
