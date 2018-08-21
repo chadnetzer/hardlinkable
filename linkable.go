@@ -40,12 +40,13 @@ func init() {
 	MyLinkable = NewLinkable()
 }
 
-func (ln *Linkable) Dev(dev uint64) FSDev {
-	if fsdev, ok := ln.FSDevs[dev]; ok {
+func (ln *Linkable) Dev(dsi DevStatInfo, pathname string) FSDev {
+	if fsdev, ok := ln.FSDevs[dsi.Dev]; ok {
 		return fsdev
 	} else {
-		fsdev = NewFSDev(dev)
-		ln.FSDevs[dev] = fsdev
+		fsdev = NewFSDev(dsi.Dev)
+		ln.FSDevs[dsi.Dev] = fsdev
+		fsdev.MaxNLinks = MaxNlink(pathname)
 		return fsdev
 	}
 }
@@ -74,8 +75,8 @@ func Run(dirs []string) {
 		//fmt.Printf("%+v %s\n", stat, pathname)
 		//fmt.Println(pathname)
 		//fmt.Printf("%+v\n", dsi)
-		fsdev := MyLinkable.Dev(dsi.Dev)
-		fsdev.findIdenticalFiles(pathname, dsi)
+		fsdev := MyLinkable.Dev(dsi, pathname)
+		fsdev.findIdenticalFiles(dsi, pathname)
 	}
 
 	for _, fsdev := range MyLinkable.FSDevs {
