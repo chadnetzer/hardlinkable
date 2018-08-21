@@ -272,12 +272,13 @@ func (f *FSDev) ArbitraryPath(ino Ino) Pathsplit {
 	for _, v = range filenamePaths {
 		return v[0]
 	}
+	panic("Unexpected empty filenamePaths in ArbitraryPath()")
 }
 
 func (f *FSDev) ArbitraryFilenamePath(ino Ino, filename string) Pathsplit {
 	filenamePaths := f.InoPaths[ino]
 	// Note - filename must exist in map, and if so len(paths) will be > 0
-	paths = filenamePaths[filename]
+	paths := filenamePaths[filename]
 	return paths[0]
 }
 
