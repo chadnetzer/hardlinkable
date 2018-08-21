@@ -76,7 +76,7 @@ func (i *InoSet) Add(ino Ino) {
 
 func (i *InoSet) Copy() InoSet {
 	newSet := NewInoSet()
-	for k,_ := range *i {
+	for k := range *i {
 		newSet[k] = exists
 	}
 	return newSet
@@ -90,7 +90,7 @@ func (i *InoSet) Intersection(set2 InoSet) InoSet {
 	} else {
 		little, big = &set2, i
 	}
-	for k, _ := range *little {
+	for k := range *little {
 		if _, ok := (*big)[k]; ok {
 			resultSet[k] = exists
 		}
