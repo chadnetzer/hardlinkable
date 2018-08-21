@@ -21,9 +21,6 @@
 package main
 
 import (
-	"bytes"
-	"fmt"
-	"io"
 	"os"
 	"path"
 	"syscall"
@@ -313,56 +310,4 @@ func areFilesHardlinkable(ps1 PathStat, ps2 PathStat) bool {
 		Stats.FoundEqualFiles()
 	}
 	return eq
-}
-
-func areFileContentsEqual(pathname1, pathname2 string) (bool, error){
-	var openErr error
-	f1, openErr := os.Open(pathname1)
-	if openErr != nil {
-		return false, openErr
-	}
-	defer f1.Close()
-
-	f2, openErr := os.Open(pathname2)
-	if openErr != nil {
-		return false, openErr
-	}
-	defer f2.Close()
-
-	eq, err := cmpReaderContents(f1, f2)
-	if eq {
-		fmt.Println("Matched: ", pathname1, pathname2)
-	}
-	return eq, err
-}
-
-// Return true if r1 and r2 have identical contents. Otherwise return false.
-func cmpReaderContents(r1, r2 io.Reader) (bool, error) {
-	const bufSize = 8192
-	buf1 := make([]byte, bufSize)
-	buf2 := make([]byte, bufSize)
-
-	for {
-		n1, err1 := r1.Read(buf1)
-		if err1 != nil && err1 != io.EOF {
-			return false, err1
-		}
-		n2, err2 := r2.Read(buf2)
-		if err2 != nil && err2 != io.EOF {
-			return false, err2
-		}
-
-		if n1 != n2 {
-			return false, nil
-		}
-
-		if n1 == 0 {
-			return true, nil
-		}
-
-		if bytes.Compare(buf1, buf2) != 0 {
-			return false, nil
-		}
-	}
-	return false, nil
 }
