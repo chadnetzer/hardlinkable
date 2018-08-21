@@ -30,6 +30,7 @@ import (
 func MatchedPathnames(directories []string) <-chan string {
 	out := make(chan string)
 	go func() {
+		defer close(out)
 		for _, dir := range directories {
 			err := godirwalk.Walk(dir, &godirwalk.Options{
 				Callback: func(osPathname string, de *godirwalk.Dirent) error {
@@ -45,7 +46,6 @@ func MatchedPathnames(directories []string) <-chan string {
 				fmt.Println(err)
 			}
 		}
-		close(out)
 	}()
 	return out
 }
