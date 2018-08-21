@@ -30,8 +30,8 @@ type Options struct {
 	IgnoreTime            bool
 	IgnorePerms           bool
 	IgnoreXattr           bool
-	MinFileSize           int64
-	MaxFileSize           int64
+	MinFileSize           uint64
+	MaxFileSize           uint64
 }
 
 var MyOptions Options

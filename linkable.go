@@ -22,19 +22,17 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"syscall"
 )
 
 type Linkable struct {
-	FSDevs map[int64]FSDev
+	FSDevs map[uint64]FSDev
 }
 
 var MyLinkable *Linkable
 
 func NewLinkable() *Linkable {
 	var l Linkable
-	l.FSDevs = make(map[int64]FSDev)
+	l.FSDevs = make(map[uint64]FSDev)
 	return &l
 }
 
@@ -42,7 +40,7 @@ func init() {
 	MyLinkable = NewLinkable()
 }
 
-func (ln *Linkable) Dev(dev int64) FSDev {
+func (ln *Linkable) Dev(dev uint64) FSDev {
 	if fsdev, ok := ln.FSDevs[dev]; ok {
 		return fsdev
 	} else {
@@ -52,34 +50,20 @@ func (ln *Linkable) Dev(dev int64) FSDev {
 	}
 }
 
-func (ln *Linkable) FindIdenticalFiles(pathname string) {
-	fi, err := os.Lstat(pathname)
-	if err != nil {
-		os.Exit(2)
-	}
-	sysStat, ok := fi.Sys().(*syscall.Stat_t)
-	if !ok {
-		os.Exit(2)
-	}
-	//fmt.Printf("%+v\n", sysStat)
-	fsdev := ln.Dev(int64(sysStat.Dev))
-	fsdev.findIdenticalFiles(pathname, fi)
-}
-
 func Run(dirs []string) {
 	var options *Options = &MyOptions
 	c := MatchedPathnames(dirs)
 	for pathname := range c {
-		fi, err := os.Lstat(pathname)
+		dsi, err := LStatInfo(pathname)
 		if err != nil {
 			continue
 		}
-		if fi.Size() < options.MinFileSize {
+		if dsi.Size < options.MinFileSize {
 			Stats.FoundFileTooSmall()
 			continue
 		}
 		if options.MaxFileSize > 0 &&
-			fi.Size() > options.MaxFileSize {
+			dsi.Size > options.MaxFileSize {
 			Stats.FoundFileTooLarge()
 			continue
 		}
@@ -89,7 +73,15 @@ func Run(dirs []string) {
 
 		//fmt.Printf("%+v %s\n", stat, pathname)
 		//fmt.Println(pathname)
-		MyLinkable.FindIdenticalFiles(pathname)
+		//fmt.Printf("%+v\n", dsi)
+		fsdev := MyLinkable.Dev(dsi.Dev)
+		fsdev.findIdenticalFiles(pathname, dsi)
+	}
+
+	for _, fsdev := range MyLinkable.FSDevs {
+		for pair := range fsdev.sortedLinks() {
+			_ = pair
+		}
 	}
 	//fmt.Printf("\n%+v\n", MyLinkable)
 	fmt.Printf("\n%+v\n", Stats)

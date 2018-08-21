@@ -21,9 +21,8 @@
 package main
 
 import (
-	"os"
+	"fmt"
 	"path"
-	"syscall"
 )
 
 type Ino = uint64
@@ -32,13 +31,13 @@ type Digest uint32
 
 type InoSet map[Ino]struct{}
 
-type FileInfos map[string]os.FileInfo
+type StatInfos map[string]StatInfo
 
 type FilenamePaths map[string][]Pathsplit
 
 type PathStat struct {
 	Pathsplit
-	FileInfo os.FileInfo
+	StatInfo
 }
 
 type PathStatPair struct {
@@ -47,17 +46,17 @@ type PathStatPair struct {
 }
 
 type FSDev struct {
-	Dev            int64
+	Dev            uint64
 	MaxNLinks      uint64
 	InoHashes      map[Hash]InoSet
-	InoFileInfo    map[Ino]os.FileInfo
+	InoStatInfo    map[Ino]StatInfo
 	InoPaths       map[Ino]FilenamePaths
 	LinkedInos     map[Ino]InoSet
 	DigestIno      map[Digest]InoSet
 	InosWithDigest InoSet
 
-	// For each directory name, keep track of all the FileInfo structures
-	DirnameFileInfos map[string]FileInfos
+	// For each directory name, keep track of all the StatInfo structures
+	DirnameStatInfos map[string]StatInfos
 }
 
 var exists = struct{}{}
@@ -106,11 +105,11 @@ func (f *FSDev) LinkedInosCopy() map[Ino]InoSet {
 	return newLinkedInos
 }
 
-func NewFSDev(dev int64) FSDev {
+func NewFSDev(dev uint64) FSDev {
 	var w FSDev
 	w.Dev = dev
 	w.InoHashes = make(map[Hash]InoSet)
-	w.InoFileInfo = make(map[Ino]os.FileInfo)
+	w.InoStatInfo = make(map[Ino]StatInfo)
 	w.InoPaths = make(map[Ino]FilenamePaths)
 	w.LinkedInos = make(map[Ino]InoSet)
 	w.DigestIno = make(map[Digest]InoSet)
@@ -121,10 +120,9 @@ func NewFSDev(dev int64) FSDev {
 
 // Produce an equal hash for potentially equal files, based only on Inode
 // metadata (size, time, etc.)
-func InoHash(stat syscall.Stat_t, opt Options) Hash {
+func InoHash(stat StatInfo, opt Options) Hash {
 	var value Hash
 	size := Hash(stat.Size)
-	mtim := stat.Mtimespec
 	// The main requirement is that files that could be equal have equal
 	// hashes.  It's less important if unequal files also have the same
 	// hash value, since we will still compare the actual file content
@@ -132,40 +130,44 @@ func InoHash(stat syscall.Stat_t, opt Options) Hash {
 	if opt.IgnoreTime || opt.ContentOnly {
 		value = size
 	} else {
-		value = size ^ Hash(mtim.Sec) ^ Hash(mtim.Nsec)
+		value = size ^ Hash(stat.Sec) ^ Hash(stat.Nsec)
 	}
 	return value
 }
 
-func (f *FSDev) findIdenticalFiles(pathname string, fileInfo os.FileInfo) {
-	sysStat := *fileInfo.Sys().(*syscall.Stat_t)
+func (f *FSDev) findIdenticalFiles(pathname string, devStatInfo DevStatInfo) {
+	if f.Dev != devStatInfo.Dev {
+		errStr := fmt.Sprintf("Mismatched Dev %d for %s", f.Dev, pathname)
+		panic(errStr)
+	}
+	statInfo := devStatInfo.StatInfo
 	//fmt.Println("pathname: ", pathname)
 	dirname, filename := path.Split(pathname)
 	curPath := Pathsplit{ dirname, filename }
-	curPathStat := PathStat { curPath, fileInfo }
+	curPathStat := PathStat { curPath, statInfo }
 
-	if _, ok := f.InoFileInfo[sysStat.Ino]; !ok {
-		//fmt.Println("find inode: ", pathname, sysStat.Ino)
+	if _, ok := f.InoStatInfo[statInfo.Ino]; !ok {
+		//fmt.Println("find inode: ", pathname, statInfo.Ino)
 		Stats.FoundInode()
 	}
 
-	inoHash := InoHash(sysStat, MyOptions)
-	//fmt.Println("hash and inode: ", inoHash, sysStat.Ino)
+	inoHash := InoHash(statInfo, MyOptions)
+	//fmt.Println("hash and inode: ", inoHash, statInfo.Ino)
 	if _, ok := f.InoHashes[inoHash]; !ok {
 		Stats.MissedHash()
-		f.InoHashes[inoHash] = NewInoSet(sysStat.Ino)
-		//fmt.Println("new inode set: ", inoHash, sysStat.Ino, f.InoHashes[inoHash])
+		f.InoHashes[inoHash] = NewInoSet(statInfo.Ino)
+		//fmt.Println("new inode set: ", inoHash, statInfo.Ino, f.InoHashes[inoHash])
 	} else {
 		Stats.FoundHash()
-		if _, ok := f.InoFileInfo[sysStat.Ino]; ok {
-			prevPath := f.ArbitraryPath(sysStat.Ino)
-			prevFileinfo := f.InoFileInfo[sysStat.Ino]
+		if _, ok := f.InoStatInfo[statInfo.Ino]; ok {
+			prevPath := f.ArbitraryPath(statInfo.Ino)
+			prevStatinfo := f.InoStatInfo[statInfo.Ino]
 			linkPair := LinkPair{ prevPath, curPath }
-			existingLinkInfo := ExistingLink{ linkPair, prevFileinfo }
+			existingLinkInfo := ExistingLink{ linkPair, prevStatinfo }
 			Stats.FoundExistingHardlink(existingLinkInfo)
-			//fmt.Println("prevPath: ", prevPath, prevFileinfo)
+			//fmt.Println("prevPath: ", prevPath, prevStatinfo)
 		}
-		linkedInos := f.linkedInoSet(sysStat.Ino)
+		linkedInos := f.linkedInoSet(statInfo.Ino)
 		//fmt.Printf("linkedInos %+v\n", linkedInos)
 		hashedInos := f.InoHashes[inoHash]
 		//fmt.Printf("hashedInos %+v\n", hashedInos)
@@ -179,7 +181,7 @@ func (f *FSDev) findIdenticalFiles(pathname string, fileInfo os.FileInfo) {
 			for cachedIno := range cachedInoSet {
 				Stats.IncInoSeqIterations()
 				cachedPathStat := f.PathStatFromIno(cachedIno)
-				if areFilesHardlinkable(cachedPathStat, curPathStat) {
+				if f.areFilesHardlinkable(cachedPathStat, curPathStat) {
 					//fmt.Println("Matching files: ", pathStat, cachedPathStat)
 					loopEndedEarly = true
 					f.foundHardlinkableFiles(cachedPathStat, curPathStat)
@@ -189,13 +191,13 @@ func (f *FSDev) findIdenticalFiles(pathname string, fileInfo os.FileInfo) {
 			if !loopEndedEarly {
 				Stats.NoHashMatch()
 				inoSet := f.InoHashes[inoHash]
-				inoSet.Add(sysStat.Ino)
-				f.InoFileInfo[sysStat.Ino] = fileInfo
+				inoSet.Add(statInfo.Ino)
+				f.InoStatInfo[statInfo.Ino] = statInfo
 			}
 		}
 	}
-	f.InoFileInfo[sysStat.Ino] = fileInfo
-	f.InoAppendPathname(sysStat.Ino, pathname)
+	f.InoStatInfo[statInfo.Ino] = statInfo
+	f.InoAppendPathname(statInfo.Ino, pathname)
 }
 
 func (f *FSDev) linkedInoSet(ino Ino) InoSet {
@@ -304,7 +306,7 @@ func (f *FSDev) InoAppendPathname(ino Ino, pathname string) {
 
 func (f *FSDev) PathStatFromIno(ino Ino) PathStat {
 	pathsplit := f.ArbitraryPath(ino)
-	fi := f.InoFileInfo[ino]
+	fi := f.InoStatInfo[ino]
 	return PathStat { pathsplit, fi }
 }
 
@@ -324,36 +326,29 @@ func (f *FSDev) allInoPaths(ino Ino) <-chan Pathsplit {
 }
 
 func (f *FSDev) foundHardlinkableFiles(ps1, ps2 PathStat) {
-	ino1 := ps1.FileInfo.Sys().(*syscall.Stat_t).Ino
-	ino2 := ps2.FileInfo.Sys().(*syscall.Stat_t).Ino
-
 	// Add both src and destination inos to the linked InoSets
-	inoSet1, ok := f.LinkedInos[ino1]
+	inoSet1, ok := f.LinkedInos[ps1.Ino]
 	if !ok {
-		f.LinkedInos[ino1] = NewInoSet(ino2)
+		f.LinkedInos[ps1.Ino] = NewInoSet(ps1.Ino)
 	} else {
-		inoSet1.Add(ino2)
+		inoSet1.Add(ps2.Ino)
 	}
 
-	inoSet2, ok := f.LinkedInos[ino2]
+	inoSet2, ok := f.LinkedInos[ps2.Ino]
 	if !ok {
-		f.LinkedInos[ino2] = NewInoSet(ino1)
+		f.LinkedInos[ps2.Ino] = NewInoSet(ps1.Ino)
 	} else {
-		inoSet2.Add(ino1)
+		inoSet2.Add(ps1.Ino)
 	}
 	Stats.FoundHardlinkableFiles(ps1.Pathsplit, ps2.Pathsplit)
 }
 
-func areFilesHardlinkable(ps1 PathStat, ps2 PathStat) bool {
-	st1 := ps1.FileInfo.Sys().(*syscall.Stat_t)
-	st2 := ps2.FileInfo.Sys().(*syscall.Stat_t)
-	if st1.Dev != st2.Dev {
+func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat) bool {
+	// Dev is equal for both PathStats
+	if ps1.Ino == ps2.Ino {
 		return false
 	}
-	if st1.Ino == st2.Ino {
-		return false
-	}
-	if st1.Size != st2.Size {
+	if ps1.Size != ps2.Size {
 		return false
 	}
 	// Add options checking later (time/perms/ownership/etc)

@@ -23,13 +23,12 @@ package main
 import (
 	"fmt"
 	"sort"
-	"syscall"
 )
 
 // Implement sorting from greatest NLink count to least
 type inoNlink struct {
 	Ino   uint64
-	Nlink uint16
+	Nlink uint32
 }
 type byNlink []inoNlink
 
@@ -41,7 +40,7 @@ func (f *FSDev) sortInoSet(inoSet InoSet) []Ino {
 	seq := make(byNlink, len(inoSet))
 	i := 0
 	for ino, _ := range inoSet {
-		nlink := f.InoFileInfo[ino].Sys().(*syscall.Stat_t).Nlink
+		nlink := f.InoStatInfo[ino].Nlink
 		seq[i] = inoNlink{Ino: ino, Nlink: nlink}
 		i++
 	}
@@ -84,8 +83,8 @@ func (f *FSDev) sortedLinks() <-chan PathStatPair {
 				for len(sortedInos) > 0 {
 					dstIno := sortedInos[len(sortedInos)-1]
 					sortedInos = sortedInos[:len(sortedInos)-1]
-					srcFileInfo := f.InoFileInfo[srcIno]
-					dstFileInfo := f.InoFileInfo[dstIno]
+					srcFileInfo := f.InoStatInfo[srcIno]
+					dstFileInfo := f.InoStatInfo[dstIno]
 
 					// Ignore max_nlink checking for now
 					srcPath := f.ArbitraryPath(srcIno)

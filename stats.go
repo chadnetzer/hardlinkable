@@ -20,10 +20,6 @@
 
 package main
 
-import (
-	"os"
-)
-
 var Stats LinkingStats
 
 func init() {
@@ -31,7 +27,7 @@ func init() {
 }
 
 type LinkDestinations struct {
-	size  int64
+	size  uint64
 	paths []Pathsplit
 }
 
@@ -42,7 +38,7 @@ type LinkPair struct {
 
 type ExistingLink struct {
 	LinkPair
-	SrcFileinfo os.FileInfo
+	SrcStatinfo StatInfo
 }
 
 type LinkingStats struct {
@@ -125,10 +121,10 @@ func (s *LinkingStats) FoundHardlinkableFiles(p1, p2 Pathsplit) {
 func (s *LinkingStats) FoundExistingHardlink(existing ExistingLink) {
 	srcPath := existing.Src
 	dstPath := existing.Dst
-	srcFileinfo := existing.SrcFileinfo
+	srcStatinfo := existing.SrcStatinfo
 	linkDestinations, exists := s.existingHardlinks[srcPath]
 	if !exists {
-		size := srcFileinfo.Size()
+		size := srcStatinfo.Size
 		linkDestinations = LinkDestinations{size, make([]Pathsplit, 0)}
 	}
 	linkDestinations.paths = append(linkDestinations.paths, dstPath)

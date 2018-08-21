@@ -21,9 +21,7 @@
 package main
 
 import (
-	"os"
 	"sort"
-	"syscall"
 	"testing"
 )
 
@@ -41,29 +39,29 @@ func InoSeqFromSet(set InoSet) []Ino {
 	return seq
 }
 
-func setupInoFileInfo(fsdev *FSDev, inoSet InoSet) {
-	fsdev.InoFileInfo = make(map[Ino]os.FileInfo)
+func setupInoStatInfo(fsdev *FSDev, inoSet InoSet) {
+	fsdev.InoStatInfo = make(map[Ino]StatInfo)
 	for ino, _ := range inoSet {
-		// Using any old FileInfo is fine
-		fi, _ := os.Lstat(".")
-		st := fi.Sys().(*syscall.Stat_t)
+		// Using any old StatInfo is fine
+		dsi, _ := LStatInfo(".")
+		si := dsi.StatInfo
 		// Deliberately make it so that if Nlinks are sorted, Inos are
 		// sorted also (for easier testing of []Ino result)
-		st.Nlink = uint16(ino)*2 + 100
-		st.Ino = uint64(ino)
-		fsdev.InoFileInfo[Ino(ino)] = fi
+		si.Nlink = uint32(ino)*2 + 100
+		si.Ino = uint64(ino)
+		fsdev.InoStatInfo[Ino(ino)] = si
 	}
 }
 
 func TestInoSort(t *testing.T) {
-	fsdev := &FSDev{}
 	inoSet := NewInoSet(1, 3, 5, 4, 2, 6, 7, 1, 8, 2, 11, 9, 5)
 	inoSeq := InoSeqFromSet(inoSet)
 	if sort.IsSorted(sort.Reverse(byIno(inoSeq))) {
 		t.Errorf("inoSeq was already sorted (should be unsorted)")
 	}
 
-	setupInoFileInfo(fsdev, inoSet)
+	fsdev := &FSDev{}
+	setupInoStatInfo(fsdev, inoSet)
 	inoSetSorted := fsdev.sortInoSet(inoSet)
 	if !sort.IsSorted(sort.Reverse(byIno(inoSetSorted))) {
 		t.Errorf("Sorting of InoSet by nLink value failed")

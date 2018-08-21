@@ -92,8 +92,8 @@ func init() {
 	flg.BoolVarP(&o.IgnorePerms, "ignore-perms", "p", false, "File permissions need not match")
 	flg.BoolVar(&o.IgnoreXattr, "ignore-xattr", false, "Xattrs need not match")
 
-	flg.Int64VarP(&o.MinFileSize, "min-size", "z", 1, "Minimum file size")
-	flg.Int64VarP(&o.MaxFileSize, "max-size", "Z", 0, "Maximum file size")
+	flg.Uint64VarP(&o.MinFileSize, "min-size", "z", 1, "Minimum file size")
+	flg.Uint64VarP(&o.MaxFileSize, "max-size", "Z", 0, "Maximum file size")
 
 	flg.StringP("match", "m", "", "Regular expression used to match files")
 	flg.StringP("exclude", "x", "", "Regular expression used to exclude files/dirs")
