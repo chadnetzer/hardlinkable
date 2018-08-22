@@ -105,6 +105,8 @@ func (f *FSDev) sortedLinks() <-chan PathStatPair {
 					for dstPath := range dstPaths {
 						dstPathStat := PathStat{dstPath, dstFileInfo}
 						out <- PathStatPair{srcPathStat, dstPathStat}
+
+						Stats.FoundNewLink(srcPathStat, dstPathStat)
 						fmt.Println(srcPath, dstPath)
 					}
 				}
