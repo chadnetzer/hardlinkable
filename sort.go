@@ -21,7 +21,6 @@
 package main
 
 import (
-	"fmt"
 	"sort"
 )
 
@@ -71,50 +70,73 @@ func (f *FSDev) sortedLinks() <-chan PathStatPair {
 		for linkableSet := range c {
 			// Sort links highest nlink to lowest
 			sortedInos := f.sortInoSet(linkableSet)
-			remainingInos := make([]Ino, 0)
+			f.sendLinkedPairs(sortedInos, out)
 
-			for len(sortedInos) > 0 || len(remainingInos) > 0 {
-				if len(remainingInos) > 0 {
-					// Reverse remainingInos and place at the end
-					// of sortedInos.  These were the leftovers
-					// from the end of the list working backwards.
-					sortedInos = appendReversedInos(sortedInos, remainingInos...)
-					remainingInos = make([]Ino, 0)
-				}
-				srcIno := sortedInos[0]
-				sortedInos = sortedInos[1:]
-				for len(sortedInos) > 0 {
-					dstIno := sortedInos[len(sortedInos)-1]
-					sortedInos = sortedInos[:len(sortedInos)-1]
-					srcSI := f.InoStatInfo[srcIno]
-					dstSI := f.InoStatInfo[dstIno]
-
-					// Check if max NLinks would be exceeded if
-					// these two inodes are fully linked
-					sum := uint64(srcSI.Nlink) + uint64(dstSI.Nlink)
-					if sum > f.MaxNLinks {
-						remainingInos = append(remainingInos, dstIno)
-						remainingInos = appendReversedInos(remainingInos, sortedInos...)
-						sortedInos = make([]Ino, 0)
-						break
-					}
-
-					dstPaths := f.allInoPaths(dstIno)
-					for dstPath := range dstPaths {
-						srcPath := f.ArbitraryPath(srcIno)
-						srcPathStat := PathStat{srcPath, srcSI}
-						dstPathStat := PathStat{dstPath, dstSI}
-
-						out <- PathStatPair{srcPathStat, dstPathStat}
-
-						Stats.FoundNewLink(srcPathStat, dstPathStat)
-						fmt.Println(srcPath, dstPath)
-					}
-				}
-			}
 			//fmt.Printf("%+v\n", linkableSet)
 			//fmt.Printf("%+v\n", sortedInos)
 		}
 	}()
 	return out
+}
+
+func (f *FSDev) sendLinkedPairs(sortedInos []Ino, out chan<- PathStatPair) {
+	remainingInos := make([]Ino, 0)
+
+	for len(sortedInos) > 0 || len(remainingInos) > 0 {
+		if len(remainingInos) > 0 {
+			// Reverse remainingInos and place at the end
+			// of sortedInos.  These were the leftovers
+			// from the end of the list working backwards.
+			sortedInos = appendReversedInos(sortedInos, remainingInos...)
+			remainingInos = make([]Ino, 0)
+		}
+		srcIno := sortedInos[0]
+		sortedInos = sortedInos[1:]
+		for len(sortedInos) > 0 {
+			dstIno := sortedInos[len(sortedInos)-1]
+			sortedInos = sortedInos[:len(sortedInos)-1]
+			srcSI := f.InoStatInfo[srcIno]
+			dstSI := f.InoStatInfo[dstIno]
+
+			// Check if max NLinks would be exceeded if
+			// these two inodes are fully linked
+			sum := uint64(srcSI.Nlink) + uint64(dstSI.Nlink)
+			if sum > f.MaxNLinks {
+				remainingInos = append(remainingInos, dstIno)
+				remainingInos = appendReversedInos(remainingInos, sortedInos...)
+				sortedInos = make([]Ino, 0)
+				break
+			}
+
+			dstPaths := f.allInoPaths(dstIno)
+			for dstPath := range dstPaths {
+				var srcPath Pathsplit
+				if MyOptions.SameName {
+					// Skip to next destination inode path if dst filename
+					// isn't also found as a src filename
+					srcPaths := f.InoPaths[srcIno]
+					dstFilename := dstPath.Filename
+					if _, ok := srcPaths[dstFilename]; !ok {
+						continue
+					}
+					srcPath = f.ArbitraryFilenamePath(srcIno, dstFilename)
+				} else {
+					srcPath = f.ArbitraryPath(srcIno)
+				}
+				srcPathStat := PathStat{srcPath, srcSI}
+				dstPathStat := PathStat{dstPath, dstSI}
+
+				out <- PathStatPair{srcPathStat, dstPathStat}
+
+				Stats.FoundNewLink(srcPathStat, dstPathStat)
+			}
+			// With SameName option, it's possible that the dstIno nLinks will not go
+			// to zero (if not all links have a matching filename), so place on the
+			// remainingInos list to allow it to (possibly) be linked with other linked
+			// inodes
+			if len(f.InoPaths[dstIno]) > 0 {
+				remainingInos = append(remainingInos, dstIno)
+			}
+		}
+	}
 }
