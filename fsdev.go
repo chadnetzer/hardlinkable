@@ -184,7 +184,7 @@ func (f *FSDev) findIdenticalFiles(pathname string, devStatInfo DevStatInfo) {
 				if f.areFilesHardlinkable(cachedPathStat, curPathStat) {
 					//fmt.Println("Matching files: ", pathStat, cachedPathStat)
 					loopEndedEarly = true
-					f.foundHardlinkableFiles(cachedPathStat, curPathStat)
+					f.addLinkableInos(cachedPathStat.Ino, curPathStat.Ino)
 					break
 				}
 			}
@@ -325,22 +325,21 @@ func (f *FSDev) allInoPaths(ino Ino) <-chan Pathsplit {
 	return out
 }
 
-func (f *FSDev) foundHardlinkableFiles(ps1, ps2 PathStat) {
+func (f *FSDev) addLinkableInos(ino1, ino2 Ino) {
 	// Add both src and destination inos to the linked InoSets
-	inoSet1, ok := f.LinkedInos[ps1.Ino]
+	inoSet1, ok := f.LinkedInos[ino1]
 	if !ok {
-		f.LinkedInos[ps1.Ino] = NewInoSet(ps1.Ino)
+		f.LinkedInos[ino1] = NewInoSet(ino2)
 	} else {
-		inoSet1.Add(ps2.Ino)
+		inoSet1.Add(ino2)
 	}
 
-	inoSet2, ok := f.LinkedInos[ps2.Ino]
+	inoSet2, ok := f.LinkedInos[ino2]
 	if !ok {
-		f.LinkedInos[ps2.Ino] = NewInoSet(ps1.Ino)
+		f.LinkedInos[ino2] = NewInoSet(ino1)
 	} else {
-		inoSet2.Add(ps1.Ino)
+		inoSet2.Add(ino1)
 	}
-	Stats.FoundHardlinkableFiles(ps1.Pathsplit, ps2.Pathsplit)
 }
 
 func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat) bool {
