@@ -135,7 +135,7 @@ func InoHash(stat StatInfo, opt Options) Hash {
 	return value
 }
 
-func (f *FSDev) findIdenticalFiles(pathname string, devStatInfo DevStatInfo) {
+func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 	if f.Dev != devStatInfo.Dev {
 		errStr := fmt.Sprintf("Mismatched Dev %d for %s", f.Dev, pathname)
 		panic(errStr)

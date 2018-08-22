@@ -73,7 +73,7 @@ func (f *FSDev) sortedLinks() <-chan PathStatPair {
 			sortedInos := f.sortInoSet(linkableSet)
 			remainingInos := make([]Ino, 0)
 
-			for len(remainingInos) > 0 || len(sortedInos) > 0 {
+			for len(sortedInos) > 0 || len(remainingInos) > 0 {
 				if len(remainingInos) > 0 {
 					// Reverse remainingInos and place at the end
 					// of sortedInos.  These were the leftovers
