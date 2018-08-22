@@ -105,9 +105,10 @@ func (f *FSDev) LinkedInosCopy() map[Ino]InoSet {
 	return newLinkedInos
 }
 
-func NewFSDev(dev uint64) FSDev {
+func NewFSDev(dev, maxNLinks uint64) FSDev {
 	var w FSDev
 	w.Dev = dev
+	w.MaxNLinks = maxNLinks
 	w.InoHashes = make(map[Hash]InoSet)
 	w.InoStatInfo = make(map[Ino]StatInfo)
 	w.InoPaths = make(map[Ino]FilenamePaths)

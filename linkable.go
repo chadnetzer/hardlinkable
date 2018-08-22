@@ -44,9 +44,8 @@ func (ln *Linkable) Dev(dsi DevStatInfo, pathname string) FSDev {
 	if fsdev, ok := ln.FSDevs[dsi.Dev]; ok {
 		return fsdev
 	} else {
-		fsdev = NewFSDev(dsi.Dev)
+		fsdev = NewFSDev(dsi.Dev, MaxNlink(pathname))
 		ln.FSDevs[dsi.Dev] = fsdev
-		fsdev.MaxNLinks = MaxNlink(pathname)
 		return fsdev
 	}
 }
