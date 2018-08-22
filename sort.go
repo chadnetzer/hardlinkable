@@ -86,10 +86,19 @@ func (f *FSDev) sortedLinks() <-chan PathStatPair {
 				for len(sortedInos) > 0 {
 					dstIno := sortedInos[len(sortedInos)-1]
 					sortedInos = sortedInos[:len(sortedInos)-1]
-					srcFileInfo := f.InoStatInfo[srcIno]
-					dstFileInfo := f.InoStatInfo[dstIno]
+					srcSI := f.InoStatInfo[srcIno]
+					dstSI := f.InoStatInfo[dstIno]
 
-					// Ignore max_nlink checking for now
+					// Check if max NLinks would be exceeded if
+					// these two inodes are fully linked
+					sum := uint64(srcSI.Nlink) + uint64(dstSI.Nlink)
+					if sum > f.MaxNLinks {
+						remainingInos = append(remainingInos, dstIno)
+						remainingInos = appendReversedInos(remainingInos, sortedInos...)
+						sortedInos = make([]Ino, 0)
+						break
+					}
+
 					srcPath := f.ArbitraryPath(srcIno)
 					srcPathStat := PathStat{srcPath, srcFileInfo}
 					dstPaths := f.allInoPaths(dstIno)
