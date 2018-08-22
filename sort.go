@@ -99,11 +99,12 @@ func (f *FSDev) sortedLinks() <-chan PathStatPair {
 						break
 					}
 
-					srcPath := f.ArbitraryPath(srcIno)
-					srcPathStat := PathStat{srcPath, srcFileInfo}
 					dstPaths := f.allInoPaths(dstIno)
 					for dstPath := range dstPaths {
-						dstPathStat := PathStat{dstPath, dstFileInfo}
+						srcPath := f.ArbitraryPath(srcIno)
+						srcPathStat := PathStat{srcPath, srcSI}
+						dstPathStat := PathStat{dstPath, dstSI}
+
 						out <- PathStatPair{srcPathStat, dstPathStat}
 
 						Stats.FoundNewLink(srcPathStat, dstPathStat)
