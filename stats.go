@@ -42,26 +42,31 @@ type ExistingLink struct {
 }
 
 type LinkingStats struct {
-	numDirs             int64
-	numFiles            int64
-	numFilesTooSmall    int64
-	numFilesTooLarge    int64
-	numInodes           int64
-	numComparisons      int64
-	numEqualComparisons int64
-	numMissedHashes     int64
-	numFoundHashes      int64
-	numInoSeqSearches   int64
-	numInoSeqIterations int64
-	numHashMismatches   int64
+	numDirs               int64
+	numFiles              int64
+	numFilesTooSmall      int64
+	numFilesTooLarge      int64
+	numComparisons        int64
+	numEqualComparisons   int64
+	numInodes             int64
+	numInodesConsolidated int64
+	numMissedHashes       int64
+	numPrevLinks          int64
+	numNewLinks           int64
+	numFoundHashes        int64
+	numInoSeqSearches     int64
+	numInoSeqIterations   int64
+	numHashMismatches     int64
+	numPrevBytesSaved     uint64
+	numNewBytesSaved      uint64
 
-	linkPairs         []LinkPair
-	existingHardlinks map[Pathsplit]LinkDestinations
+	linkPairs     []LinkPair
+	existingLinks map[Pathsplit]LinkDestinations
 }
 
 func NewLinkingStats() LinkingStats {
 	ls := LinkingStats{
-		existingHardlinks: make(map[Pathsplit]LinkDestinations),
+		existingLinks: make(map[Pathsplit]LinkDestinations),
 	}
 	return ls
 }
@@ -114,20 +119,29 @@ func (s *LinkingStats) FoundEqualFiles() {
 	s.numEqualComparisons += 1
 }
 
-func (s *LinkingStats) FoundHardlinkableFiles(p1, p2 Pathsplit) {
-	s.linkPairs = append(s.linkPairs, LinkPair{p1, p2})
+func (s *LinkingStats) FoundNewLink(src, dst PathStat) {
+	linkPair := LinkPair{src.Pathsplit, dst.Pathsplit}
+	// Make optional to save space...
+	s.linkPairs = append(s.linkPairs, linkPair)
+
+	s.numNewLinks += 1
+	if dst.Nlink == 1 {
+		s.numNewBytesSaved += dst.Size
+		s.numInodesConsolidated += 1
+	}
 }
 
-func (s *LinkingStats) FoundExistingHardlink(existing ExistingLink) {
-	srcPath := existing.Src
-	dstPath := existing.Dst
-	srcStatinfo := existing.SrcStatinfo
-	linkDestinations, exists := s.existingHardlinks[srcPath]
-	if !exists {
+func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
+	s.numPrevLinks += 1
+	srcPath := e.Src
+	dstPath := e.Dst
+	srcStatinfo := e.SrcStatinfo
+	linkDestinations, ok := s.existingLinks[srcPath]
+	if !ok {
 		size := srcStatinfo.Size
 		linkDestinations = LinkDestinations{size, make([]Pathsplit, 0)}
 	}
 	linkDestinations.paths = append(linkDestinations.paths, dstPath)
-	s.existingHardlinks[srcPath] = linkDestinations
+	s.existingLinks[srcPath] = linkDestinations
 	//fmt.Println("currently linked: ", srcPath, linkDestinations)
 }

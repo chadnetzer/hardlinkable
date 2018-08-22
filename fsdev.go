@@ -164,7 +164,7 @@ func (f *FSDev) findIdenticalFiles(pathname string, devStatInfo DevStatInfo) {
 			prevStatinfo := f.InoStatInfo[statInfo.Ino]
 			linkPair := LinkPair{ prevPath, curPath }
 			existingLinkInfo := ExistingLink{ linkPair, prevStatinfo }
-			Stats.FoundExistingHardlink(existingLinkInfo)
+			Stats.FoundExistingLink(existingLinkInfo)
 			//fmt.Println("prevPath: ", prevPath, prevStatinfo)
 		}
 		linkedInos := f.linkedInoSet(statInfo.Ino)
