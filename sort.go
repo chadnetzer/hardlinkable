@@ -55,6 +55,14 @@ func (f *FSDev) sortInoSet(inoSet InoSet) []Ino {
 	return sortedSeq
 }
 
+// Reverse fromS and append to toS
+func appendReversedInos(toS []Ino, fromS ...Ino) []Ino {
+	for i, j := 0, len(fromS)-1; i < j; i, j = i+1, j-1 {
+		fromS[i], fromS[j] = fromS[j], fromS[i]
+	}
+	return append(toS, fromS...)
+}
+
 func (f *FSDev) sortedLinks() <-chan PathStatPair {
 	out := make(chan PathStatPair)
 	go func() {
@@ -70,12 +78,7 @@ func (f *FSDev) sortedLinks() <-chan PathStatPair {
 					// Reverse remainingInos and place at the end
 					// of sortedInos.  These were the leftovers
 					// from the end of the list working backwards.
-					s := remainingInos
-					for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
-						s[i], s[j] = s[j], s[i]
-					}
-					remainingInos = s
-					sortedInos = append(sortedInos, remainingInos...)
+					sortedInos = appendReversedInos(sortedInos, remainingInos...)
 					remainingInos = make([]Ino, 0)
 				}
 				srcIno := sortedInos[0]

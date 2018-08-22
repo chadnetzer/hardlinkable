@@ -67,3 +67,13 @@ func TestInoSort(t *testing.T) {
 		t.Errorf("Sorting of InoSet by nLink value failed")
 	}
 }
+
+func TestAppendReversed(t *testing.T) {
+	forward := []Ino{1, 2, 3}
+	reversed := []Ino{5, 4}
+	forward = appendReversedInos(forward, reversed...)
+	if !sort.IsSorted(byIno(forward)) {
+		t.Errorf("appendReversed failure")
+	}
+
+}
