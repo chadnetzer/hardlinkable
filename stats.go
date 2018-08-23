@@ -145,6 +145,7 @@ func (s *LinkingStats) FoundNewLink(src, dst PathStat) {
 
 func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
 	s.numPrevLinks += 1
+	s.numPrevBytesSaved += e.SrcStatinfo.Size
 	srcPath := e.Src
 	dstPath := e.Dst
 	srcStatinfo := e.SrcStatinfo
