@@ -30,6 +30,8 @@ type Options struct {
 	IgnoreTime            bool
 	IgnorePerms           bool
 	IgnoreXattr           bool
+	LinkingEnabled        bool
+	DebuggingLevel        int
 	MinFileSize           uint64
 	MaxFileSize           uint64
 }

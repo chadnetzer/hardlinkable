@@ -41,7 +41,7 @@ type ExistingLink struct {
 	SrcStatinfo StatInfo
 }
 
-type LinkingStats struct {
+type CountingStats struct {
 	numDirs               int64
 	numFiles              int64
 	numFilesTooSmall      int64
@@ -60,6 +60,10 @@ type LinkingStats struct {
 	numPrevBytesSaved     uint64
 	numNewBytesSaved      uint64
 
+}
+
+type LinkingStats struct {
+	CountingStats
 	linkPairs     []LinkPair
 	existingLinks map[Pathsplit]LinkDestinations
 }
