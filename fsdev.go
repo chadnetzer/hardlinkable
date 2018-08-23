@@ -143,8 +143,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 	}
 	statInfo := devStatInfo.StatInfo
 	//fmt.Println("pathname: ", pathname)
-	dirname, filename := path.Split(pathname)
-	curPath := Pathsplit{ dirname, filename }
+	curPath := SplitPathname(pathname)
 	curPathStat := PathStat { curPath, statInfo }
 
 	if _, ok := f.InoStatInfo[statInfo.Ino]; !ok {
@@ -198,7 +197,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 		}
 	}
 	f.InoStatInfo[statInfo.Ino] = statInfo
-	f.InoAppendPathname(statInfo.Ino, pathname)
+	f.InoAppendPathname(statInfo.Ino, SplitPathname(pathname))
 }
 
 func (f *FSDev) linkedInoSet(ino Ino) InoSet {
@@ -286,9 +285,8 @@ func (f *FSDev) ArbitraryFilenamePath(ino Ino, filename string) Pathsplit {
 	return paths[0]
 }
 
-func (f *FSDev) InoAppendPathname(ino Ino, pathname string) {
-	dirname, filename := path.Split(pathname)
-	pathsplit := Pathsplit{ dirname, filename }
+func (f *FSDev) InoAppendPathname(ino Ino, pathsplit Pathsplit) {
+	filename := pathsplit.Filename
 	filenamePaths, ok := f.InoPaths[ino]
 	if !ok {
 		filenamePaths = make(FilenamePaths)
@@ -312,9 +310,15 @@ func (f *FSDev) PathStatFromIno(ino Ino) PathStat {
 }
 
 func (f *FSDev) allInoPaths(ino Ino) <-chan Pathsplit {
-	out := make(chan Pathsplit)
+	// Deepcopy the FilenamePaths map so that we can update the original
+	// while iterating over it's contents
 	filenamePaths := f.InoPaths[ino]
-	//deepcopy filenamePaths
+	m := make(FilenamePaths)
+	for k,v := range filenamePaths {
+		m[k] = append([]Pathsplit(nil), v...) // Copy v
+	}
+
+	out := make(chan Pathsplit)
 	go func() {
 		defer close(out)
 		for _, paths := range filenamePaths {
@@ -364,4 +368,24 @@ func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat) bool {
 		Stats.FoundEqualFiles()
 	}
 	return eq
+}
+
+func (fs *FSDev) moveLinkedPath(dstPath Pathsplit, srcIno Ino, dstIno Ino) {
+	// Get pathnames slice mathing Ino and filename
+	p := fs.InoPaths[dstIno][dstPath.Filename]
+
+	// Find and remove dstPath from pathnames
+	for i,ps := range p {
+		if ps == dstPath {
+			p = append(p[:i], p[i+1:]...)
+			break
+		}
+	}
+
+	if len(p) == 0 {
+		delete(fs.InoPaths[dstIno], dstPath.Filename)
+	} else {
+		fs.InoPaths[dstIno][dstPath.Filename] = p
+	}
+	fs.InoAppendPathname(srcIno, dstPath)
 }

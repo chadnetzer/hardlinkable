@@ -20,7 +20,15 @@
 
 package main
 
+import "path"
+
 type Pathsplit struct {
 	Dirname  string
 	Filename string
+}
+
+func SplitPathname(pathname string) Pathsplit {
+	dirname, filename := path.Split(pathname)
+	pathSplit := Pathsplit{dirname, filename}
+	return pathSplit
 }

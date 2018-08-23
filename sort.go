@@ -129,6 +129,17 @@ func (f *FSDev) sendLinkedPairs(sortedInos []Ino, out chan<- PathStatPair) {
 				out <- PathStatPair{srcPathStat, dstPathStat}
 
 				Stats.FoundNewLink(srcPathStat, dstPathStat)
+
+				// Update StatInfo information for inodes
+				srcSI.Nlink += 1
+				dstSI.Nlink -= 1
+				f.InoStatInfo[srcIno] = srcSI
+				if dstSI.Nlink == 0 {
+					delete(f.InoStatInfo, dstIno)
+				} else {
+					f.InoStatInfo[dstIno] = dstSI
+				}
+				f.moveLinkedPath(dstPath, srcIno, dstIno)
 			}
 			// With SameName option, it's possible that the dstIno nLinks will not go
 			// to zero (if not all links have a matching filename), so place on the
