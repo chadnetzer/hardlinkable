@@ -20,6 +20,13 @@
 
 package main
 
+import (
+	"fmt"
+	"math"
+	"strconv"
+	"strings"
+)
+
 var Stats LinkingStats
 
 func init() {
@@ -149,6 +156,72 @@ func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
 	linkDestinations.paths = append(linkDestinations.paths, dstPath)
 	s.existingLinks[srcPath] = linkDestinations
 	//fmt.Println("currently linked: ", srcPath, linkDestinations)
+}
+
+func (ls *LinkingStats) outputLinkingStats() {
+	s := make([]string, 0)
+	s = append(s, "Hard linking statistics")
+	s = append(s, "-----------------------")
+	s = statStr(s, "Directories", ls.numDirs)
+	s = statStr(s, "Files", ls.numFiles)
+	if MyOptions.LinkingEnabled {
+		s = statStr(s, "Consolidated Inodes", ls.numInodesConsolidated)
+		s = statStr(s, "Hardlinked this run", ls.numNewLinks)
+	} else {
+		s = statStr(s, "Consolidatable Inodes", ls.numInodesConsolidated)
+		s = statStr(s, "Hardlinkable this run", ls.numNewLinks)
+	}
+	s = statStr(s, "Currently hardlinked bytes", ls.numPrevBytesSaved)
+	s[len(s)-1] += fmt.Sprintf(" (%v)", humanize(ls.numPrevBytesSaved))
+
+	totalBytes := ls.numPrevBytesSaved + ls.numNewBytesSaved
+	if MyOptions.LinkingEnabled {
+		s = statStr(s, "Additional linked bytes", ls.numNewBytesSaved)
+		s = statStr(s, "Total linked bytes", totalBytes)
+	} else {
+		s = statStr(s, "Additional linkable bytes", ls.numNewBytesSaved)
+		s = statStr(s, "Total linkable bytes", totalBytes)
+	}
+	// Append some humanized size values to the byte string outputs
+	s[len(s)-2] += fmt.Sprintf(" (%v)", humanize(ls.numNewBytesSaved))
+	s[len(s)-1] += fmt.Sprintf(" (%v)", humanize(totalBytes))
+
+	if true || MyOptions.Verbosity > 0 {
+		s = statStr(s, "Comparisons", ls.numComparisons)
+		s = statStr(s, "Inodes", ls.numInodes)
+		s = statStr(s, "Current hardlinks", ls.numPrevLinks)
+		s = statStr(s, "Total old + new links", ls.numPrevLinks+ls.numNewLinks)
+		if ls.numFilesTooLarge >= 0 {
+			s = statStr(s, "Total too large files", ls.numFilesTooLarge)
+		}
+		if ls.numFilesTooSmall >= 0 {
+			s = statStr(s, "Total too small files", ls.numFilesTooSmall)
+		}
+		remainingInodes := ls.numInodes - ls.numInodesConsolidated
+		s = statStr(s, "Total remaining inodes", remainingInodes)
+	}
+	if true || MyOptions.DebuggingLevel > 0 {
+		s = statStr(s, "Total file hash hits", ls.numFoundHashes)
+		// add additional stat output onto the last string
+		s[len(s)-1] += fmt.Sprintf("	misses: %v	sum total: %v", ls.numMissedHashes, ls.numFoundHashes+ls.numMissedHashes)
+		s = statStr(s, "Total hash searches", ls.numInoSeqSearches)
+		avgItersPerSearch := "N/A"
+		if ls.numInoSeqIterations > 0 {
+			avg := float64(ls.numInoSeqIterations) / float64(ls.numInoSeqSearches)
+			avgItersPerSearch = fmt.Sprintf("%.1f", avg)
+		}
+		//s = statStr(s, "Total hash list iterations : %v	(avg per search: %v)", ls.numInoSeqIterations, avgItersPerSearch)
+		s = statStr(s, "Total hash list iterations", ls.numInoSeqIterations)
+		s[len(s)-1] += fmt.Sprintf("	(avg per search: %v)", avgItersPerSearch)
+		s = statStr(s, "Total equal comparisons", ls.numEqualComparisons)
+	}
+	fmt.Println(strings.Join(s, "\n"))
+}
+
+func statStr(a []string, s string, args ...interface{}) []string {
+	s = fmt.Sprintf("%-27s", s)
+	s = s + ": %v"
+	return append(a, fmt.Sprintf(s, args...))
 }
 
 func humanize(n uint64) string {
