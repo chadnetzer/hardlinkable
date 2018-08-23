@@ -76,4 +76,5 @@ func Run(dirs []string) {
 			_ = pair
 		}
 	}
+	Stats.outputLinkingStats()
 }
