@@ -20,6 +20,10 @@
 
 package main
 
+import (
+	"time"
+)
+
 type Linkable struct {
 	FSDevs map[uint64]FSDev
 }
@@ -48,6 +52,7 @@ func (ln *Linkable) Dev(dsi DevStatInfo, pathname string) FSDev {
 
 func Run(dirs []string) {
 	var options *Options = &MyOptions
+	Stats.startTime = time.Now()
 	c := MatchedPathnames(dirs)
 	for pathname := range c {
 		dsi, err := LStatInfo(pathname)
@@ -76,5 +81,6 @@ func Run(dirs []string) {
 			_ = pair
 		}
 	}
+	Stats.endTime = time.Now()
 	Stats.outputLinkingStats()
 }

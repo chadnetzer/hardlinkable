@@ -25,6 +25,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var Stats LinkingStats
@@ -72,6 +73,8 @@ type CountingStats struct {
 
 type LinkingStats struct {
 	CountingStats
+	startTime     time.Time
+	endTime       time.Time
 	linkPairs     []LinkPair
 	existingLinks map[Pathsplit]LinkDestinations
 }
@@ -187,6 +190,9 @@ func (ls *LinkingStats) outputLinkingStats() {
 	s[len(s)-3] += fmt.Sprintf(" (%v)", humanize(ls.numPrevBytesSaved))
 	s[len(s)-2] += fmt.Sprintf(" (%v)", humanize(ls.numNewBytesSaved))
 	s[len(s)-1] += fmt.Sprintf(" (%v)", humanize(totalBytes))
+
+	duration := ls.endTime.Sub(ls.startTime)
+	s = statStr(s, "Total run time", duration.Round(time.Millisecond).String())
 
 	if true || MyOptions.Verbosity > 0 {
 		s = statStr(s, "Comparisons", ls.numComparisons)
