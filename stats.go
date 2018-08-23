@@ -173,8 +173,6 @@ func (ls *LinkingStats) outputLinkingStats() {
 		s = statStr(s, "Hardlinkable this run", ls.numNewLinks)
 	}
 	s = statStr(s, "Currently hardlinked bytes", ls.numPrevBytesSaved)
-	s[len(s)-1] += fmt.Sprintf(" (%v)", humanize(ls.numPrevBytesSaved))
-
 	totalBytes := ls.numPrevBytesSaved + ls.numNewBytesSaved
 	if MyOptions.LinkingEnabled {
 		s = statStr(s, "Additional linked bytes", ls.numNewBytesSaved)
@@ -184,6 +182,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 		s = statStr(s, "Total linkable bytes", totalBytes)
 	}
 	// Append some humanized size values to the byte string outputs
+	s[len(s)-3] += fmt.Sprintf(" (%v)", humanize(ls.numPrevBytesSaved))
 	s[len(s)-2] += fmt.Sprintf(" (%v)", humanize(ls.numNewBytesSaved))
 	s[len(s)-1] += fmt.Sprintf(" (%v)", humanize(totalBytes))
 
