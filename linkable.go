@@ -20,10 +20,6 @@
 
 package main
 
-import (
-	"fmt"
-)
-
 type Linkable struct {
 	FSDevs map[uint64]FSDev
 }
@@ -71,9 +67,6 @@ func Run(dirs []string) {
 		// point, add it to the found count
 		Stats.FoundFile()
 
-		//fmt.Printf("%+v %s\n", stat, pathname)
-		//fmt.Println(pathname)
-		//fmt.Printf("%+v\n", dsi)
 		fsdev := MyLinkable.Dev(dsi, pathname)
 		fsdev.findIdenticalFiles(dsi, pathname)
 	}
@@ -83,6 +76,4 @@ func Run(dirs []string) {
 			_ = pair
 		}
 	}
-	//fmt.Printf("\n%+v\n", MyLinkable)
-	fmt.Printf("\n%+v\n", Stats)
 }

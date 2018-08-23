@@ -22,7 +22,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 )
@@ -42,9 +41,6 @@ func areFileContentsEqual(pathname1, pathname2 string) (bool, error) {
 	defer f2.Close()
 
 	eq, err := cmpReaderContents(f1, f2)
-	if eq {
-		fmt.Println("Matched: ", pathname1, pathname2)
-	}
 	return eq, err
 }
 
