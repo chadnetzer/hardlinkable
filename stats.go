@@ -181,6 +181,8 @@ func (ls *LinkingStats) outputLinkingStats() {
 		s = statStr(s, "Additional linkable bytes", ls.numNewBytesSaved)
 		s = statStr(s, "Total linkable bytes", totalBytes)
 	}
+	padLastN(s, 3) // add spaces to columnize the previous lines
+
 	// Append some humanized size values to the byte string outputs
 	s[len(s)-3] += fmt.Sprintf(" (%v)", humanize(ls.numPrevBytesSaved))
 	s[len(s)-2] += fmt.Sprintf(" (%v)", humanize(ls.numNewBytesSaved))
@@ -222,6 +224,25 @@ func statStr(a []string, s string, args ...interface{}) []string {
 	s = fmt.Sprintf("%-27s", s)
 	s = s + ": %v"
 	return append(a, fmt.Sprintf(s, args...))
+}
+
+// padLastN adds spaces to the last N strings in the slice-of-strings s, so
+// that they are all the same length.
+func padLastN(s []string, N int) {
+	if len(s) == 0 || N == 0 {
+		return
+	}
+	max := 0
+	for i := len(s) - N; i < len(s); i++ {
+		v := len(s[i])
+		if v > max {
+			max = v
+		}
+	}
+	for i := len(s) - N; i < len(s); i++ {
+		pad := strings.Repeat(" ", max-len(s[i]))
+		s[i] += pad
+	}
 }
 
 func humanize(n uint64) string {
