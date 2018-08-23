@@ -50,16 +50,17 @@ type CountingStats struct {
 	numEqualComparisons   int64
 	numInodes             int64
 	numInodesConsolidated int64
-	numMissedHashes       int64
 	numPrevLinks          int64
 	numNewLinks           int64
-	numFoundHashes        int64
-	numInoSeqSearches     int64
-	numInoSeqIterations   int64
-	numHashMismatches     int64
-	numPrevBytesSaved     uint64
-	numNewBytesSaved      uint64
 
+	// Debugging counts
+	numFoundHashes      int64
+	numMissedHashes     int64
+	numInoSeqSearches   int64
+	numInoSeqIterations int64
+	numHashMismatches   int64
+	numPrevBytesSaved   uint64
+	numNewBytesSaved    uint64
 }
 
 type LinkingStats struct {
