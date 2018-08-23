@@ -145,3 +145,35 @@ func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
 	s.existingLinks[srcPath] = linkDestinations
 	//fmt.Println("currently linked: ", srcPath, linkDestinations)
 }
+
+func humanize(n uint64) string {
+	var s string
+	var m string
+	F := func(N uint64, div float64) string {
+		reduced := float64(N) / div
+		rounded := math.Round(reduced*1000) / 1000.0
+		s = strconv.FormatFloat(rounded, 'f', -1, 64)
+		return s
+	}
+	if n >= (uint64(1) << 50) {
+		s = F(n, math.Pow(1024, 5))
+		m = " PiB"
+	} else if n >= (uint64(1) << 40) {
+		s = F(n, math.Pow(1024, 4))
+		m = " TiB"
+	} else if n >= (uint64(1) << 30) {
+		s = F(n, math.Pow(1024, 3))
+		m = " GiB"
+	} else if n >= (uint64(1) << 20) {
+		s = F(n, math.Pow(1024, 2))
+		m = " MiB"
+	} else if n >= (uint64(1) << 10) {
+		s = F(n, 1024.0)
+		m = " KiB"
+	} else {
+		s = fmt.Sprintf("%d", n)
+		m = " bytes"
+	}
+
+	return s + m
+}
