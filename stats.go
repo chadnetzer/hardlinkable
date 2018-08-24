@@ -162,6 +162,36 @@ func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
 	//fmt.Println("currently linked: ", srcPath, linkDestinations)
 }
 
+func (ls *LinkingStats) outputLinkedPairs() {
+	s := make([]string, 0)
+	if MyOptions.LinkingEnabled {
+		s = append(s, "Files that were hardlinked this run")
+		s = append(s, "-----------------------------------")
+	} else {
+		s = append(s, "Files that are hardlinkable")
+		s = append(s, "---------------------------")
+	}
+	prevPathsplit := Pathsplit{}
+	for _, p := range Stats.linkPairs {
+		if p.Src != prevPathsplit {
+			s = append(s, "from: "+p.Src.Join())
+			prevPathsplit = p.Src
+		}
+		s = append(s, "  to: "+p.Dst.Join())
+	}
+	fmt.Println(strings.Join(s, "\n"))
+}
+
+func (ls *LinkingStats) outputResults() {
+	if MyOptions.Verbosity > 0 {
+		ls.outputLinkedPairs()
+		fmt.Println("")
+	}
+	if MyOptions.StatsOutputEnabled {
+		ls.outputLinkingStats()
+	}
+}
+
 func (ls *LinkingStats) outputLinkingStats() {
 	s := make([]string, 0)
 	s = append(s, "Hard linking statistics")

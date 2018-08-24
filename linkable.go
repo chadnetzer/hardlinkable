@@ -82,5 +82,5 @@ func Run(dirs []string) {
 		}
 	}
 	Stats.endTime = time.Now()
-	Stats.outputLinkingStats()
+	Stats.outputResults()
 }
