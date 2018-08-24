@@ -224,7 +224,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 	duration := ls.endTime.Sub(ls.startTime)
 	s = statStr(s, "Total run time", duration.Round(time.Millisecond).String())
 
-	if MyOptions.Verbosity > 0 {
+	if MyOptions.Verbosity > 0 || MyOptions.DebugLevel > 0 {
 		s = statStr(s, "Comparisons", ls.numComparisons)
 		s = statStr(s, "Inodes", ls.numInodes)
 		s = statStr(s, "Current hardlinks", ls.numPrevLinks)
@@ -238,7 +238,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 		remainingInodes := ls.numInodes - ls.numInodesConsolidated
 		s = statStr(s, "Total remaining inodes", remainingInodes)
 	}
-	if true || MyOptions.DebuggingLevel > 0 {
+	if MyOptions.DebugLevel > 0 {
 		s = statStr(s, "Total file hash hits", ls.numFoundHashes)
 		// add additional stat output onto the last string
 		s[len(s)-1] += fmt.Sprintf("	misses: %v	sum total: %v", ls.numMissedHashes, ls.numFoundHashes+ls.numMissedHashes)

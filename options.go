@@ -31,7 +31,7 @@ type Options struct {
 	IgnorePerms           bool
 	IgnoreXattr           bool
 	LinkingEnabled        bool
-	DebuggingLevel        int
+	DebugLevel            int
 	MinFileSize           uint64
 	MaxFileSize           uint64
 }

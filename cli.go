@@ -115,6 +115,9 @@ func init() {
 	flg.StringP("match", "m", "", "Regular expression used to match files")
 	flg.StringP("exclude", "x", "", "Regular expression used to exclude files/dirs")
 
+	// Hidden options
+	flg.CountVarP(&o.DebugLevel, "debug", "d", "Increase debugging level")
+	flg.MarkHidden("debug")
 	flg.SortFlags = false
 }
 
