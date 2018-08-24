@@ -34,8 +34,8 @@ func NewInoSet(inos ...Ino) InoSet {
 	return set
 }
 
-func (s *InoSet) Add(ino Ino) {
-	(*s)[ino] = exists
+func (s InoSet) Add(ino Ino) {
+	s[ino] = exists
 }
 
 // Return true if given Ino is in the InoSet
