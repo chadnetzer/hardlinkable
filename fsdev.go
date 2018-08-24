@@ -25,11 +25,8 @@ import (
 	"path"
 )
 
-type Ino = uint64
 type Hash uint64
 type Digest uint32
-
-type InoSet map[Ino]struct{}
 
 type StatInfos map[string]StatInfo
 
@@ -57,44 +54,6 @@ type FSDev struct {
 
 	// For each directory name, keep track of all the StatInfo structures
 	DirnameStatInfos map[string]StatInfos
-}
-
-var exists = struct{}{}
-
-func NewInoSet(inos ...Ino) InoSet {
-	set := make(map[Ino]struct{})
-	for _, ino := range inos {
-		set[ino] = exists
-	}
-	return set
-}
-
-func (i *InoSet) Add(ino Ino) {
-	(*i)[ino] = exists
-}
-
-func (i *InoSet) Copy() InoSet {
-	newSet := NewInoSet()
-	for k := range *i {
-		newSet[k] = exists
-	}
-	return newSet
-}
-
-func (i *InoSet) Intersection(set2 InoSet) InoSet {
-	resultSet := NewInoSet()
-	var little, big *InoSet
-	if len(*i) <= len(set2) {
-		little, big = i, &set2
-	} else {
-		little, big = &set2, i
-	}
-	for k := range *little {
-		if _, ok := (*big)[k]; ok {
-			resultSet[k] = exists
-		}
-	}
-	return resultSet
 }
 
 func (f *FSDev) LinkedInosCopy() map[Ino]InoSet {
