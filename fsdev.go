@@ -121,7 +121,7 @@ func NewFSDev(dev, maxNLinks uint64) FSDev {
 
 // Produce an equal hash for potentially equal files, based only on Inode
 // metadata (size, time, etc.)
-func InoHash(stat StatInfo, opt Options) Hash {
+func InoHash(stat StatInfo, opt *Options) Hash {
 	var value Hash
 	size := Hash(stat.Size)
 	// The main requirement is that files that could be equal have equal
@@ -142,21 +142,17 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 		panic(errStr)
 	}
 	statInfo := devStatInfo.StatInfo
-	//fmt.Println("pathname: ", pathname)
 	curPath := SplitPathname(pathname)
 	curPathStat := PathStat { curPath, statInfo }
 
 	if _, ok := f.InoStatInfo[statInfo.Ino]; !ok {
-		//fmt.Println("find inode: ", pathname, statInfo.Ino)
 		Stats.FoundInode()
 	}
 
 	inoHash := InoHash(statInfo, MyOptions)
-	//fmt.Println("hash and inode: ", inoHash, statInfo.Ino)
 	if _, ok := f.InoHashes[inoHash]; !ok {
 		Stats.MissedHash()
 		f.InoHashes[inoHash] = NewInoSet(statInfo.Ino)
-		//fmt.Println("new inode set: ", inoHash, statInfo.Ino, f.InoHashes[inoHash])
 	} else {
 		Stats.FoundHash()
 		if _, ok := f.InoStatInfo[statInfo.Ino]; ok {
@@ -165,14 +161,10 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 			linkPair := LinkPair{ prevPath, curPath }
 			existingLinkInfo := ExistingLink{ linkPair, prevStatinfo }
 			Stats.FoundExistingLink(existingLinkInfo)
-			//fmt.Println("prevPath: ", prevPath, prevStatinfo)
 		}
 		linkedInos := f.linkedInoSet(statInfo.Ino)
-		//fmt.Printf("linkedInos %+v\n", linkedInos)
 		hashedInos := f.InoHashes[inoHash]
-		//fmt.Printf("hashedInos %+v\n", hashedInos)
 		linkedHashedInos := linkedInos.Intersection(hashedInos)
-		//fmt.Printf("linkedHashedInos %+v\n", linkedHashedInos)
 		foundLinkedHashedInos := len(linkedHashedInos) > 0
 		if !foundLinkedHashedInos {
 			Stats.SearchedInoSeq()
@@ -182,7 +174,6 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 				Stats.IncInoSeqIterations()
 				cachedPathStat := f.PathStatFromIno(cachedIno)
 				if f.areFilesHardlinkable(cachedPathStat, curPathStat) {
-					//fmt.Println("Matching files: ", pathStat, cachedPathStat)
 					loopEndedEarly = true
 					f.addLinkableInos(cachedPathStat.Ino, curPathStat.Ino)
 					break
@@ -299,8 +290,6 @@ func (f *FSDev) InoAppendPathname(ino Ino, pathsplit Pathsplit) {
 	paths = append(paths, pathsplit)
 	filenamePaths[filename] = paths
 	f.InoPaths[ino] = filenamePaths
-
-	//fmt.Println("filenamePaths ", filenamePaths)
 }
 
 func (f *FSDev) PathStatFromIno(ino Ino) PathStat {

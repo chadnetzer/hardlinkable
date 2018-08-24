@@ -71,9 +71,6 @@ func (f *FSDev) sortedLinks() <-chan PathStatPair {
 			// Sort links highest nlink to lowest
 			sortedInos := f.sortInoSet(linkableSet)
 			f.sendLinkedPairs(sortedInos, out)
-
-			//fmt.Printf("%+v\n", linkableSet)
-			//fmt.Printf("%+v\n", sortedInos)
 		}
 	}()
 	return out

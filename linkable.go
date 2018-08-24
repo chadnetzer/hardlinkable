@@ -21,7 +21,7 @@
 package main
 
 import (
-	"fmt"
+	"time"
 )
 
 type Linkable struct {
@@ -51,7 +51,10 @@ func (ln *Linkable) Dev(dsi DevStatInfo, pathname string) FSDev {
 }
 
 func Run(dirs []string) {
-	var options *Options = &MyOptions
+	options := MyCLIOptions.NewOptions()
+	MyOptions = &options // Compatibility setup for now
+
+	Stats.startTime = time.Now()
 	c := MatchedPathnames(dirs)
 	for pathname := range c {
 		dsi, err := LStatInfo(pathname)
@@ -71,9 +74,6 @@ func Run(dirs []string) {
 		// point, add it to the found count
 		Stats.FoundFile()
 
-		//fmt.Printf("%+v %s\n", stat, pathname)
-		//fmt.Println(pathname)
-		//fmt.Printf("%+v\n", dsi)
 		fsdev := MyLinkable.Dev(dsi, pathname)
 		fsdev.findIdenticalFiles(dsi, pathname)
 	}
@@ -83,6 +83,6 @@ func Run(dirs []string) {
 			_ = pair
 		}
 	}
-	//fmt.Printf("\n%+v\n", MyLinkable)
-	fmt.Printf("\n%+v\n", Stats)
+	Stats.endTime = time.Now()
+	Stats.outputResults()
 }

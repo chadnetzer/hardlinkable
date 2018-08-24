@@ -32,3 +32,7 @@ func SplitPathname(pathname string) Pathsplit {
 	pathSplit := Pathsplit{dirname, filename}
 	return pathSplit
 }
+
+func (ps Pathsplit) Join() string {
+	return path.Join(ps.Dirname, ps.Filename)
+}

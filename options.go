@@ -30,8 +30,10 @@ type Options struct {
 	IgnoreTime            bool
 	IgnorePerms           bool
 	IgnoreXattr           bool
+	LinkingEnabled        bool
+	DebugLevel            int
 	MinFileSize           uint64
 	MaxFileSize           uint64
 }
 
-var MyOptions Options
+var MyOptions *Options
