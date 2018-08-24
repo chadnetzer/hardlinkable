@@ -69,17 +69,13 @@ func (s InoSet) Intersection(set2 InoSet) InoSet {
 	return resultSet
 }
 
-func (s InoSet) Difference(set2 InoSet) InoSet {
-	var little, big *InoSet
+func (s InoSet) Difference(other InoSet) InoSet {
 	// Iterate over smaller set
-	if len(s) <= len(set2) {
-		little, big = &s, &set2
-	} else {
-		little, big = &set2, &s
-	}
-	resultSet := big.Copy()
-	for k := range *little {
-		delete(resultSet, k)
+	resultSet := NewInoSet()
+	for k := range s {
+		if _, ok := other[k]; !ok {
+			resultSet.Add(k)
+		}
 	}
 	return resultSet
 }
