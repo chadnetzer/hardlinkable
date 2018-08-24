@@ -57,31 +57,43 @@ func TestInoSetAdd(t *testing.T) {
 	}
 }
 
-func TestInoSetDifference(t *testing.T) {
-	var s1, s2 InoSet
-	s1 = NewInoSet()
-	s2 = NewInoSet()
-	diff := s1.Difference(s2)
-	if len(diff) != 0 {
-		t.Errorf("Empty InoSet difference length isn't 0: %v", diff)
-	}
+func TestInoSetIntersection(t *testing.T) {
+	s1 := NewInoSet(1)
+	s2 := NewInoSet(2)
 
-	s1.Add(Ino(1))
-	diff = s1.Difference(s2)
-	if len(diff) != 1 {
-		t.Errorf("InoSet difference length isn't 1: %v", diff)
-	}
-	if !reflect.DeepEqual(diff, NewInoSet(Ino(1))) {
-		t.Errorf("InoSet difference doesn't contains only 1: %v", diff)
+	// For each test, also test the symmetric operation
+	in1 := s1.Intersection(s2)
+	in2 := s2.Intersection(s1)
+	if len(in1) != 0 || len(in2) != 0 {
+		t.Errorf("Empty InoSet intersection length isn't 0: %v  %v", in1, in2)
 	}
 
 	s2.Add(Ino(1))
-	diff = s1.Difference(s2)
-	if len(diff) != 0 {
-		t.Errorf("InoSet difference length isn't 0: %v", diff)
+	in1 = s1.Intersection(s2)
+	in2 = s2.Intersection(s1)
+	if len(in1) != 1 || len(in2) != 1 {
+		t.Errorf("InoSet intersection length isn't 1: %v  %v", in1, in2)
 	}
-	if !reflect.DeepEqual(diff, NewInoSet()) {
-		t.Errorf("InoSet difference isn't empty: %v. sets: %v-%v", diff, s1, s2)
+	if !reflect.DeepEqual(in1, NewInoSet(Ino(1))) {
+		t.Errorf("InoSet intersection doesn't contain only 1: %v", in1)
+	}
+	if !reflect.DeepEqual(in2, NewInoSet(Ino(1))) {
+		t.Errorf("InoSet intersection doesn't contain only 1: %v", in2)
+	}
+
+	s1.Add(Ino(2))
+	in1 = s1.Intersection(s2)
+	in2 = s2.Intersection(s1)
+	if len(in1) != 2 || len(in2) != 2 {
+		t.Errorf("InoSet intersection length isn't 2: %v  %v", in1, in2)
+	}
+	if !reflect.DeepEqual(in1, NewInoSet(Ino(1), Ino(2))) {
+		t.Errorf("InoSet intersection isn't {1,2}: %v", in1)
+	}
+	if !reflect.DeepEqual(in2, NewInoSet(Ino(1), Ino(2))) {
+		t.Errorf("InoSet intersection isn't {1,2}: %v", in2)
+	}
+}
 
 func TestInoSetDifference(t *testing.T) {
 	s1 := NewInoSet()
