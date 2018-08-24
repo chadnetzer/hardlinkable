@@ -29,7 +29,24 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Because the pflags (and flags) boolean options don't toggle the default, but
+// instead set it to true when specified, it's best to specify all boolean
+// flags with a 'false' default.  So, for options that we want to default to
+// true (and thus disable when the option is given), we use a separate flag
+// with the opposite default, and toggle it manually after parsing.
+type CLIOptions struct {
+	StatsOutputDisabled bool
+	Options
+}
+
+func (c *CLIOptions) NewOptions() Options {
+	options := c.Options
+	options.StatsOutputEnabled = !c.StatsOutputDisabled
+	return options
+}
+
 var cfgFile string
+var MyCLIOptions CLIOptions
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -80,9 +97,9 @@ func init() {
 
 	// Local flags
 	flg := rootCmd.Flags()
-	var o *Options = &MyOptions
+	var o *CLIOptions = &MyCLIOptions
 	flg.CountVarP(&o.Verbosity, "verbose", "v", "Increase verbosity level")
-	flg.BoolVar(&o.StatsOutputEnabled, "no-stats", false, "Do not print the final stats")
+	flg.BoolVar(&o.StatsOutputDisabled, "no-stats", false, "Do not print the final stats")
 	flg.BoolVar(&o.ProgressOutputEnabled, "no-progress", false, "Disable progress output while processing")
 	flg.BoolVar(&o.JSONOutputEnabled, "json", false, "Output results as JSON")
 

@@ -36,4 +36,4 @@ type Options struct {
 	MaxFileSize           uint64
 }
 
-var MyOptions Options
+var MyOptions *Options

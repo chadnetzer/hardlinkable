@@ -51,7 +51,9 @@ func (ln *Linkable) Dev(dsi DevStatInfo, pathname string) FSDev {
 }
 
 func Run(dirs []string) {
-	var options *Options = &MyOptions
+	options := MyCLIOptions.NewOptions()
+	MyOptions = &options // Compatibility setup for now
+
 	Stats.startTime = time.Now()
 	c := MatchedPathnames(dirs)
 	for pathname := range c {

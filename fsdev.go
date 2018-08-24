@@ -121,7 +121,7 @@ func NewFSDev(dev, maxNLinks uint64) FSDev {
 
 // Produce an equal hash for potentially equal files, based only on Inode
 // metadata (size, time, etc.)
-func InoHash(stat StatInfo, opt Options) Hash {
+func InoHash(stat StatInfo, opt *Options) Hash {
 	var value Hash
 	size := Hash(stat.Size)
 	// The main requirement is that files that could be equal have equal
