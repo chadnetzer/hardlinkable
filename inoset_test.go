@@ -82,5 +82,43 @@ func TestInoSetDifference(t *testing.T) {
 	}
 	if !reflect.DeepEqual(diff, NewInoSet()) {
 		t.Errorf("InoSet difference isn't empty: %v. sets: %v-%v", diff, s1, s2)
+
+func TestInoSetDifference(t *testing.T) {
+	s1 := NewInoSet()
+	s2 := NewInoSet()
+	diff1 := s1.Difference(s2)
+	diff2 := s2.Difference(s1)
+	if len(diff1) != 0 || len(diff2) != 0 {
+		t.Errorf("Empty InoSet difference length isn't 0: %v  %v", diff1, diff2)
+	}
+
+	s1.Add(Ino(1))
+	diff1 = s1.Difference(s2)
+	if !reflect.DeepEqual(diff1, NewInoSet(Ino(1))) {
+		t.Errorf("InoSet difference doesn't contain only 1: %v", diff1)
+	}
+	diff2 = s2.Difference(s1)
+	if !reflect.DeepEqual(diff2, NewInoSet()) {
+		t.Errorf("InoSet difference isn't empty: %v", diff2)
+	}
+
+	s2.Add(Ino(1))
+	diff1 = s1.Difference(s2)
+	if !reflect.DeepEqual(diff1, NewInoSet()) {
+		t.Errorf("InoSet difference isn't empty: %v", diff1)
+	}
+	diff2 = s2.Difference(s1)
+	if !reflect.DeepEqual(diff2, NewInoSet()) {
+		t.Errorf("InoSet difference isn't empty: %v", diff2)
+	}
+
+	s1.Add(Ino(2))
+	diff1 = s1.Difference(s2)
+	if !reflect.DeepEqual(diff1, NewInoSet(Ino(2))) {
+		t.Errorf("InoSet difference doesn't contain only 2: %v", diff1)
+	}
+	diff2 = s2.Difference(s1)
+	if !reflect.DeepEqual(diff2, NewInoSet()) {
+		t.Errorf("InoSet difference isn't empty: %v", diff2)
 	}
 }
