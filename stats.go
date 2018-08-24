@@ -169,7 +169,9 @@ func (ls *LinkingStats) outputResults() {
 	}
 	if MyOptions.Verbosity > 0 {
 		ls.outputLinkedPairs()
-		fmt.Println("")
+		if MyOptions.StatsOutputEnabled {
+			fmt.Println("")
+		}
 	}
 	if MyOptions.StatsOutputEnabled {
 		ls.outputLinkingStats()
