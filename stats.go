@@ -163,6 +163,10 @@ func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
 }
 
 func (ls *LinkingStats) outputResults() {
+	if MyOptions.Verbosity > 1 {
+		ls.outputCurrentHardlinks()
+		fmt.Println("")
+	}
 	if MyOptions.Verbosity > 0 {
 		ls.outputLinkedPairs()
 		fmt.Println("")
@@ -170,6 +174,22 @@ func (ls *LinkingStats) outputResults() {
 	if MyOptions.StatsOutputEnabled {
 		ls.outputLinkingStats()
 	}
+}
+
+func (ls *LinkingStats) outputCurrentHardlinks() {
+	s := make([]string, 0)
+	s = append(s, "Currently hardlinked files")
+	s = append(s, "--------------------------")
+	for src, dsts := range ls.existingLinks {
+		s = append(s, fmt.Sprintf("from: %v", src.Join()))
+		for _, dst := range dsts.paths {
+			s = append(s, fmt.Sprintf("  to: %v", dst.Join()))
+		}
+		totalSaved := dsts.size * uint64(len(dsts.paths)) // Can overflow
+		s = append(s, fmt.Sprintf("Filesize: %v  Total saved: %v",
+			humanize(dsts.size), humanize(totalSaved)))
+	}
+	fmt.Println(strings.Join(s, "\n"))
 }
 
 func (ls *LinkingStats) outputLinkedPairs() {
