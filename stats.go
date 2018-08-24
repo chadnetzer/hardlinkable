@@ -224,7 +224,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 	duration := ls.endTime.Sub(ls.startTime)
 	s = statStr(s, "Total run time", duration.Round(time.Millisecond).String())
 
-	if true || MyOptions.Verbosity > 0 {
+	if MyOptions.Verbosity > 0 {
 		s = statStr(s, "Comparisons", ls.numComparisons)
 		s = statStr(s, "Inodes", ls.numInodes)
 		s = statStr(s, "Current hardlinks", ls.numPrevLinks)
