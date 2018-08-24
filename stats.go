@@ -162,6 +162,16 @@ func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
 	//fmt.Println("currently linked: ", srcPath, linkDestinations)
 }
 
+func (ls *LinkingStats) outputResults() {
+	if MyOptions.Verbosity > 0 {
+		ls.outputLinkedPairs()
+		fmt.Println("")
+	}
+	if MyOptions.StatsOutputEnabled {
+		ls.outputLinkingStats()
+	}
+}
+
 func (ls *LinkingStats) outputLinkedPairs() {
 	s := make([]string, 0)
 	if MyOptions.LinkingEnabled {
@@ -180,16 +190,6 @@ func (ls *LinkingStats) outputLinkedPairs() {
 		s = append(s, "  to: "+p.Dst.Join())
 	}
 	fmt.Println(strings.Join(s, "\n"))
-}
-
-func (ls *LinkingStats) outputResults() {
-	if MyOptions.Verbosity > 0 {
-		ls.outputLinkedPairs()
-		fmt.Println("")
-	}
-	if MyOptions.StatsOutputEnabled {
-		ls.outputLinkingStats()
-	}
 }
 
 func (ls *LinkingStats) outputLinkingStats() {
