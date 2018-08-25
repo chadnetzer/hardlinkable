@@ -134,7 +134,12 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 					f.addPathStatDigest(curPathStat, digest)
 					noDigestSet := cachedInoSet.Difference(f.InosWithDigest)
 					sameDigestSet := cachedInoSet.Intersection(f.DigestIno[digest])
+					differentDigestSet := cachedInoSet.Difference(sameDigestSet).Difference(noDigestSet)
 					cachedInoSeq = append(sameDigestSet.AsSlice(), noDigestSet.AsSlice()...)
+
+					BugIf(noDigestSet.Has(statInfo.Ino), "New Ino found in noDigestSet")
+					BugIf(len(InoSetIntersection(sameDigestSet, differentDigestSet, noDigestSet)) > 0,
+						"Overlapping digest sets")
 				}
 			}
 			loopEndedEarly := false
