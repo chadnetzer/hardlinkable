@@ -79,3 +79,13 @@ func (s InoSet) Difference(other InoSet) InoSet {
 	}
 	return resultSet
 }
+
+func (s InoSet) AsSlice() []Ino {
+	r := make([]Ino, len(s))
+	i := 0
+	for k := range s {
+		r[i] = k
+		i++
+	}
+	return r
+}

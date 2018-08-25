@@ -134,3 +134,27 @@ func TestInoSetDifference(t *testing.T) {
 		t.Errorf("InoSet difference isn't empty: %v", diff2)
 	}
 }
+
+func TestInoSetAsSlice(t *testing.T) {
+	s1 := NewInoSet()
+	if !reflect.DeepEqual(s1.AsSlice(), []Ino{}) {
+		t.Errorf("InoSet.AsSlice() isn't empty: %v", s1.AsSlice())
+	}
+	s1.Add(Ino(1))
+	if !reflect.DeepEqual(s1.AsSlice(), []Ino{Ino(1)}) {
+		t.Errorf("InoSet.AsSlice() isn't [1]: %v", s1.AsSlice())
+	}
+	s1.Add(Ino(2))
+	if len(s1) != 2 {
+		t.Errorf("Length of InoSet.AsSlice() isn't 2: %v", s1.AsSlice())
+	}
+	if len(append(NewInoSet().AsSlice(), NewInoSet().AsSlice()...)) != 0 {
+		t.Errorf("Length of appended InoSet.AsSlice() was expected to be 0")
+	}
+	if len(append(NewInoSet(Ino(1)).AsSlice(), NewInoSet().AsSlice()...)) != 1 {
+		t.Errorf("Length of appended InoSet.AsSlice() was expected to be 1")
+	}
+	if len(append(NewInoSet(Ino(1)).AsSlice(), NewInoSet(Ino(2)).AsSlice()...)) != 2 {
+		t.Errorf("Length of appended InoSet.AsSlice() was expected to be 2")
+	}
+}
