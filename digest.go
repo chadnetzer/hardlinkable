@@ -48,6 +48,8 @@ func contentDigest(pathname string) (Digest, error) {
 		return 0, err
 	}
 
+	Stats.computedDigest()
+
 	hash := fnv.New32a()
 	hash.Write(buf)
 	return Digest(hash.Sum32()), nil

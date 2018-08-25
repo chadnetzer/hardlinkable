@@ -67,6 +67,7 @@ type CountingStats struct {
 	numInoSeqSearches   int64
 	numInoSeqIterations int64
 	numHashMismatches   int64
+	numDigestsComputed  int64
 	numPrevBytesSaved   uint64
 	numNewBytesSaved    uint64
 }
@@ -132,6 +133,10 @@ func (s *LinkingStats) DidComparison() {
 
 func (s *LinkingStats) FoundEqualFiles() {
 	s.numEqualComparisons += 1
+}
+
+func (s *LinkingStats) computedDigest() {
+	s.numDigestsComputed += 1
 }
 
 func (s *LinkingStats) FoundNewLink(src, dst PathStat) {
@@ -274,6 +279,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 		s = statStr(s, "Total hash list iterations", ls.numInoSeqIterations)
 		s[len(s)-1] += fmt.Sprintf("	(avg per search: %v)", avgItersPerSearch)
 		s = statStr(s, "Total equal comparisons", ls.numEqualComparisons)
+		s = statStr(s, "Total digests computed", ls.numDigestsComputed)
 	}
 	fmt.Println(strings.Join(s, "\n"))
 }
