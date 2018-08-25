@@ -26,7 +26,6 @@ import (
 )
 
 type Hash uint64
-type Digest uint32
 
 type StatInfos map[string]StatInfo
 
