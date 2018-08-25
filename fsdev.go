@@ -127,8 +127,9 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 			Stats.SearchedInoSeq()
 			cachedInoSet := f.InoHashes[inoHash]
 			cachedInoSeq := cachedInoSet.AsSlice()
-			if MyOptions.LinearSearchThresh >= 0 &&
-				len(cachedInoSeq) > MyOptions.LinearSearchThresh {
+			useDigest := MyOptions.LinearSearchThresh >= 0 &&
+				len(cachedInoSeq) > MyOptions.LinearSearchThresh
+			if useDigest {
 				digest, err := contentDigest(curPath.Join())
 				if err == nil {
 					f.addPathStatDigest(curPathStat, digest)
@@ -146,7 +147,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 			for _, cachedIno := range cachedInoSeq {
 				Stats.IncInoSeqIterations()
 				cachedPathStat := f.PathStatFromIno(cachedIno)
-				if f.areFilesHardlinkable(cachedPathStat, curPathStat) {
+				if f.areFilesHardlinkable(cachedPathStat, curPathStat, useDigest) {
 					loopEndedEarly = true
 					f.addLinkableInos(cachedPathStat.Ino, curPathStat.Ino)
 					break
@@ -309,7 +310,7 @@ func (f *FSDev) addLinkableInos(ino1, ino2 Ino) {
 	}
 }
 
-func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat) bool {
+func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat, useDigest bool) bool {
 	// Dev is equal for both PathStats
 	if ps1.Ino == ps2.Ino {
 		return false
@@ -320,7 +321,7 @@ func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat) bool {
 	// Add options checking later (time/perms/ownership/etc)
 
 	// assert(st1.Dev == st2.Dev && st1.Ino != st2.Ino && st1.Size == st2.Size)
-	if MyOptions.LinearSearchThresh >= 0 {
+	if useDigest {
 		fs.newPathStatDigest(ps1)
 		fs.newPathStatDigest(ps2)
 	}
