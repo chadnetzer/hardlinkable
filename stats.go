@@ -66,9 +66,9 @@ type CountingStats struct {
 	// Debugging counts
 	numFoundHashes      int64
 	numMissedHashes     int64
+	numHashMismatches   int64
 	numInoSeqSearches   int64
 	numInoSeqIterations int64
-	numHashMismatches   int64
 	numDigestsComputed  int64
 }
 
@@ -251,11 +251,12 @@ func (ls *LinkingStats) outputLinkingStats() {
 	duration := ls.endTime.Sub(ls.startTime)
 	s = statStr(s, "Total run time", duration.Round(time.Millisecond).String())
 
+	totalLinks := ls.numPrevLinks + ls.numNewLinks
 	if MyOptions.Verbosity > 0 || MyOptions.DebugLevel > 0 {
 		s = statStr(s, "Comparisons", ls.numComparisons)
 		s = statStr(s, "Inodes", ls.numInodes)
 		s = statStr(s, "Current hardlinks", ls.numPrevLinks)
-		s = statStr(s, "Total old + new links", ls.numPrevLinks+ls.numNewLinks)
+		s = statStr(s, "Total old + new links", totalLinks)
 		if ls.numFilesTooLarge >= 0 {
 			s = statStr(s, "Total too large files", ls.numFilesTooLarge)
 		}
@@ -269,6 +270,8 @@ func (ls *LinkingStats) outputLinkingStats() {
 		s = statStr(s, "Total file hash hits", ls.numFoundHashes)
 		// add additional stat output onto the last string
 		s[len(s)-1] += fmt.Sprintf("	misses: %v	sum total: %v", ls.numMissedHashes, ls.numFoundHashes+ls.numMissedHashes)
+		s = statStr(s, "Total hash mismatches", ls.numHashMismatches)
+		s[len(s)-1] += fmt.Sprintf("	(+ total links: %v)", ls.numHashMismatches+totalLinks)
 		s = statStr(s, "Total hash searches", ls.numInoSeqSearches)
 		avgItersPerSearch := "N/A"
 		if ls.numInoSeqIterations > 0 {
