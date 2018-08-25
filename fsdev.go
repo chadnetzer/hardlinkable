@@ -22,7 +22,6 @@ package main
 
 import (
 	"fmt"
-	"path"
 )
 
 type Hash uint64
@@ -316,12 +315,14 @@ func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat) bool {
 	// Add options checking later (time/perms/ownership/etc)
 
 	// assert(st1.Dev == st2.Dev && st1.Ino != st2.Ino && st1.Size == st2.Size)
-	pathname1 := path.Join(ps1.Dirname, ps1.Filename)
-	pathname2 := path.Join(ps2.Dirname, ps2.Filename)
+	if MyOptions.LinearSearchThresh >= 0 {
+		fs.newPathStatDigest(ps1)
+		fs.newPathStatDigest(ps2)
+	}
 
 	Stats.DidComparison()
 	// error handling deferred
-	eq, _ := areFileContentsEqual(pathname1, pathname2)
+	eq, _ := areFileContentsEqual(ps1.Join(), ps2.Join())
 	if eq {
 		Stats.FoundEqualFiles()
 	}
