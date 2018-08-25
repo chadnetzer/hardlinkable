@@ -56,7 +56,7 @@ type FSDev struct {
 
 func (f *FSDev) LinkedInosCopy() map[Ino]InoSet {
 	newLinkedInos := make(map[Ino]InoSet)
-	for k,v := range f.LinkedInos {
+	for k, v := range f.LinkedInos {
 		newLinkedInos[k] = v.Copy()
 	}
 	return newLinkedInos
@@ -100,7 +100,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 	}
 	statInfo := devStatInfo.StatInfo
 	curPath := SplitPathname(pathname)
-	curPathStat := PathStat { curPath, statInfo }
+	curPathStat := PathStat{curPath, statInfo}
 
 	if _, ok := f.InoStatInfo[statInfo.Ino]; !ok {
 		Stats.FoundInode()
@@ -115,8 +115,8 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 		if _, ok := f.InoStatInfo[statInfo.Ino]; ok {
 			prevPath := f.ArbitraryPath(statInfo.Ino)
 			prevStatinfo := f.InoStatInfo[statInfo.Ino]
-			linkPair := LinkPair{ prevPath, curPath }
-			existingLinkInfo := ExistingLink{ linkPair, prevStatinfo }
+			linkPair := LinkPair{prevPath, curPath}
+			existingLinkInfo := ExistingLink{linkPair, prevStatinfo}
 			Stats.FoundExistingLink(existingLinkInfo)
 		}
 		linkedInos := f.linkedInoSet(statInfo.Ino)
@@ -183,8 +183,8 @@ func (f *FSDev) linkedInoSet(ino Ino) InoSet {
 	pending := append(make([]Ino, 0, 1), ino)
 	for len(pending) > 0 {
 		// Pop last item from pending as ino
-		ino = pending[len(pending) - 1]
-		pending = pending[:len(pending) - 1]
+		ino = pending[len(pending)-1]
+		pending = pending[:len(pending)-1]
 
 		// Add ino to results
 		resultSet[ino] = exists
@@ -217,8 +217,8 @@ func (f *FSDev) linkedInoSets() <-chan InoSet {
 			pending := append(make([]Ino, 0, 1), startIno)
 			for len(pending) > 0 {
 				// Pop last item from pending as ino
-				ino := pending[len(pending) - 1]
-				pending = pending[:len(pending) - 1]
+				ino := pending[len(pending)-1]
+				pending = pending[:len(pending)-1]
 
 				// Add ino to results
 				resultSet[ino] = exists
@@ -267,7 +267,7 @@ func (f *FSDev) InoAppendPathname(ino Ino, pathsplit Pathsplit) {
 	}
 	var paths []Pathsplit
 	paths, ok = filenamePaths[filename]
-	if !ok  {
+	if !ok {
 		paths = make([]Pathsplit, 0)
 	}
 	paths = append(paths, pathsplit)
@@ -278,7 +278,7 @@ func (f *FSDev) InoAppendPathname(ino Ino, pathsplit Pathsplit) {
 func (f *FSDev) PathStatFromIno(ino Ino) PathStat {
 	pathsplit := f.ArbitraryPath(ino)
 	fi := f.InoStatInfo[ino]
-	return PathStat { pathsplit, fi }
+	return PathStat{pathsplit, fi}
 }
 
 func (f *FSDev) allInoPaths(ino Ino) <-chan Pathsplit {
@@ -286,7 +286,7 @@ func (f *FSDev) allInoPaths(ino Ino) <-chan Pathsplit {
 	// while iterating over it's contents
 	filenamePaths := f.InoPaths[ino]
 	m := make(FilenamePaths)
-	for k,v := range filenamePaths {
+	for k, v := range filenamePaths {
 		m[k] = append([]Pathsplit(nil), v...) // Copy v
 	}
 
@@ -349,7 +349,7 @@ func (fs *FSDev) moveLinkedPath(dstPath Pathsplit, srcIno Ino, dstIno Ino) {
 	p := fs.InoPaths[dstIno][dstPath.Filename]
 
 	// Find and remove dstPath from pathnames
-	for i,ps := range p {
+	for i, ps := range p {
 		if ps == dstPath {
 			p = append(p[:i], p[i+1:]...)
 			break

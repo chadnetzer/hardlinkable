@@ -60,6 +60,8 @@ type CountingStats struct {
 	numInodesConsolidated int64
 	numPrevLinks          int64
 	numNewLinks           int64
+	numPrevBytesSaved     uint64
+	numNewBytesSaved      uint64
 
 	// Debugging counts
 	numFoundHashes      int64
@@ -68,8 +70,6 @@ type CountingStats struct {
 	numInoSeqIterations int64
 	numHashMismatches   int64
 	numDigestsComputed  int64
-	numPrevBytesSaved   uint64
-	numNewBytesSaved    uint64
 }
 
 type LinkingStats struct {
