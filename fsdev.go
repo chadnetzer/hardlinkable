@@ -336,3 +336,29 @@ func (fs *FSDev) moveLinkedPath(dstPath Pathsplit, srcIno Ino, dstIno Ino) {
 	}
 	fs.InoAppendPathname(srcIno, dstPath)
 }
+
+func (fs *FSDev) addPathStatDigest(ps PathStat, digest Digest) {
+	if !fs.InosWithDigest.Has(ps.Ino) {
+		fs.helperPathStatDigest(ps, digest)
+	}
+}
+
+func (fs *FSDev) newPathStatDigest(ps PathStat) {
+	if !fs.InosWithDigest.Has(ps.Ino) {
+		pathname := ps.Pathsplit.Join()
+		digest, err := contentDigest(pathname)
+		if err == nil {
+			fs.helperPathStatDigest(ps, digest)
+		}
+	}
+}
+
+func (fs *FSDev) helperPathStatDigest(ps PathStat, digest Digest) {
+	if _, ok := fs.DigestIno[digest]; !ok {
+		fs.DigestIno[digest] = NewInoSet(ps.Ino)
+	} else {
+		set := fs.DigestIno[digest]
+		set.Add(ps.Ino)
+	}
+	fs.InosWithDigest.Add(ps.Ino)
+}
