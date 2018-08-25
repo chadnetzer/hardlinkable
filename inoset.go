@@ -69,6 +69,20 @@ func (s InoSet) Intersection(set2 InoSet) InoSet {
 	return resultSet
 }
 
+func InoSetIntersection(sets ...InoSet) InoSet {
+	if len(sets) == 0 {
+		return NewInoSet()
+	}
+
+	resultSet := sets[0].Copy()
+	set := sets[0]
+	for _, other := range sets {
+		resultSet = set.Intersection(other)
+		set = resultSet
+	}
+	return resultSet
+}
+
 func (s InoSet) Difference(other InoSet) InoSet {
 	// Iterate over smaller set
 	resultSet := NewInoSet()

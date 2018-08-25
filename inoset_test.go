@@ -93,6 +93,30 @@ func TestInoSetIntersection(t *testing.T) {
 	if !reflect.DeepEqual(in2, NewInoSet(Ino(1), Ino(2))) {
 		t.Errorf("InoSet intersection isn't {1,2}: %v", in2)
 	}
+
+	s1 = NewInoSet(Ino(1))
+	s2 = NewInoSet(Ino(2))
+	s3 := NewInoSet(Ino(3))
+	in1 = InoSetIntersection(s1, s2, s3)
+	if !reflect.DeepEqual(in1, NewInoSet()) {
+		t.Errorf("InoSet intersection isn't empty: %v", in1)
+	}
+
+	s1 = NewInoSet(Ino(1))
+	s2 = NewInoSet(Ino(1))
+	s3 = NewInoSet(Ino(1))
+	in1 = InoSetIntersection(s1, s2, s3)
+	if !reflect.DeepEqual(in1, NewInoSet(Ino(1))) {
+		t.Errorf("InoSet intersection isn't {1}: %v", in1)
+	}
+
+	s1 = NewInoSet(Ino(1), Ino(2), Ino(4))
+	s2 = NewInoSet(Ino(2), Ino(3), Ino(4))
+	s3 = NewInoSet(Ino(1), Ino(3), Ino(4))
+	in1 = InoSetIntersection(s1, s2, s3)
+	if !reflect.DeepEqual(in1, NewInoSet(Ino(4))) {
+		t.Errorf("InoSet intersection isn't {4}: %v", in1)
+	}
 }
 
 func TestInoSetDifference(t *testing.T) {
