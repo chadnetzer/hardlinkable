@@ -127,11 +127,20 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 			Stats.SearchedInoSeq()
 			cachedInoSet := f.InoHashes[inoHash]
 			cachedInoSeq := cachedInoSet.AsSlice()
+			// If digests are enabled, and cached inode lists are
+			// long enough, then switch on the use of digests.
 			useDigest := MyOptions.LinearSearchThresh >= 0 &&
 				len(cachedInoSeq) > MyOptions.LinearSearchThresh
 			if useDigest {
 				digest, err := contentDigest(curPath.Join())
 				if err == nil {
+					// With digests, we take the (potentially long) set of cached
+					// inodes (ie. those inodes that all have the same InoHash),
+					// and remove the inodes that are definitely not a match
+					// (because their digests do not match with the current inode).
+					// We also search the inodes that have the digest before those
+					// that have no digest yet, in hopes of more quickly finding an
+					// identical file.
 					f.addPathStatDigest(curPathStat, digest)
 					noDigestSet := cachedInoSet.Difference(f.InosWithDigest)
 					sameDigestSet := cachedInoSet.Intersection(f.DigestIno[digest])
