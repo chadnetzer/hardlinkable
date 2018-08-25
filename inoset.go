@@ -26,6 +26,7 @@ type InoSet map[Ino]struct{}
 
 var exists = struct{}{}
 
+// Return a non-nil InoSet with the optional inos in it
 func NewInoSet(inos ...Ino) InoSet {
 	set := make(map[Ino]struct{})
 	for _, ino := range inos {
@@ -34,6 +35,7 @@ func NewInoSet(inos ...Ino) InoSet {
 	return set
 }
 
+// Add an Ino to the InoSet
 func (s InoSet) Add(ino Ino) {
 	s[ino] = exists
 }
@@ -44,6 +46,7 @@ func (s InoSet) Has(ino Ino) bool {
 	return ok
 }
 
+// Return a duplicate of the InoSet
 func (s InoSet) Copy() InoSet {
 	newSet := NewInoSet()
 	for k := range s {
@@ -52,6 +55,7 @@ func (s InoSet) Copy() InoSet {
 	return newSet
 }
 
+// Return an intersection of the receiver with an InoSets
 func (s InoSet) Intersection(set2 InoSet) InoSet {
 	resultSet := NewInoSet()
 	var little, big *InoSet
@@ -69,6 +73,7 @@ func (s InoSet) Intersection(set2 InoSet) InoSet {
 	return resultSet
 }
 
+// Return an intersection of multiple InoSets
 func InoSetIntersection(sets ...InoSet) InoSet {
 	if len(sets) == 0 {
 		return NewInoSet()
@@ -83,6 +88,7 @@ func InoSetIntersection(sets ...InoSet) InoSet {
 	return resultSet
 }
 
+// Return a difference of the other InoSet from the receiver
 func (s InoSet) Difference(other InoSet) InoSet {
 	// Iterate over smaller set
 	resultSet := NewInoSet()
@@ -94,6 +100,7 @@ func (s InoSet) Difference(other InoSet) InoSet {
 	return resultSet
 }
 
+// Return the content of InoSet as a slice
 func (s InoSet) AsSlice() []Ino {
 	r := make([]Ino, len(s))
 	i := 0
