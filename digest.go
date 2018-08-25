@@ -20,21 +20,37 @@
 
 package main
 
-type Options struct {
-	Verbosity             int
-	StatsOutputEnabled    bool
-	ProgressOutputEnabled bool
-	JSONOutputEnabled     bool
-	SameName              bool
-	ContentOnly           bool
-	IgnoreTime            bool
-	IgnorePerms           bool
-	IgnoreXattr           bool
-	LinkingEnabled        bool
-	LinearSearchThresh    int
-	DebugLevel            int
-	MinFileSize           uint64
-	MaxFileSize           uint64
-}
+import (
+	"hash/fnv"
+	"os"
+)
 
-var MyOptions *Options
+type Digest uint32
+
+// Return a short digest of the first part of the given pathname, to help
+// determine if two files are definitely not equivalent, without doing a full
+// comparison.  Typically this will be used when a full file comparison will be
+// performed anyway (incurring the IO overhead), and saving the digest to help
+// quickly reduce the set of possibly equal inodes later (ie. reducing the
+// length of the repeated linear searches).
+func contentDigest(pathname string) (Digest, error) {
+	const bufSize = 8192
+
+	f, err := os.Open(pathname)
+	if err != nil {
+		return 0, err
+	}
+	defer f.Close()
+
+	buf := make([]byte, bufSize)
+	_, err = f.Read(buf)
+	if err != nil {
+		return 0, err
+	}
+
+	Stats.computedDigest()
+
+	hash := fnv.New32a()
+	hash.Write(buf)
+	return Digest(hash.Sum32()), nil
+}

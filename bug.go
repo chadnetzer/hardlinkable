@@ -20,21 +20,10 @@
 
 package main
 
-type Options struct {
-	Verbosity             int
-	StatsOutputEnabled    bool
-	ProgressOutputEnabled bool
-	JSONOutputEnabled     bool
-	SameName              bool
-	ContentOnly           bool
-	IgnoreTime            bool
-	IgnorePerms           bool
-	IgnoreXattr           bool
-	LinkingEnabled        bool
-	LinearSearchThresh    int
-	DebugLevel            int
-	MinFileSize           uint64
-	MaxFileSize           uint64
-}
+import "log"
 
-var MyOptions *Options
+func BugIf(predicate bool, s string) {
+	if predicate {
+		log.Fatalln(s)
+	}
+}
