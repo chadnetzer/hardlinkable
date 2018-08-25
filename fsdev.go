@@ -127,8 +127,19 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 		if !foundLinkedHashedInos {
 			Stats.SearchedInoSeq()
 			cachedInoSet := f.InoHashes[inoHash]
+			cachedInoSeq := cachedInoSet.AsSlice()
+			if MyOptions.LinearSearchThresh >= 0 &&
+				len(cachedInoSeq) > MyOptions.LinearSearchThresh {
+				digest, err := contentDigest(curPath.Join())
+				if err == nil {
+					f.addPathStatDigest(curPathStat, digest)
+					noDigestSet := cachedInoSet.Difference(f.InosWithDigest)
+					sameDigestSet := cachedInoSet.Intersection(f.DigestIno[digest])
+					cachedInoSeq = append(sameDigestSet.AsSlice(), noDigestSet.AsSlice()...)
+				}
+			}
 			loopEndedEarly := false
-			for cachedIno := range cachedInoSet {
+			for _, cachedIno := range cachedInoSeq {
 				Stats.IncInoSeqIterations()
 				cachedPathStat := f.PathStatFromIno(cachedIno)
 				if f.areFilesHardlinkable(cachedPathStat, curPathStat) {

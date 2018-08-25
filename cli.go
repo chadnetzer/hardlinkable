@@ -118,6 +118,8 @@ func init() {
 	// Hidden options
 	flg.CountVarP(&o.DebugLevel, "debug", "d", "Increase debugging level")
 	flg.MarkHidden("debug")
+	flg.IntVarP(&o.LinearSearchThresh, "linear-search-thresh", "", 1, "Length of inode hash lists before switching to digests")
+	flg.MarkHidden("linear-search-thresh")
 	flg.SortFlags = false
 }
 
