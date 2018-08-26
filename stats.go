@@ -257,10 +257,10 @@ func (ls *LinkingStats) outputLinkingStats() {
 		s = statStr(s, "Inodes", ls.numInodes)
 		s = statStr(s, "Current hardlinks", ls.numPrevLinks)
 		s = statStr(s, "Total old + new links", totalLinks)
-		if ls.numFilesTooLarge >= 0 {
+		if ls.numFilesTooLarge > 0 {
 			s = statStr(s, "Total too large files", ls.numFilesTooLarge)
 		}
-		if ls.numFilesTooSmall >= 0 {
+		if ls.numFilesTooSmall > 0 {
 			s = statStr(s, "Total too small files", ls.numFilesTooSmall)
 		}
 		remainingInodes := ls.numInodes - ls.numInodesConsolidated
