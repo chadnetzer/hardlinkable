@@ -26,6 +26,8 @@ import (
 	"time"
 )
 
+const numFPSes = 8
+
 // A simple progress meter while scanning directories and performing linking
 type Progress struct {
 	lastLineLen     int
@@ -33,6 +35,9 @@ type Progress struct {
 	updateDelay     time.Duration
 	dirFilesCounter int
 	counterMin      int
+	fpsHist         [numFPSes]float64
+	fpsI            int
+	lastAvgFPS      float64
 
 	stats   *LinkingStats
 	options *Options
@@ -78,8 +83,26 @@ func (p *Progress) ShowDirsFilesFound() {
 	durStr := duration.Round(time.Second).String()
 	fps := float64(numFiles) / duration.Seconds()
 
-	fmtStr := "\r%d files in %d dirs (elapsed: %s files/sec: %.0f comparisons: %d)"
-	s := fmt.Sprintf(fmtStr, numFiles, numDirs, durStr, fps, numComparisons)
+	// Calculate a simple windowed average of the FPS, just to help
+	// determine roughly if the FPS rate is increasing or decreasing.  It's
+	// deliberately simplistic, as it's used more as a direction flag.
+	p.fpsHist[p.fpsI] = fps
+	p.fpsI = (p.fpsI + 1) % numFPSes
+	var fpsSum float64
+	var directionStr string
+	for _, v := range p.fpsHist {
+		fpsSum += v
+	}
+	avgFPS := fpsSum / float64(numFPSes)
+	if avgFPS > p.lastAvgFPS {
+		directionStr = "⬇"
+	} else {
+		directionStr = "⬆"
+	}
+	p.lastAvgFPS = avgFPS
+
+	fmtStr := "\r%d files in %d dirs (elapsed: %s files/sec: %.0f%s comparisons: %d)"
+	s := fmt.Sprintf(fmtStr, numFiles, numDirs, durStr, fps, directionStr, numComparisons)
 	p.line(s)
 }
 
