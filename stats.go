@@ -63,6 +63,14 @@ type CountingStats struct {
 	numPrevBytesSaved     uint64
 	numNewBytesSaved      uint64
 
+	// Some stats on files that compared equal, but which had some
+	// mismatching inode parameters.  This can be helpful for tuning the
+	// command line options on subsequent runs.
+	numMismatchedMtime uint64
+	numMismatchedMode  uint64
+	numMismatchedUid   uint64
+	numMismatchedGid   uint64
+
 	// Debugging counts
 	numFoundHashes      int64
 	numMissedHashes     int64
@@ -101,6 +109,22 @@ func (s *LinkingStats) FoundFileTooSmall() {
 
 func (s *LinkingStats) FoundFileTooLarge() {
 	s.numFilesTooLarge += 1
+}
+
+func (s *LinkingStats) FoundMismatchedMtime() {
+	s.numMismatchedMtime += 1
+}
+
+func (s *LinkingStats) FoundMismatchedMode() {
+	s.numMismatchedMode += 1
+}
+
+func (s *LinkingStats) FoundMismatchedUid() {
+	s.numMismatchedUid += 1
+}
+
+func (s *LinkingStats) FoundMismatchedGid() {
+	s.numMismatchedGid += 1
 }
 
 func (s *LinkingStats) FoundInode() {
@@ -262,6 +286,18 @@ func (ls *LinkingStats) outputLinkingStats() {
 		}
 		if ls.numFilesTooSmall > 0 {
 			s = statStr(s, "Total too small files", ls.numFilesTooSmall)
+		}
+		if ls.numMismatchedMtime > 0 {
+			s = statStr(s, "Total file time mismatches", ls.numMismatchedMtime)
+		}
+		if ls.numMismatchedMode > 0 {
+			s = statStr(s, "Total file mode mismatches", ls.numMismatchedMode)
+		}
+		if ls.numMismatchedUid > 0 {
+			s = statStr(s, "Total file uid mismatches", ls.numMismatchedUid)
+		}
+		if ls.numMismatchedGid > 0 {
+			s = statStr(s, "Total file uid mismatches", ls.numMismatchedGid)
 		}
 		remainingInodes := ls.numInodes - ls.numInodesConsolidated
 		s = statStr(s, "Total remaining inodes", remainingInodes)

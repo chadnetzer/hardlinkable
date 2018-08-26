@@ -341,6 +341,21 @@ func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat, useDigest bool
 	eq, _ := areFileContentsEqual(ps1.Join(), ps2.Join())
 	if eq {
 		Stats.FoundEqualFiles()
+
+		// Add some debugging statistics for files that are found to be
+		// equal, but which have some mismatched inode parameters.
+		if !(ps1.Sec == ps2.Sec && ps1.Nsec == ps2.Nsec) {
+			Stats.FoundMismatchedMtime()
+		}
+		if ps1.Mode.Perm() != ps2.Mode.Perm() {
+			Stats.FoundMismatchedMode()
+		}
+		if ps1.Uid != ps2.Uid {
+			Stats.FoundMismatchedUid()
+		}
+		if ps1.Gid != ps2.Gid {
+			Stats.FoundMismatchedGid()
+		}
 	}
 	return eq
 }
