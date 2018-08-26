@@ -35,13 +35,15 @@ import (
 // true (and thus disable when the option is given), we use a separate flag
 // with the opposite default, and toggle it manually after parsing.
 type CLIOptions struct {
-	StatsOutputDisabled bool
+	StatsOutputDisabled    bool
+	ProgressOutputDisabled bool
 	Options
 }
 
 func (c *CLIOptions) NewOptions() Options {
 	options := c.Options
 	options.StatsOutputEnabled = !c.StatsOutputDisabled
+	options.ProgressOutputEnabled = !c.ProgressOutputDisabled
 	return options
 }
 
@@ -100,7 +102,7 @@ func init() {
 	var o *CLIOptions = &MyCLIOptions
 	flg.CountVarP(&o.Verbosity, "verbose", "v", "Increase verbosity level")
 	flg.BoolVar(&o.StatsOutputDisabled, "no-stats", false, "Do not print the final stats")
-	flg.BoolVar(&o.ProgressOutputEnabled, "no-progress", false, "Disable progress output while processing")
+	flg.BoolVar(&o.ProgressOutputDisabled, "no-progress", false, "Disable progress output while processing")
 	flg.BoolVar(&o.JSONOutputEnabled, "json", false, "Output results as JSON")
 
 	flg.BoolVarP(&o.SameName, "same-name", "f", false, "Filenames need to be identical")

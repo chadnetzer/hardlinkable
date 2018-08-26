@@ -21,11 +21,15 @@
 package main
 
 import (
+	"os"
 	"time"
+
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type Linkable struct {
-	FSDevs map[uint64]FSDev
+	FSDevs   map[uint64]FSDev
+	progress Progress
 }
 
 var MyLinkable *Linkable
@@ -54,9 +58,16 @@ func Run(dirs []string) {
 	options := MyCLIOptions.NewOptions()
 	MyOptions = &options // Compatibility setup for now
 
+	if MyOptions.ProgressOutputEnabled &&
+		terminal.IsTerminal(int(os.Stdout.Fd())) {
+		MyLinkable.progress = NewTTYProgress(&Stats, MyOptions)
+	} else {
+		MyLinkable.progress = &DisabledProgress{}
+	}
 	Stats.startTime = time.Now()
 	c := MatchedPathnames(dirs)
 	for pathname := range c {
+		MyLinkable.progress.ShowDirsFilesFound()
 		dsi, err := LStatInfo(pathname)
 		if err != nil {
 			continue
@@ -78,6 +89,7 @@ func Run(dirs []string) {
 		fsdev.findIdenticalFiles(dsi, pathname)
 	}
 
+	MyLinkable.progress.Clear()
 	for _, fsdev := range MyLinkable.FSDevs {
 		for pair := range fsdev.sortedLinks() {
 			_ = pair
