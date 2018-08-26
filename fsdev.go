@@ -285,15 +285,16 @@ func (f *FSDev) allInoPaths(ino Ino) <-chan Pathsplit {
 	// Deepcopy the FilenamePaths map so that we can update the original
 	// while iterating over it's contents
 	filenamePaths := f.InoPaths[ino]
-	m := make(FilenamePaths)
+	m := make(FilenamePaths, len(filenamePaths))
 	for k, v := range filenamePaths {
 		m[k] = append([]Pathsplit(nil), v...) // Copy v
 	}
 
+	// Iterate over the copy of the FilenamePaths, and return each pathname
 	out := make(chan Pathsplit)
 	go func() {
 		defer close(out)
-		for _, paths := range filenamePaths {
+		for _, paths := range m {
 			for _, path := range paths {
 				out <- path
 			}
