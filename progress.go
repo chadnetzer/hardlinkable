@@ -28,8 +28,13 @@ import (
 
 const numFPSes = 8
 
+type Progress interface {
+	ShowDirsFilesFound()
+	Clear()
+}
+
 // A simple progress meter while scanning directories and performing linking
-type Progress struct {
+type TTYProgress struct {
 	lastLineLen     int
 	lastTime        time.Time
 	updateDelay     time.Duration
@@ -43,21 +48,23 @@ type Progress struct {
 	options *Options
 }
 
-func NewProgress(stats *LinkingStats, options *Options) Progress {
-	p := Progress{
+type DisabledProgress struct{}
+
+// Initialize TTYProgress and return pointer to it
+func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
+	return &TTYProgress{
 		updateDelay: 100 * time.Millisecond,
 		counterMin:  11, // Prime number makes output more dynamic
 		stats:       stats,
 		options:     options,
 	}
-	return p
 }
 
 // Output a line (without a newline at the end) of progress on directory
 // scanning and inode linking (ie. which inodes have identical content and
 // matching inode parameters).  Call in the main directory walk/link
 // calculation loop.
-func (p *Progress) ShowDirsFilesFound() {
+func (p *TTYProgress) ShowDirsFilesFound() {
 	if p.options.ProgressOutputEnabled {
 		return
 	}
@@ -107,13 +114,13 @@ func (p *Progress) ShowDirsFilesFound() {
 
 // Call to erase the progress loop (before 'normal' program post-processing
 // output)
-func (p *Progress) Clear() {
+func (p *TTYProgress) Clear() {
 	p.line("\r")
 	p.lastLineLen = 1
 	p.line("\r")
 }
 
-func (p *Progress) line(s string) {
+func (p *TTYProgress) line(s string) {
 	numSpaces := p.lastLineLen - len(s)
 	p.lastLineLen = len(s)
 	if numSpaces > 0 {
@@ -121,3 +128,6 @@ func (p *Progress) line(s string) {
 	}
 	fmt.Print(s)
 }
+
+func (p *DisabledProgress) ShowDirsFilesFound() {}
+func (p *DisabledProgress) Clear()              {}
