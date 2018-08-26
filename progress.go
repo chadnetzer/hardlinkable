@@ -115,9 +115,9 @@ func (p *Progress) Clear() {
 
 func (p *Progress) line(s string) {
 	numSpaces := p.lastLineLen - len(s)
+	p.lastLineLen = len(s)
 	if numSpaces > 0 {
 		s += strings.Repeat(" ", numSpaces)
 	}
-	p.lastLineLen = len(s)
 	fmt.Print(s)
 }
