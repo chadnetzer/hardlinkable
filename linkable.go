@@ -58,7 +58,8 @@ func Run(dirs []string) {
 	options := MyCLIOptions.NewOptions()
 	MyOptions = &options // Compatibility setup for now
 
-	if terminal.IsTerminal(int(os.Stdout.Fd())) {
+	if MyOptions.ProgressOutputEnabled &&
+		terminal.IsTerminal(int(os.Stdout.Fd())) {
 		MyLinkable.progress = NewTTYProgress(&Stats, MyOptions)
 	} else {
 		MyLinkable.progress = &DisabledProgress{}

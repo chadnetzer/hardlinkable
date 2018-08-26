@@ -65,9 +65,6 @@ func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
 // matching inode parameters).  Call in the main directory walk/link
 // calculation loop.
 func (p *TTYProgress) ShowDirsFilesFound() {
-	if p.options.ProgressOutputEnabled {
-		return
-	}
 	p.dirFilesCounter += 1
 	if p.dirFilesCounter < p.counterMin {
 		return
