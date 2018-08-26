@@ -21,7 +21,10 @@
 package main
 
 import (
+	"os"
 	"time"
+
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type Linkable struct {
@@ -55,8 +58,12 @@ func Run(dirs []string) {
 	options := MyCLIOptions.NewOptions()
 	MyOptions = &options // Compatibility setup for now
 
+	if terminal.IsTerminal(int(os.Stdout.Fd())) {
+		MyLinkable.progress = NewTTYProgress(&Stats, MyOptions)
+	} else {
+		MyLinkable.progress = &DisabledProgress{}
+	}
 	Stats.startTime = time.Now()
-	MyLinkable.progress = NewProgress(&Stats, MyOptions)
 	c := MatchedPathnames(dirs)
 	for pathname := range c {
 		MyLinkable.progress.ShowDirsFilesFound()
