@@ -77,7 +77,6 @@ func (p *Progress) ShowDirsFilesFound() {
 
 	numDirs := p.stats.numDirs
 	numFiles := p.stats.numFiles
-	numComparisons := p.stats.numComparisons
 
 	duration := time.Now().Sub(p.stats.startTime)
 	durStr := duration.Round(time.Second).String()
@@ -101,8 +100,8 @@ func (p *Progress) ShowDirsFilesFound() {
 	}
 	p.lastAvgFPS = avgFPS
 
-	fmtStr := "\r%d files in %d dirs (elapsed: %s files/sec: %.0f%s comparisons: %d)"
-	s := fmt.Sprintf(fmtStr, numFiles, numDirs, durStr, fps, directionStr, numComparisons)
+	fmtStr := "\r%d files in %d dirs (elapsed time: %s files/sec: %.0f %v)"
+	s := fmt.Sprintf(fmtStr, numFiles, numDirs, durStr, fps, directionStr)
 	p.line(s)
 }
 
