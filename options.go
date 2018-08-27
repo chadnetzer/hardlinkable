@@ -29,6 +29,7 @@ type Options struct {
 	ContentOnly           bool
 	IgnoreTime            bool
 	IgnorePerms           bool
+	IgnoreOwner           bool
 	IgnoreXattr           bool
 	LinkingEnabled        bool
 	LinearSearchThresh    int

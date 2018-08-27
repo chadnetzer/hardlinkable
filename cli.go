@@ -109,6 +109,7 @@ func init() {
 	flg.BoolVarP(&o.ContentOnly, "content-only", "c", false, "Only file contents have to match")
 	flg.BoolVarP(&o.IgnoreTime, "ignore-time", "t", false, "File modification times need not match")
 	flg.BoolVarP(&o.IgnorePerms, "ignore-perms", "p", false, "File permissions need not match")
+	flg.BoolVarP(&o.IgnoreOwner, "ignore-owner", "o", false, "File uid/gid need not match")
 	flg.BoolVar(&o.IgnoreXattr, "ignore-xattr", false, "Xattrs need not match")
 
 	flg.Uint64VarP(&o.MinFileSize, "min-size", "z", 1, "Minimum file size")

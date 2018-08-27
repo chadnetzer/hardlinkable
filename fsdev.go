@@ -54,6 +54,18 @@ type FSDev struct {
 	DirnameStatInfos map[string]StatInfos
 }
 
+func (s1 PathStat) EqualTime(s2 PathStat) bool {
+	return s1.Sec == s2.Sec && s1.Nsec == s2.Nsec
+}
+
+func (s1 PathStat) EqualMode(s2 PathStat) bool {
+	return s1.Mode == s2.Mode
+}
+
+func (s1 PathStat) EqualOwnership(s2 PathStat) bool {
+	return s1.Uid == s2.Uid && s1.Gid == s2.Gid
+}
+
 func (f *FSDev) LinkedInosCopy() map[Ino]InoSet {
 	newLinkedInos := make(map[Ino]InoSet)
 	for k, v := range f.LinkedInos {
@@ -328,7 +340,17 @@ func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat, useDigest bool
 	if ps1.Size != ps2.Size {
 		return false
 	}
-	// Add options checking later (time/perms/ownership/etc)
+	if !MyOptions.ContentOnly {
+		if !MyOptions.IgnoreTime && !ps1.EqualTime(ps2) {
+			return false
+		}
+		if !MyOptions.IgnorePerms && !ps1.EqualMode(ps2) {
+			return false
+		}
+		if !MyOptions.IgnoreOwner && !ps1.EqualOwnership(ps2) {
+			return false
+		}
+	}
 
 	// assert(st1.Dev == st2.Dev && st1.Ino != st2.Ino && st1.Size == st2.Size)
 	if useDigest {
