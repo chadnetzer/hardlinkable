@@ -347,7 +347,7 @@ func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat, useDigest bool
 		if !MyOptions.IgnorePerms && !ps1.EqualMode(ps2) {
 			return false
 		}
-		if !ps1.EqualOwnership(ps2) {
+		if !MyOptions.IgnoreOwner && !ps1.EqualOwnership(ps2) {
 			return false
 		}
 	}
