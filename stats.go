@@ -250,13 +250,13 @@ func (ls *LinkingStats) outputLinkingStats() {
 	s = statStr(s, "Directories", ls.numDirs)
 	s = statStr(s, "Files", ls.numFiles)
 	if MyOptions.LinkingEnabled {
-		s = statStr(s, "Consolidated Inodes", ls.numInodesConsolidated)
+		s = statStr(s, "Consolidated inodes", ls.numInodesConsolidated)
 		s = statStr(s, "Hardlinked this run", ls.numNewLinks)
 	} else {
-		s = statStr(s, "Consolidatable Inodes", ls.numInodesConsolidated)
+		s = statStr(s, "Consolidatable inodes", ls.numInodesConsolidated)
 		s = statStr(s, "Hardlinkable this run", ls.numNewLinks)
 	}
-	s = statStr(s, "Currently hardlinked bytes", ls.numPrevBytesSaved)
+	s = statStr(s, "Currently linked bytes", ls.numPrevBytesSaved)
 	totalBytes := ls.numPrevBytesSaved + ls.numNewBytesSaved
 	if MyOptions.LinkingEnabled {
 		s = statStr(s, "Additional linked bytes", ls.numNewBytesSaved)
@@ -279,7 +279,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 	if MyOptions.Verbosity > 0 || MyOptions.DebugLevel > 0 {
 		s = statStr(s, "Comparisons", ls.numComparisons)
 		s = statStr(s, "Inodes", ls.numInodes)
-		s = statStr(s, "Current hardlinks", ls.numPrevLinks)
+		s = statStr(s, "Current links", ls.numPrevLinks)
 		s = statStr(s, "Total old + new links", totalLinks)
 		if ls.numFilesTooLarge > 0 {
 			s = statStr(s, "Total too large files", ls.numFilesTooLarge)
