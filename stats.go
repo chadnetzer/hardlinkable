@@ -63,6 +63,14 @@ type CountingStats struct {
 	numPrevBytesSaved     uint64
 	numNewBytesSaved      uint64
 
+	// Some stats on files that compared equal, but which had some
+	// mismatching inode parameters.  This can be helpful for tuning the
+	// command line options on subsequent runs.
+	numMismatchedMtime uint64
+	numMismatchedMode  uint64
+	numMismatchedUid   uint64
+	numMismatchedGid   uint64
+
 	// Debugging counts
 	numFoundHashes      int64
 	numMissedHashes     int64
@@ -101,6 +109,22 @@ func (s *LinkingStats) FoundFileTooSmall() {
 
 func (s *LinkingStats) FoundFileTooLarge() {
 	s.numFilesTooLarge += 1
+}
+
+func (s *LinkingStats) FoundMismatchedMtime() {
+	s.numMismatchedMtime += 1
+}
+
+func (s *LinkingStats) FoundMismatchedMode() {
+	s.numMismatchedMode += 1
+}
+
+func (s *LinkingStats) FoundMismatchedUid() {
+	s.numMismatchedUid += 1
+}
+
+func (s *LinkingStats) FoundMismatchedGid() {
+	s.numMismatchedGid += 1
 }
 
 func (s *LinkingStats) FoundInode() {
@@ -226,13 +250,13 @@ func (ls *LinkingStats) outputLinkingStats() {
 	s = statStr(s, "Directories", ls.numDirs)
 	s = statStr(s, "Files", ls.numFiles)
 	if MyOptions.LinkingEnabled {
-		s = statStr(s, "Consolidated Inodes", ls.numInodesConsolidated)
+		s = statStr(s, "Consolidated inodes", ls.numInodesConsolidated)
 		s = statStr(s, "Hardlinked this run", ls.numNewLinks)
 	} else {
-		s = statStr(s, "Consolidatable Inodes", ls.numInodesConsolidated)
+		s = statStr(s, "Consolidatable inodes", ls.numInodesConsolidated)
 		s = statStr(s, "Hardlinkable this run", ls.numNewLinks)
 	}
-	s = statStr(s, "Currently hardlinked bytes", ls.numPrevBytesSaved)
+	s = statStr(s, "Currently linked bytes", ls.numPrevBytesSaved)
 	totalBytes := ls.numPrevBytesSaved + ls.numNewBytesSaved
 	if MyOptions.LinkingEnabled {
 		s = statStr(s, "Additional linked bytes", ls.numNewBytesSaved)
@@ -255,13 +279,25 @@ func (ls *LinkingStats) outputLinkingStats() {
 	if MyOptions.Verbosity > 0 || MyOptions.DebugLevel > 0 {
 		s = statStr(s, "Comparisons", ls.numComparisons)
 		s = statStr(s, "Inodes", ls.numInodes)
-		s = statStr(s, "Current hardlinks", ls.numPrevLinks)
+		s = statStr(s, "Current links", ls.numPrevLinks)
 		s = statStr(s, "Total old + new links", totalLinks)
-		if ls.numFilesTooLarge >= 0 {
+		if ls.numFilesTooLarge > 0 {
 			s = statStr(s, "Total too large files", ls.numFilesTooLarge)
 		}
-		if ls.numFilesTooSmall >= 0 {
+		if ls.numFilesTooSmall > 0 {
 			s = statStr(s, "Total too small files", ls.numFilesTooSmall)
+		}
+		if ls.numMismatchedMtime > 0 {
+			s = statStr(s, "Total file time mismatches", ls.numMismatchedMtime)
+		}
+		if ls.numMismatchedMode > 0 {
+			s = statStr(s, "Total file mode mismatches", ls.numMismatchedMode)
+		}
+		if ls.numMismatchedUid > 0 {
+			s = statStr(s, "Total file uid mismatches", ls.numMismatchedUid)
+		}
+		if ls.numMismatchedGid > 0 {
+			s = statStr(s, "Total file uid mismatches", ls.numMismatchedGid)
 		}
 		remainingInodes := ls.numInodes - ls.numInodesConsolidated
 		s = statStr(s, "Total remaining inodes", remainingInodes)
