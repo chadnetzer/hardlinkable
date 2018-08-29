@@ -71,6 +71,7 @@ type CountingStats struct {
 	numMismatchedUid   int64
 	numMismatchedGid   int64
 	numMismatchedXattr int64
+	numMismatchedBytes uint64
 
 	// Debugging counts
 	numFoundHashes      int64
@@ -130,6 +131,10 @@ func (s *LinkingStats) FoundMismatchedGid() {
 
 func (s *LinkingStats) FoundMismatchedXattr() {
 	s.numMismatchedXattr += 1
+}
+
+func (s *LinkingStats) AddMismatchedBytes(size uint64) {
+	s.numMismatchedBytes += size
 }
 
 func (s *LinkingStats) FoundInode() {
@@ -307,6 +312,11 @@ func (ls *LinkingStats) outputLinkingStats() {
 		if ls.numMismatchedXattr > 0 {
 			s = statStr(s, "Total file xattr mismatches", ls.numMismatchedXattr)
 		}
+		if ls.numMismatchedBytes > 0 {
+			s = statStr(s, "Total mismatched file bytes", ls.numMismatchedBytes)
+			s[len(s)-1] += fmt.Sprintf(" (%v)", humanize(ls.numMismatchedBytes))
+		}
+
 		remainingInodes := ls.numInodes - ls.numInodesConsolidated
 		s = statStr(s, "Total remaining inodes", remainingInodes)
 	}
