@@ -66,11 +66,11 @@ type CountingStats struct {
 	// Some stats on files that compared equal, but which had some
 	// mismatching inode parameters.  This can be helpful for tuning the
 	// command line options on subsequent runs.
-	numMismatchedMtime uint64
-	numMismatchedMode  uint64
-	numMismatchedUid   uint64
-	numMismatchedGid   uint64
-	numMismatchedXattr uint64
+	numMismatchedMtime int64
+	numMismatchedMode  int64
+	numMismatchedUid   int64
+	numMismatchedGid   int64
+	numMismatchedXattr int64
 
 	// Debugging counts
 	numFoundHashes      int64
