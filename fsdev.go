@@ -350,6 +350,11 @@ func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat, useDigest bool
 		if !MyOptions.IgnoreOwner && !ps1.EqualOwnership(ps2) {
 			return false
 		}
+		if !MyOptions.IgnoreXattr {
+			if eq, _ := equalXAttrs(ps1.Join(), ps2.Join()); !eq {
+				return false
+			}
+		}
 	}
 
 	// assert(st1.Dev == st2.Dev && st1.Ino != st2.Ino && st1.Size == st2.Size)
@@ -377,6 +382,10 @@ func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat, useDigest bool
 		}
 		if ps1.Gid != ps2.Gid {
 			Stats.FoundMismatchedGid()
+		}
+		eq, err := equalXAttrs(ps1.Join(), ps2.Join())
+		if err == nil && !eq {
+			Stats.FoundMismatchedXattr()
 		}
 	}
 	return eq
