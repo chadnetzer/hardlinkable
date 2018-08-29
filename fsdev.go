@@ -383,6 +383,10 @@ func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat, useDigest bool
 		if ps1.Gid != ps2.Gid {
 			Stats.FoundMismatchedGid()
 		}
+		eq, err := equalXAttrs(ps1.Join(), ps2.Join())
+		if err == nil && !eq {
+			Stats.FoundMismatchedXattr()
+		}
 	}
 	return eq
 }
