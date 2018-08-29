@@ -302,7 +302,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 			s = statStr(s, "Total file uid mismatches", ls.numMismatchedUid)
 		}
 		if ls.numMismatchedGid > 0 {
-			s = statStr(s, "Total file uid mismatches", ls.numMismatchedGid)
+			s = statStr(s, "Total file gid mismatches", ls.numMismatchedGid)
 		}
 		if ls.numMismatchedXattr > 0 {
 			s = statStr(s, "Total file xattr mismatches", ls.numMismatchedXattr)
