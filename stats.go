@@ -202,11 +202,11 @@ func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
 }
 
 func (ls *LinkingStats) outputResults() {
-	if MyOptions.Verbosity > 1 {
+	if MyOptions.Verbosity > 2 {
 		ls.outputCurrentHardlinks()
 		fmt.Println("")
 	}
-	if MyOptions.Verbosity > 0 {
+	if MyOptions.Verbosity > 1 {
 		ls.outputLinkedPairs()
 		if MyOptions.StatsOutputEnabled {
 			fmt.Println("")
