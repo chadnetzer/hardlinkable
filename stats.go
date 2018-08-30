@@ -379,6 +379,7 @@ func printSlices(a [][]string) {
 	}
 }
 
+// Return a string with bytecount "humanized" to a shortened amount
 func humanize(n uint64) string {
 	var s string
 	var m string
@@ -409,4 +410,9 @@ func humanize(n uint64) string {
 	}
 
 	return s + m
+}
+
+// Return the humanized number count as a string surrounded by parens
+func humanizeParens(n uint64) string {
+	return fmt.Sprintf("(%v)", humanize(n))
 }
