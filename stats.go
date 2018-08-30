@@ -298,19 +298,19 @@ func (ls *LinkingStats) outputLinkingStats() {
 			s = statStr(s, "Total too small files", ls.numFilesTooSmall)
 		}
 		if ls.numMismatchedMtime > 0 {
-			s = statStr(s, "Total file time mismatches", ls.numMismatchedMtime)
+			s = statStr(s, "Equal files w/ unequal time", ls.numMismatchedMtime)
 		}
 		if ls.numMismatchedMode > 0 {
-			s = statStr(s, "Total file mode mismatches", ls.numMismatchedMode)
+			s = statStr(s, "Equal files w/ unequal mode", ls.numMismatchedMode)
 		}
 		if ls.numMismatchedUid > 0 {
-			s = statStr(s, "Total file uid mismatches", ls.numMismatchedUid)
+			s = statStr(s, "Equal files w/ unequal uid", ls.numMismatchedUid)
 		}
 		if ls.numMismatchedGid > 0 {
-			s = statStr(s, "Total file gid mismatches", ls.numMismatchedGid)
+			s = statStr(s, "Equal files w/ unequal gid", ls.numMismatchedGid)
 		}
 		if ls.numMismatchedXattr > 0 {
-			s = statStr(s, "Total file xattr mismatches", ls.numMismatchedXattr)
+			s = statStr(s, "Equal files w/ unequal xattr", ls.numMismatchedXattr)
 		}
 		if ls.numMismatchedBytes > 0 {
 			s = statStr(s, "Total mismatched file bytes", ls.numMismatchedBytes)
