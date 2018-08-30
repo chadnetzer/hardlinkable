@@ -254,9 +254,9 @@ func (ls *LinkingStats) outputLinkedPairs() {
 }
 
 func (ls *LinkingStats) outputLinkingStats() {
-	s := make([]string, 0)
-	s = append(s, "Hard linking statistics")
-	s = append(s, "-----------------------")
+	s := make([][]string, 0)
+	s = statStr(s, "Hard linking statistics")
+	s = statStr(s, "-----------------------")
 	s = statStr(s, "Directories", ls.numDirs)
 	s = statStr(s, "Files", ls.numFiles)
 	if MyOptions.LinkingEnabled {
@@ -266,19 +266,19 @@ func (ls *LinkingStats) outputLinkingStats() {
 		s = statStr(s, "Consolidatable inodes", ls.numInodesConsolidated)
 		s = statStr(s, "Hardlinkable this run", ls.numNewLinks)
 	}
-	s = statStr(s, "Currently linked bytes", ls.numPrevBytesSaved)
+	s = statStr(s, "Currently linked bytes", ls.numPrevBytesSaved, humanizeParens(ls.numPrevBytesSaved))
 	totalBytes := ls.numPrevBytesSaved + ls.numNewBytesSaved
+	var s1, s2 string
 	if MyOptions.LinkingEnabled {
-		s = statStr(s, "Additional linked bytes", ls.numNewBytesSaved)
-		s = statStr(s, "Total linked bytes", totalBytes)
+		s1 = "Additional linked bytes"
+		s2 = "Total linked bytes"
 	} else {
-		s = statStr(s, "Additional linkable bytes", ls.numNewBytesSaved)
-		s = statStr(s, "Total linkable bytes", totalBytes)
+		s1 = "Additional linkable bytes"
+		s2 = "Total linkable bytes"
 	}
 	// Append some humanized size values to the byte string outputs
-	s[len(s)-3] += fmt.Sprintf(" (%v)", humanize(ls.numPrevBytesSaved))
-	s[len(s)-2] += fmt.Sprintf(" (%v)", humanize(ls.numNewBytesSaved))
-	s[len(s)-1] += fmt.Sprintf(" (%v)", humanize(totalBytes))
+	s = statStr(s, s1, ls.numNewBytesSaved, humanizeParens(ls.numNewBytesSaved))
+	s = statStr(s, s2, totalBytes, humanizeParens(totalBytes))
 
 	duration := ls.endTime.Sub(ls.startTime)
 	s = statStr(s, "Total run time", duration.Round(time.Millisecond).String())
@@ -311,38 +311,40 @@ func (ls *LinkingStats) outputLinkingStats() {
 			s = statStr(s, "Equal files w/ unequal xattr", ls.numMismatchedXattr)
 		}
 		if ls.numMismatchedBytes > 0 {
-			s = statStr(s, "Total mismatched file bytes", ls.numMismatchedBytes)
-			s[len(s)-1] += fmt.Sprintf(" (%v)", humanize(ls.numMismatchedBytes))
+			s = statStr(s, "Total mismatched file bytes",
+				ls.numMismatchedBytes, humanizeParens(ls.numMismatchedBytes))
 		}
 
 		remainingInodes := ls.numInodes - ls.numInodesConsolidated
 		s = statStr(s, "Total remaining inodes", remainingInodes)
 	}
 	if MyOptions.DebugLevel > 0 {
-		s = statStr(s, "Total file hash hits", ls.numFoundHashes)
 		// add additional stat output onto the last string
-		s[len(s)-1] += fmt.Sprintf("	misses: %v	sum total: %v", ls.numMissedHashes, ls.numFoundHashes+ls.numMissedHashes)
-		s = statStr(s, "Total hash mismatches", ls.numHashMismatches)
-		s[len(s)-1] += fmt.Sprintf("	(+ total links: %v)", ls.numHashMismatches+totalLinks)
+		s = statStr(s, "Total file hash hits", ls.numFoundHashes,
+			fmt.Sprintf("misses: %v  sum total: %v", ls.numMissedHashes, ls.numFoundHashes+ls.numMissedHashes))
+		s = statStr(s, "Total hash mismatches", ls.numHashMismatches,
+			fmt.Sprintf("(+ total links: %v)", ls.numHashMismatches+totalLinks))
 		s = statStr(s, "Total hash searches", ls.numInoSeqSearches)
 		avgItersPerSearch := "N/A"
 		if ls.numInoSeqIterations > 0 {
 			avg := float64(ls.numInoSeqIterations) / float64(ls.numInoSeqSearches)
 			avgItersPerSearch = fmt.Sprintf("%.1f", avg)
 		}
-		//s = statStr(s, "Total hash list iterations : %v	(avg per search: %v)", ls.numInoSeqIterations, avgItersPerSearch)
-		s = statStr(s, "Total hash list iterations", ls.numInoSeqIterations)
-		s[len(s)-1] += fmt.Sprintf("	(avg per search: %v)", avgItersPerSearch)
+		s = statStr(s, "Total hash list iterations", ls.numInoSeqIterations, fmt.Sprintf("(avg per search: %v)", avgItersPerSearch))
 		s = statStr(s, "Total equal comparisons", ls.numEqualComparisons)
 		s = statStr(s, "Total digests computed", ls.numDigestsComputed)
 	}
-	fmt.Println(strings.Join(s, "\n"))
+	printSlices(s)
 }
 
-func statStr(a []string, s string, args ...interface{}) []string {
-	s = fmt.Sprintf("%-27s", s)
-	s = s + ": %v"
-	return append(a, fmt.Sprintf(s, args...))
+// Add a new row of string colums to the given slice of string slices
+func statStr(a [][]string, args ...interface{}) [][]string {
+	s := make([]string, 0)
+	for _, arg := range args {
+		s = append(s, fmt.Sprintf("%v", arg))
+	}
+	return append(a, s)
+}
 
 // Columnate printing of a slice of string slices (ie. a list of string
 // columns)
