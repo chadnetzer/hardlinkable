@@ -345,6 +345,40 @@ func statStr(a []string, s string, args ...interface{}) []string {
 	s = fmt.Sprintf("%-27s", s)
 	s = s + ": %v"
 	return append(a, fmt.Sprintf(s, args...))
+
+// Columnate printing of a slice of string slices (ie. a list of string
+// columns)
+func printSlices(a [][]string) {
+	numCols := 0
+	for _, c := range a {
+		if len(c) > numCols {
+			numCols = len(c)
+		}
+	}
+	colWidths := make([]int, numCols)
+	for _, c := range a {
+		for i, s := range c {
+			if len(s) > colWidths[i] {
+				colWidths[i] = len(s)
+			}
+		}
+	}
+	for _, c := range a {
+		for i, s := range c {
+			if i == 1 {
+				fmt.Print(" :")
+			}
+			if i >= 1 {
+				fmt.Print(" ")
+			}
+			if i >= 2 {
+				fmt.Print(" ")
+			}
+			fmtStr := "%-" + fmt.Sprintf("%v", colWidths[i]) + "s"
+			fmt.Printf(fmtStr, s)
+		}
+		fmt.Println()
+	}
 }
 
 // padLastN adds spaces to the last N strings in the slice-of-strings s, so
