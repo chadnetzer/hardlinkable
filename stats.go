@@ -275,8 +275,6 @@ func (ls *LinkingStats) outputLinkingStats() {
 		s = statStr(s, "Additional linkable bytes", ls.numNewBytesSaved)
 		s = statStr(s, "Total linkable bytes", totalBytes)
 	}
-	padLastN(s, 3) // add spaces to columnize the previous lines
-
 	// Append some humanized size values to the byte string outputs
 	s[len(s)-3] += fmt.Sprintf(" (%v)", humanize(ls.numPrevBytesSaved))
 	s[len(s)-2] += fmt.Sprintf(" (%v)", humanize(ls.numNewBytesSaved))
@@ -378,25 +376,6 @@ func printSlices(a [][]string) {
 			fmt.Printf(fmtStr, s)
 		}
 		fmt.Println()
-	}
-}
-
-// padLastN adds spaces to the last N strings in the slice-of-strings s, so
-// that they are all the same length.
-func padLastN(s []string, N int) {
-	if len(s) == 0 || N == 0 {
-		return
-	}
-	max := 0
-	for i := len(s) - N; i < len(s); i++ {
-		v := len(s[i])
-		if v > max {
-			max = v
-		}
-	}
-	for i := len(s) - N; i < len(s); i++ {
-		pad := strings.Repeat(" ", max-len(s[i]))
-		s[i] += pad
 	}
 }
 
