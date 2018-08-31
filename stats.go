@@ -66,11 +66,12 @@ type CountingStats struct {
 	// Some stats on files that compared equal, but which had some
 	// mismatching inode parameters.  This can be helpful for tuning the
 	// command line options on subsequent runs.
-	numMismatchedMtime uint64
-	numMismatchedMode  uint64
-	numMismatchedUid   uint64
-	numMismatchedGid   uint64
-	numMismatchedXattr uint64
+	numMismatchedMtime int64
+	numMismatchedMode  int64
+	numMismatchedUid   int64
+	numMismatchedGid   int64
+	numMismatchedXattr int64
+	numMismatchedBytes uint64
 
 	// Debugging counts
 	numFoundHashes      int64
@@ -130,6 +131,10 @@ func (s *LinkingStats) FoundMismatchedGid() {
 
 func (s *LinkingStats) FoundMismatchedXattr() {
 	s.numMismatchedXattr += 1
+}
+
+func (s *LinkingStats) AddMismatchedBytes(size uint64) {
+	s.numMismatchedBytes += size
 }
 
 func (s *LinkingStats) FoundInode() {
@@ -197,11 +202,11 @@ func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
 }
 
 func (ls *LinkingStats) outputResults() {
-	if MyOptions.Verbosity > 1 {
+	if MyOptions.Verbosity > 2 {
 		ls.outputCurrentHardlinks()
 		fmt.Println("")
 	}
-	if MyOptions.Verbosity > 0 {
+	if MyOptions.Verbosity > 1 {
 		ls.outputLinkedPairs()
 		if MyOptions.StatsOutputEnabled {
 			fmt.Println("")
@@ -249,9 +254,9 @@ func (ls *LinkingStats) outputLinkedPairs() {
 }
 
 func (ls *LinkingStats) outputLinkingStats() {
-	s := make([]string, 0)
-	s = append(s, "Hard linking statistics")
-	s = append(s, "-----------------------")
+	s := make([][]string, 0)
+	s = statStr(s, "Hard linking statistics")
+	s = statStr(s, "-----------------------")
 	s = statStr(s, "Directories", ls.numDirs)
 	s = statStr(s, "Files", ls.numFiles)
 	if MyOptions.LinkingEnabled {
@@ -261,21 +266,19 @@ func (ls *LinkingStats) outputLinkingStats() {
 		s = statStr(s, "Consolidatable inodes", ls.numInodesConsolidated)
 		s = statStr(s, "Hardlinkable this run", ls.numNewLinks)
 	}
-	s = statStr(s, "Currently linked bytes", ls.numPrevBytesSaved)
+	s = statStr(s, "Currently linked bytes", ls.numPrevBytesSaved, humanizeParens(ls.numPrevBytesSaved))
 	totalBytes := ls.numPrevBytesSaved + ls.numNewBytesSaved
+	var s1, s2 string
 	if MyOptions.LinkingEnabled {
-		s = statStr(s, "Additional linked bytes", ls.numNewBytesSaved)
-		s = statStr(s, "Total linked bytes", totalBytes)
+		s1 = "Additional linked bytes"
+		s2 = "Total linked bytes"
 	} else {
-		s = statStr(s, "Additional linkable bytes", ls.numNewBytesSaved)
-		s = statStr(s, "Total linkable bytes", totalBytes)
+		s1 = "Additional linkable bytes"
+		s2 = "Total linkable bytes"
 	}
-	padLastN(s, 3) // add spaces to columnize the previous lines
-
 	// Append some humanized size values to the byte string outputs
-	s[len(s)-3] += fmt.Sprintf(" (%v)", humanize(ls.numPrevBytesSaved))
-	s[len(s)-2] += fmt.Sprintf(" (%v)", humanize(ls.numNewBytesSaved))
-	s[len(s)-1] += fmt.Sprintf(" (%v)", humanize(totalBytes))
+	s = statStr(s, s1, ls.numNewBytesSaved, humanizeParens(ls.numNewBytesSaved))
+	s = statStr(s, s2, totalBytes, humanizeParens(totalBytes))
 
 	duration := ls.endTime.Sub(ls.startTime)
 	s = statStr(s, "Total run time", duration.Round(time.Millisecond).String())
@@ -293,69 +296,92 @@ func (ls *LinkingStats) outputLinkingStats() {
 			s = statStr(s, "Total too small files", ls.numFilesTooSmall)
 		}
 		if ls.numMismatchedMtime > 0 {
-			s = statStr(s, "Total file time mismatches", ls.numMismatchedMtime)
+			s = statStr(s, "Equal files w/ unequal time", ls.numMismatchedMtime)
 		}
 		if ls.numMismatchedMode > 0 {
-			s = statStr(s, "Total file mode mismatches", ls.numMismatchedMode)
+			s = statStr(s, "Equal files w/ unequal mode", ls.numMismatchedMode)
 		}
 		if ls.numMismatchedUid > 0 {
-			s = statStr(s, "Total file uid mismatches", ls.numMismatchedUid)
+			s = statStr(s, "Equal files w/ unequal uid", ls.numMismatchedUid)
 		}
 		if ls.numMismatchedGid > 0 {
-			s = statStr(s, "Total file uid mismatches", ls.numMismatchedGid)
+			s = statStr(s, "Equal files w/ unequal gid", ls.numMismatchedGid)
 		}
 		if ls.numMismatchedXattr > 0 {
-			s = statStr(s, "Total file xattr mismatches", ls.numMismatchedXattr)
+			s = statStr(s, "Equal files w/ unequal xattr", ls.numMismatchedXattr)
 		}
+		if ls.numMismatchedBytes > 0 {
+			s = statStr(s, "Total mismatched file bytes",
+				ls.numMismatchedBytes, humanizeParens(ls.numMismatchedBytes))
+		}
+
 		remainingInodes := ls.numInodes - ls.numInodesConsolidated
 		s = statStr(s, "Total remaining inodes", remainingInodes)
 	}
 	if MyOptions.DebugLevel > 0 {
-		s = statStr(s, "Total file hash hits", ls.numFoundHashes)
 		// add additional stat output onto the last string
-		s[len(s)-1] += fmt.Sprintf("	misses: %v	sum total: %v", ls.numMissedHashes, ls.numFoundHashes+ls.numMissedHashes)
-		s = statStr(s, "Total hash mismatches", ls.numHashMismatches)
-		s[len(s)-1] += fmt.Sprintf("	(+ total links: %v)", ls.numHashMismatches+totalLinks)
+		s = statStr(s, "Total file hash hits", ls.numFoundHashes,
+			fmt.Sprintf("misses: %v  sum total: %v", ls.numMissedHashes, ls.numFoundHashes+ls.numMissedHashes))
+		s = statStr(s, "Total hash mismatches", ls.numHashMismatches,
+			fmt.Sprintf("(+ total links: %v)", ls.numHashMismatches+totalLinks))
 		s = statStr(s, "Total hash searches", ls.numInoSeqSearches)
 		avgItersPerSearch := "N/A"
 		if ls.numInoSeqIterations > 0 {
 			avg := float64(ls.numInoSeqIterations) / float64(ls.numInoSeqSearches)
 			avgItersPerSearch = fmt.Sprintf("%.1f", avg)
 		}
-		//s = statStr(s, "Total hash list iterations : %v	(avg per search: %v)", ls.numInoSeqIterations, avgItersPerSearch)
-		s = statStr(s, "Total hash list iterations", ls.numInoSeqIterations)
-		s[len(s)-1] += fmt.Sprintf("	(avg per search: %v)", avgItersPerSearch)
+		s = statStr(s, "Total hash list iterations", ls.numInoSeqIterations, fmt.Sprintf("(avg per search: %v)", avgItersPerSearch))
 		s = statStr(s, "Total equal comparisons", ls.numEqualComparisons)
 		s = statStr(s, "Total digests computed", ls.numDigestsComputed)
 	}
-	fmt.Println(strings.Join(s, "\n"))
+	printSlices(s)
 }
 
-func statStr(a []string, s string, args ...interface{}) []string {
-	s = fmt.Sprintf("%-27s", s)
-	s = s + ": %v"
-	return append(a, fmt.Sprintf(s, args...))
-}
-
-// padLastN adds spaces to the last N strings in the slice-of-strings s, so
-// that they are all the same length.
-func padLastN(s []string, N int) {
-	if len(s) == 0 || N == 0 {
-		return
+// Add a new row of string colums to the given slice of string slices
+func statStr(a [][]string, args ...interface{}) [][]string {
+	s := make([]string, 0)
+	for _, arg := range args {
+		s = append(s, fmt.Sprintf("%v", arg))
 	}
-	max := 0
-	for i := len(s) - N; i < len(s); i++ {
-		v := len(s[i])
-		if v > max {
-			max = v
+	return append(a, s)
+}
+
+// Columnate printing of a slice of string slices (ie. a list of string
+// columns)
+func printSlices(a [][]string) {
+	numCols := 0
+	for _, c := range a {
+		if len(c) > numCols {
+			numCols = len(c)
 		}
 	}
-	for i := len(s) - N; i < len(s); i++ {
-		pad := strings.Repeat(" ", max-len(s[i]))
-		s[i] += pad
+	colWidths := make([]int, numCols)
+	for _, c := range a {
+		for i, s := range c {
+			if len(s) > colWidths[i] {
+				colWidths[i] = len(s)
+			}
+		}
+	}
+	for _, c := range a {
+		for i, s := range c {
+			if i == 1 {
+				fmt.Print(" :")
+			}
+			if i >= 1 {
+				fmt.Print(" ")
+			}
+			if i >= 2 {
+				fmt.Print(" ")
+			}
+			fmtStr := "%-" + fmt.Sprintf("%v", colWidths[i]) + "s"
+			fmt.Printf(fmtStr, s)
+		}
+		fmt.Println()
 	}
 }
 
+// Return a string with bytecount "humanized" to a shortened amount
 func humanize(n uint64) string {
 	var s string
 	var m string
@@ -386,4 +412,9 @@ func humanize(n uint64) string {
 	}
 
 	return s + m
+}
+
+// Return the humanized number count as a string surrounded by parens
+func humanizeParens(n uint64) string {
+	return fmt.Sprintf("(%v)", humanize(n))
 }
