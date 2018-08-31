@@ -64,7 +64,7 @@ func Run(dirs []string) {
 	} else {
 		MyLinkable.progress = &DisabledProgress{}
 	}
-	Stats.startTime = time.Now()
+	Stats.StartTime = time.Now()
 	c := MatchedPathnames(dirs)
 	for pathname := range c {
 		MyLinkable.progress.ShowDirsFilesFound()
@@ -95,6 +95,6 @@ func Run(dirs []string) {
 			_ = pair
 		}
 	}
-	Stats.endTime = time.Now()
+	Stats.EndTime = time.Now()
 	Stats.outputResults()
 }

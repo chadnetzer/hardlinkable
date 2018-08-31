@@ -49,7 +49,7 @@ type ExistingLink struct {
 	SrcStatinfo StatInfo
 }
 
-type JSONCountingStats struct {
+type CountingStats struct {
 	DirCount                int64  `json:"dirCount"`
 	FileCount               int64  `json:"fileCount"`
 	FileTooSmallCount       int64  `json:"fileTooSmallCount"`
@@ -62,6 +62,9 @@ type JSONCountingStats struct {
 	PrevBytesSaved          uint64 `json:"prevBytesSaved"`
 	NewBytesSaved           uint64 `json:"newBytesSaved"`
 
+	// Some stats on files that compared equal, but which had some
+	// mismatching inode parameters.  This can be helpful for tuning the
+	// command line options on subsequent runs.
 	MismatchedMtimeCount int64  `json:"mismatchedMtimeCount"`
 	MismatchedModeCount  int64  `json:"mismatchedModeCount"`
 	MismatchedUidCount   int64  `json:"mismatchedUidCount"`
@@ -69,6 +72,7 @@ type JSONCountingStats struct {
 	MismatchedXattrCount int64  `json:"mismatchedXattrCount"`
 	MismatchedBytes      uint64 `json:"mismatchedBytes"`
 
+	// Debugging counts
 	EqualComparisonCount int64 `json:"equalComparisonCount"`
 	FoundHashCount       int64 `json:"foundHashCount"`
 	MissedHashCount      int64 `json:"missedHashCount"`
@@ -78,43 +82,10 @@ type JSONCountingStats struct {
 	DigestComputedCount  int64 `json:"digestComputedCount"`
 }
 
-type CountingStats struct {
-	numDirs               int64
-	numFiles              int64
-	numFilesTooSmall      int64
-	numFilesTooLarge      int64
-	numComparisons        int64
-	numEqualComparisons   int64
-	numInodes             int64
-	numInodesConsolidated int64
-	numPrevLinks          int64
-	numNewLinks           int64
-	numPrevBytesSaved     uint64
-	numNewBytesSaved      uint64
-
-	// Some stats on files that compared equal, but which had some
-	// mismatching inode parameters.  This can be helpful for tuning the
-	// command line options on subsequent runs.
-	numMismatchedMtime int64
-	numMismatchedMode  int64
-	numMismatchedUid   int64
-	numMismatchedGid   int64
-	numMismatchedXattr int64
-	numMismatchedBytes uint64
-
-	// Debugging counts
-	numFoundHashes      int64
-	numMissedHashes     int64
-	numHashMismatches   int64
-	numInoSeqSearches   int64
-	numInoSeqIterations int64
-	numDigestsComputed  int64
-}
-
 type LinkingStats struct {
 	CountingStats
-	startTime     time.Time
-	endTime       time.Time
+	StartTime     time.Time
+	EndTime       time.Time
 	linkPairs     []LinkPair
 	existingLinks map[Pathsplit]LinkDestinations
 }
@@ -127,79 +98,79 @@ func NewLinkingStats() LinkingStats {
 }
 
 func (s *LinkingStats) FoundDirectory() {
-	s.numDirs += 1
+	s.DirCount += 1
 }
 
 func (s *LinkingStats) FoundFile() {
-	s.numFiles += 1
+	s.FileCount += 1
 }
 
 func (s *LinkingStats) FoundFileTooSmall() {
-	s.numFilesTooSmall += 1
+	s.FileTooSmallCount += 1
 }
 
 func (s *LinkingStats) FoundFileTooLarge() {
-	s.numFilesTooLarge += 1
+	s.FileTooLargeCount += 1
 }
 
 func (s *LinkingStats) FoundMismatchedMtime() {
-	s.numMismatchedMtime += 1
+	s.MismatchedMtimeCount += 1
 }
 
 func (s *LinkingStats) FoundMismatchedMode() {
-	s.numMismatchedMode += 1
+	s.MismatchedModeCount += 1
 }
 
 func (s *LinkingStats) FoundMismatchedUid() {
-	s.numMismatchedUid += 1
+	s.MismatchedUidCount += 1
 }
 
 func (s *LinkingStats) FoundMismatchedGid() {
-	s.numMismatchedGid += 1
+	s.MismatchedGidCount += 1
 }
 
 func (s *LinkingStats) FoundMismatchedXattr() {
-	s.numMismatchedXattr += 1
+	s.MismatchedXattrCount += 1
 }
 
 func (s *LinkingStats) AddMismatchedBytes(size uint64) {
-	s.numMismatchedBytes += size
+	s.MismatchedBytes += size
 }
 
 func (s *LinkingStats) FoundInode() {
-	s.numInodes += 1
+	s.InodeCount += 1
 }
 
 func (s *LinkingStats) MissedHash() {
-	s.numMissedHashes += 1
+	s.MissedHashCount += 1
 }
 
 func (s *LinkingStats) FoundHash() {
-	s.numFoundHashes += 1
+	s.FoundHashCount += 1
 }
 
 func (s *LinkingStats) SearchedInoSeq() {
-	s.numInoSeqSearches += 1
+	s.InoSeqSearchCount += 1
 }
 
 func (s *LinkingStats) IncInoSeqIterations() {
-	s.numInoSeqIterations += 1
+	s.InoSeqIterationCount += 1
 }
 
 func (s *LinkingStats) NoHashMatch() {
-	s.numHashMismatches += 1
+	s.HashMismatchCount += 1
 }
 
 func (s *LinkingStats) DidComparison() {
-	s.numComparisons += 1
+	s.ComparisonCount += 1
 }
 
 func (s *LinkingStats) FoundEqualFiles() {
-	s.numEqualComparisons += 1
+	s.EqualComparisonCount += 1
 }
 
 func (s *LinkingStats) computedDigest() {
-	s.numDigestsComputed += 1
+	s.DigestComputedCount += 1
 }
 
 func (s *LinkingStats) FoundNewLink(src, dst PathStat) {
@@ -207,16 +178,16 @@ func (s *LinkingStats) FoundNewLink(src, dst PathStat) {
 	// Make optional to save space...
 	s.linkPairs = append(s.linkPairs, linkPair)
 
-	s.numNewLinks += 1
+	s.NewLinkCount += 1
 	if dst.Nlink == 1 {
-		s.numNewBytesSaved += dst.Size
-		s.numInodesConsolidated += 1
+		s.NewBytesSaved += dst.Size
+		s.InodeConsolidationCount += 1
 	}
 }
 
 func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
-	s.numPrevLinks += 1
-	s.numPrevBytesSaved += e.SrcStatinfo.Size
+	s.PrevLinkCount += 1
+	s.PrevBytesSaved += e.SrcStatinfo.Size
 	srcPath := e.Src
 	dstPath := e.Dst
 	srcStatinfo := e.SrcStatinfo
@@ -286,17 +257,17 @@ func (ls *LinkingStats) outputLinkingStats() {
 	s := make([][]string, 0)
 	s = statStr(s, "Hard linking statistics")
 	s = statStr(s, "-----------------------")
-	s = statStr(s, "Directories", ls.numDirs)
-	s = statStr(s, "Files", ls.numFiles)
+	s = statStr(s, "Directories", ls.DirCount)
+	s = statStr(s, "Files", ls.FileCount)
 	if MyOptions.LinkingEnabled {
-		s = statStr(s, "Consolidated inodes", ls.numInodesConsolidated)
-		s = statStr(s, "Hardlinked this run", ls.numNewLinks)
+		s = statStr(s, "Consolidated inodes", ls.InodeConsolidationCount)
+		s = statStr(s, "Hardlinked this run", ls.NewLinkCount)
 	} else {
-		s = statStr(s, "Consolidatable inodes", ls.numInodesConsolidated)
-		s = statStr(s, "Hardlinkable this run", ls.numNewLinks)
+		s = statStr(s, "Consolidatable inodes", ls.InodeConsolidationCount)
+		s = statStr(s, "Hardlinkable this run", ls.NewLinkCount)
 	}
-	s = statStr(s, "Currently linked bytes", ls.numPrevBytesSaved, humanizeParens(ls.numPrevBytesSaved))
-	totalBytes := ls.numPrevBytesSaved + ls.numNewBytesSaved
+	s = statStr(s, "Currently linked bytes", ls.PrevBytesSaved, humanizeParens(ls.PrevBytesSaved))
+	totalBytes := ls.PrevBytesSaved + ls.NewBytesSaved
 	var s1, s2 string
 	if MyOptions.LinkingEnabled {
 		s1 = "Additional linked bytes"
@@ -306,62 +277,62 @@ func (ls *LinkingStats) outputLinkingStats() {
 		s2 = "Total linkable bytes"
 	}
 	// Append some humanized size values to the byte string outputs
-	s = statStr(s, s1, ls.numNewBytesSaved, humanizeParens(ls.numNewBytesSaved))
+	s = statStr(s, s1, ls.NewBytesSaved, humanizeParens(ls.NewBytesSaved))
 	s = statStr(s, s2, totalBytes, humanizeParens(totalBytes))
 
-	duration := ls.endTime.Sub(ls.startTime)
+	duration := ls.EndTime.Sub(ls.StartTime)
 	s = statStr(s, "Total run time", duration.Round(time.Millisecond).String())
 
-	totalLinks := ls.numPrevLinks + ls.numNewLinks
+	totalLinks := ls.PrevLinkCount + ls.NewLinkCount
 	if MyOptions.Verbosity > 0 || MyOptions.DebugLevel > 0 {
-		s = statStr(s, "Comparisons", ls.numComparisons)
-		s = statStr(s, "Inodes", ls.numInodes)
-		s = statStr(s, "Current links", ls.numPrevLinks)
+		s = statStr(s, "Comparisons", ls.ComparisonCount)
+		s = statStr(s, "Inodes", ls.InodeCount)
+		s = statStr(s, "Current links", ls.PrevLinkCount)
 		s = statStr(s, "Total old + new links", totalLinks)
-		if ls.numFilesTooLarge > 0 {
-			s = statStr(s, "Total too large files", ls.numFilesTooLarge)
+		if ls.FileTooLargeCount > 0 {
+			s = statStr(s, "Total too large files", ls.FileTooLargeCount)
 		}
-		if ls.numFilesTooSmall > 0 {
-			s = statStr(s, "Total too small files", ls.numFilesTooSmall)
+		if ls.FileTooSmallCount > 0 {
+			s = statStr(s, "Total too small files", ls.FileTooSmallCount)
 		}
-		if ls.numMismatchedMtime > 0 {
-			s = statStr(s, "Equal files w/ unequal time", ls.numMismatchedMtime)
+		if ls.MismatchedMtimeCount > 0 {
+			s = statStr(s, "Equal files w/ unequal time", ls.MismatchedMtimeCount)
 		}
-		if ls.numMismatchedMode > 0 {
-			s = statStr(s, "Equal files w/ unequal mode", ls.numMismatchedMode)
+		if ls.MismatchedModeCount > 0 {
+			s = statStr(s, "Equal files w/ unequal mode", ls.MismatchedModeCount)
 		}
-		if ls.numMismatchedUid > 0 {
-			s = statStr(s, "Equal files w/ unequal uid", ls.numMismatchedUid)
+		if ls.MismatchedUidCount > 0 {
+			s = statStr(s, "Equal files w/ unequal uid", ls.MismatchedUidCount)
 		}
-		if ls.numMismatchedGid > 0 {
-			s = statStr(s, "Equal files w/ unequal gid", ls.numMismatchedGid)
+		if ls.MismatchedGidCount > 0 {
+			s = statStr(s, "Equal files w/ unequal gid", ls.MismatchedGidCount)
 		}
-		if ls.numMismatchedXattr > 0 {
-			s = statStr(s, "Equal files w/ unequal xattr", ls.numMismatchedXattr)
+		if ls.MismatchedXattrCount > 0 {
+			s = statStr(s, "Equal files w/ unequal xattr", ls.MismatchedXattrCount)
 		}
-		if ls.numMismatchedBytes > 0 {
+		if ls.MismatchedBytes > 0 {
 			s = statStr(s, "Total mismatched file bytes",
-				ls.numMismatchedBytes, humanizeParens(ls.numMismatchedBytes))
+				ls.MismatchedBytes, humanizeParens(ls.MismatchedBytes))
 		}
 
-		remainingInodes := ls.numInodes - ls.numInodesConsolidated
+		remainingInodes := ls.InodeCount - ls.InodeConsolidationCount
 		s = statStr(s, "Total remaining inodes", remainingInodes)
 	}
 	if MyOptions.DebugLevel > 0 {
 		// add additional stat output onto the last string
-		s = statStr(s, "Total file hash hits", ls.numFoundHashes,
-			fmt.Sprintf("misses: %v  sum total: %v", ls.numMissedHashes, ls.numFoundHashes+ls.numMissedHashes))
-		s = statStr(s, "Total hash mismatches", ls.numHashMismatches,
-			fmt.Sprintf("(+ total links: %v)", ls.numHashMismatches+totalLinks))
-		s = statStr(s, "Total hash searches", ls.numInoSeqSearches)
+		s = statStr(s, "Total file hash hits", ls.FoundHashCount,
+			fmt.Sprintf("misses: %v  sum total: %v", ls.MissedHashCount, ls.FoundHashCount+ls.MissedHashCount))
+		s = statStr(s, "Total hash mismatches", ls.HashMismatchCount,
+			fmt.Sprintf("(+ total links: %v)", ls.HashMismatchCount+totalLinks))
+		s = statStr(s, "Total hash searches", ls.InoSeqSearchCount)
 		avgItersPerSearch := "N/A"
-		if ls.numInoSeqIterations > 0 {
-			avg := float64(ls.numInoSeqIterations) / float64(ls.numInoSeqSearches)
+		if ls.InoSeqIterationCount > 0 {
+			avg := float64(ls.InoSeqIterationCount) / float64(ls.InoSeqSearchCount)
 			avgItersPerSearch = fmt.Sprintf("%.1f", avg)
 		}
-		s = statStr(s, "Total hash list iterations", ls.numInoSeqIterations, fmt.Sprintf("(avg per search: %v)", avgItersPerSearch))
-		s = statStr(s, "Total equal comparisons", ls.numEqualComparisons)
-		s = statStr(s, "Total digests computed", ls.numDigestsComputed)
+		s = statStr(s, "Total hash list iterations", ls.InoSeqIterationCount, fmt.Sprintf("(avg per search: %v)", avgItersPerSearch))
+		s = statStr(s, "Total equal comparisons", ls.EqualComparisonCount)
+		s = statStr(s, "Total digests computed", ls.DigestComputedCount)
 	}
 	printSlices(s)
 }
