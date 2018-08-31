@@ -49,6 +49,35 @@ type ExistingLink struct {
 	SrcStatinfo StatInfo
 }
 
+type JSONCountingStats struct {
+	DirCount                int64  `json:"dirCount"`
+	FileCount               int64  `json:"fileCount"`
+	FileTooSmallCount       int64  `json:"fileTooSmallCount"`
+	FileTooLargeCount       int64  `json:"fileTooLargeCount"`
+	ComparisonCount         int64  `json:"comparisonCount"`
+	InodeCount              int64  `json:"inodeCount"`
+	InodeConsolidationCount int64  `json:"inodeConsolidationCount"`
+	PrevLinkCount           int64  `json:"prevLinkCount"`
+	NewLinkCount            int64  `json:"newLinkCount"`
+	PrevBytesSaved          uint64 `json:"prevBytesSaved"`
+	NewBytesSaved           uint64 `json:"newBytesSaved"`
+
+	MismatchedMtimeCount int64  `json:"mismatchedMtimeCount"`
+	MismatchedModeCount  int64  `json:"mismatchedModeCount"`
+	MismatchedUidCount   int64  `json:"mismatchedUidCount"`
+	MismatchedGidCount   int64  `json:"mismatchedGidCount"`
+	MismatchedXattrCount int64  `json:"mismatchedXattrCount"`
+	MismatchedBytes      uint64 `json:"mismatchedBytes"`
+
+	EqualComparisonCount int64 `json:"equalComparisonCount"`
+	FoundHashCount       int64 `json:"foundHashCount"`
+	MissedHashCount      int64 `json:"missedHashCount"`
+	HashMismatchCount    int64 `json:"hashMismatchCount"`
+	InoSeqSearchCount    int64 `json:"inoSeqSearchCount"`
+	InoSeqIterationCount int64 `json:"inoSeqIterationCount"`
+	DigestComputedCount  int64 `json:"digestComputedCount"`
+}
+
 type CountingStats struct {
 	numDirs               int64
 	numFiles              int64
