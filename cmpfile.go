@@ -27,7 +27,6 @@ import (
 )
 
 func areFileContentsEqual(pathname1, pathname2 string) (bool, error) {
-	var openErr error
 	f1, openErr := os.Open(pathname1)
 	if openErr != nil {
 		return false, openErr
@@ -51,13 +50,13 @@ func cmpReaderContents(r1, r2 io.Reader) (bool, error) {
 	buf2 := make([]byte, bufSize)
 
 	for {
-		n1, err1 := r1.Read(buf1)
-		if err1 != nil && err1 != io.EOF {
-			return false, err1
+		n1, err := r1.Read(buf1)
+		if err != nil && err != io.EOF {
+			return false, err
 		}
-		n2, err2 := r2.Read(buf2)
-		if err2 != nil && err2 != io.EOF {
-			return false, err2
+		n2, err := r2.Read(buf2)
+		if err != nil && err != io.EOF {
+			return false, err
 		}
 
 		if n1 != n2 {

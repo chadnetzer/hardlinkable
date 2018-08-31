@@ -43,15 +43,14 @@ func TestEqualXattrs(t *testing.T) {
 		t.Fatalf("Couldn't chdir to temp dir for equal Xattr tests")
 	}
 
-	var f1, f2 *os.File
-	f1, err = ioutil.TempFile(dir, "f1")
+	f1, err := ioutil.TempFile(dir, "f1")
 	if err != nil {
 		t.Fatalf("Couldn't create temp file for equal Xattr tests: %v", err)
 	}
 	if useDefer {
 		defer os.Remove(f1.Name())
 	}
-	f2, err = ioutil.TempFile(dir, "f2")
+	f2, err := ioutil.TempFile(dir, "f2")
 	if err != nil {
 		t.Fatalf("Couldn't create temp file for equal Xattr tests: %v", err)
 	}

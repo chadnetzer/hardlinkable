@@ -55,8 +55,7 @@ func MaxNlink(pathname string) uint64 {
 
 	outStr := strings.TrimSpace(string(out))
 
-	var maxNlinks uint64
-	maxNlinks, err = strconv.ParseUint(outStr, 10, 64)
+	maxNlinks, err := strconv.ParseUint(outStr, 10, 64)
 	if err != nil {
 		return returnVal
 	}

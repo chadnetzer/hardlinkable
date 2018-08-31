@@ -26,12 +26,9 @@ import (
 )
 
 func TestFileContentComparison(t *testing.T) {
-	var eq bool
-	var err error
-
 	R := strings.NewReader
 
-	eq, err = cmpReaderContents(R(""), R(""))
+	eq, err := cmpReaderContents(R(""), R(""))
 	if !eq || err != nil {
 		t.Errorf("Zero length cmpContents() compared unequal")
 	}
