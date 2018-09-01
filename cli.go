@@ -116,7 +116,7 @@ func init() {
 	flg.Uint64VarP(&o.MaxFileSize, "max-size", "Z", 0, "Maximum file size")
 
 	flg.StringP("match", "m", "", "Regular expression used to match files")
-	flg.StringP("exclude", "x", "", "Regular expression used to exclude files/dirs")
+	flg.StringArrayVarP(&o.Excludes, "exclude", "x", nil, "Regex used to exclude files/dirs")
 
 	// Hidden options
 	flg.CountVarP(&o.DebugLevel, "debug", "d", "Increase debugging level")

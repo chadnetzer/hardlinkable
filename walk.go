@@ -22,6 +22,8 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
+	"regexp"
 
 	"github.com/karrick/godirwalk"
 )
@@ -35,9 +37,16 @@ func MatchedPathnames(directories []string) <-chan string {
 			err := godirwalk.Walk(dir, &godirwalk.Options{
 				Callback: func(osPathname string, de *godirwalk.Dirent) error {
 					if de.ModeType().IsDir() {
+						// Do not exclude dirs provided explicitly by the user
+						if dir != osPathname &&
+							isExcluded(de.Name(), MyOptions.Excludes) {
+							return filepath.SkipDir
+						}
 						Stats.FoundDirectory()
 					} else if de.ModeType().IsRegular() {
-						out <- osPathname
+						if !isExcluded(de.Name(), MyOptions.Excludes) {
+							out <- osPathname
+						}
 					}
 					return nil
 				},
@@ -48,4 +57,14 @@ func MatchedPathnames(directories []string) <-chan string {
 		}
 	}()
 	return out
+}
+
+func isExcluded(name string, pattern []string) bool {
+	for _, p := range pattern {
+		matched, err := regexp.MatchString(p, name)
+		if matched && err == nil {
+			return true
+		}
+	}
+	return false
 }
