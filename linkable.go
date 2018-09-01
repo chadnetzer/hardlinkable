@@ -96,5 +96,9 @@ func Run(dirs []string) {
 		}
 	}
 	Stats.EndTime = time.Now()
-	Stats.outputResults()
+	if MyOptions.JSONOutputEnabled {
+		Stats.outputJSONResults()
+	} else {
+		Stats.outputResults()
+	}
 }
