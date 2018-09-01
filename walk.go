@@ -39,12 +39,12 @@ func MatchedPathnames(directories []string) <-chan string {
 					if de.ModeType().IsDir() {
 						// Do not exclude dirs provided explicitly by the user
 						if dir != osPathname &&
-							isExcluded(de.Name(), MyOptions.Excludes) {
+							isExcluded(de.Name(), MyOptions.DirExcludes) {
 							return filepath.SkipDir
 						}
 						Stats.FoundDirectory()
 					} else if de.ModeType().IsRegular() {
-						if !isExcluded(de.Name(), MyOptions.Excludes) {
+						if !isExcluded(de.Name(), MyOptions.FileExcludes) {
 							out <- osPathname
 						}
 					}
