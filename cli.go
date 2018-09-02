@@ -21,12 +21,9 @@
 package main
 
 import (
-	"bytes"
-	"encoding/csv"
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -55,36 +52,24 @@ func (c *CLIOptions) NewOptions() Options {
 	return options
 }
 
-// Create custom pflag var type (based on StringArray), so that Type() returns
-// custom string for UnquoteUsage(). pflag doesn't export it's custom Values,
-// so we essentially reimplement it here.
+// Custom pflag Value displays "RE" instead of "stringArray" in usage text
 type RegexArray struct {
 	flag.Value // "inherit" Value interface
 	vals       []string
 }
 
+// Return the string "<nil>" to disable default usage text
 func (r *RegexArray) String() string {
-	// In order to satisfy the requirement for the default value being
-	// zero, we must return the string "<nil>" (instead of "[]").
-	if r.vals == nil {
-		return "<nil>"
-	}
-	b := &bytes.Buffer{}
-	w := csv.NewWriter(b)
-	err := w.Write(r.vals)
-	if err != nil {
-		return ""
-	}
-	w.Flush()
-	s := "[" + strings.TrimSuffix(b.String(), "\n") + "]"
-	return s
+	return "<nil>"
 }
 
+// Implement StringArray Value Set semantics
 func (r *RegexArray) Set(val string) error {
 	r.vals = append(r.vals, val)
 	return nil
 }
 
+// Return "RE" instead of "stringArray" for usage text
 func (r *RegexArray) Type() string { return "RE" }
 
 var cfgFile string
