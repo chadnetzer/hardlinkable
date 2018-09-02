@@ -21,6 +21,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -37,6 +38,8 @@ import (
 type CLIOptions struct {
 	StatsOutputDisabled    bool
 	ProgressOutputDisabled bool
+	CLIFileExcludes        RegexArray
+	CLIDirExcludes         RegexArray
 	Options
 }
 
@@ -44,8 +47,30 @@ func (c *CLIOptions) NewOptions() Options {
 	options := c.Options
 	options.StatsOutputEnabled = !c.StatsOutputDisabled
 	options.ProgressOutputEnabled = !c.ProgressOutputDisabled
+	options.FileExcludes = c.CLIFileExcludes.vals
+	options.DirExcludes = c.CLIDirExcludes.vals
 	return options
 }
+
+// Custom pflag Value displays "RE" instead of "stringArray" in usage text
+type RegexArray struct {
+	flag.Value // "inherit" Value interface
+	vals       []string
+}
+
+// Return the string "<nil>" to disable default usage text
+func (r *RegexArray) String() string {
+	return "<nil>"
+}
+
+// Implement StringArray Value Set semantics
+func (r *RegexArray) Set(val string) error {
+	r.vals = append(r.vals, val)
+	return nil
+}
+
+// Return "RE" instead of "stringArray" for usage text
+func (r *RegexArray) Type() string { return "RE" }
 
 var cfgFile string
 var MyCLIOptions CLIOptions
@@ -116,7 +141,8 @@ func init() {
 	flg.Uint64VarP(&o.MaxFileSize, "max-size", "Z", 0, "Maximum file size")
 
 	flg.StringP("match", "m", "", "Regular expression used to match files")
-	flg.StringP("exclude", "x", "", "Regular expression used to exclude files/dirs")
+	flg.VarP(&o.CLIFileExcludes, "exclude", "x", "Regex(es) used to exclude files")
+	flg.VarP(&o.CLIDirExcludes, "exclude-dir", "X", "Regex(es) used to exclude dirs")
 
 	// Hidden options
 	flg.CountVarP(&o.DebugLevel, "debug", "d", "Increase debugging level")

@@ -36,6 +36,8 @@ type Options struct {
 	DebugLevel            int
 	MinFileSize           uint64
 	MaxFileSize           uint64
+	FileExcludes          []string
+	DirExcludes           []string
 }
 
 var MyOptions *Options
