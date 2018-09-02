@@ -21,8 +21,12 @@
 package main
 
 import (
+	"bytes"
+	"encoding/csv"
+	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -37,6 +41,8 @@ import (
 type CLIOptions struct {
 	StatsOutputDisabled    bool
 	ProgressOutputDisabled bool
+	CLIFileExcludes        RegexArray
+	CLIDirExcludes         RegexArray
 	Options
 }
 
@@ -44,8 +50,42 @@ func (c *CLIOptions) NewOptions() Options {
 	options := c.Options
 	options.StatsOutputEnabled = !c.StatsOutputDisabled
 	options.ProgressOutputEnabled = !c.ProgressOutputDisabled
+	options.FileExcludes = c.CLIFileExcludes.vals
+	options.DirExcludes = c.CLIDirExcludes.vals
 	return options
 }
+
+// Create custom pflag var type (based on StringArray), so that Type() returns
+// custom string for UnquoteUsage(). pflag doesn't export it's custom Values,
+// so we essentially reimplement it here.
+type RegexArray struct {
+	flag.Value // "inherit" Value interface
+	vals       []string
+}
+
+func (r *RegexArray) String() string {
+	// In order to satisfy the requirement for the default value being
+	// zero, we must return the string "<nil>" (instead of "[]").
+	if r.vals == nil {
+		return "<nil>"
+	}
+	b := &bytes.Buffer{}
+	w := csv.NewWriter(b)
+	err := w.Write(r.vals)
+	if err != nil {
+		return ""
+	}
+	w.Flush()
+	s := "[" + strings.TrimSuffix(b.String(), "\n") + "]"
+	return s
+}
+
+func (r *RegexArray) Set(val string) error {
+	r.vals = append(r.vals, val)
+	return nil
+}
+
+func (r *RegexArray) Type() string { return "RE" }
 
 var cfgFile string
 var MyCLIOptions CLIOptions
@@ -116,8 +156,8 @@ func init() {
 	flg.Uint64VarP(&o.MaxFileSize, "max-size", "Z", 0, "Maximum file size")
 
 	flg.StringP("match", "m", "", "Regular expression used to match files")
-	flg.StringArrayVarP(&o.FileExcludes, "exclude", "x", nil, "Regex used to exclude files")
-	flg.StringArrayVarP(&o.DirExcludes, "exclude-dir", "X", nil, "Regex used to exclude dirs")
+	flg.VarP(&o.CLIFileExcludes, "exclude", "x", "Regex(es) used to exclude files")
+	flg.VarP(&o.CLIDirExcludes, "exclude-dir", "X", "Regex(es) used to exclude dirs")
 
 	// Hidden options
 	flg.CountVarP(&o.DebugLevel, "debug", "d", "Increase debugging level")
