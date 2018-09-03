@@ -29,7 +29,7 @@ import (
 )
 
 // Return allowed pathnames through the given channel.
-func MatchedPathnames(directories []string) <-chan string {
+func MatchedPathnames(directories []string, options Options) <-chan string {
 	out := make(chan string)
 	go func() {
 		defer close(out)
@@ -38,7 +38,7 @@ func MatchedPathnames(directories []string) <-chan string {
 				Callback: func(osPathname string, de *godirwalk.Dirent) error {
 					if de.ModeType().IsDir() {
 						dirname := de.Name()
-						dirExcludes := MyOptions.DirExcludes
+						dirExcludes := options.DirExcludes
 						// Do not exclude dirs provided explicitly by the user
 						if dir != osPathname && isMatched(dirname, dirExcludes) {
 							return filepath.SkipDir
@@ -46,8 +46,8 @@ func MatchedPathnames(directories []string) <-chan string {
 						Stats.FoundDirectory()
 					} else if de.ModeType().IsRegular() {
 						filename := de.Name()
-						fileIncludes := MyOptions.FileIncludes
-						fileExcludes := MyOptions.FileExcludes
+						fileIncludes := options.FileIncludes
+						fileExcludes := options.FileExcludes
 						// When excludes is not empty, include can override an exclude
 						if (len(fileExcludes) == 0 && len(fileIncludes) == 0) ||
 							(len(fileIncludes) > 0 && isMatched(filename, fileIncludes)) ||
