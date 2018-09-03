@@ -38,6 +38,7 @@ import (
 type CLIOptions struct {
 	StatsOutputDisabled    bool
 	ProgressOutputDisabled bool
+	CLIFileIncludes        RegexArray
 	CLIFileExcludes        RegexArray
 	CLIDirExcludes         RegexArray
 	Options
@@ -47,6 +48,7 @@ func (c *CLIOptions) NewOptions() Options {
 	options := c.Options
 	options.StatsOutputEnabled = !c.StatsOutputDisabled
 	options.ProgressOutputEnabled = !c.ProgressOutputDisabled
+	options.FileIncludes = c.CLIFileIncludes.vals
 	options.FileExcludes = c.CLIFileExcludes.vals
 	options.DirExcludes = c.CLIDirExcludes.vals
 	return options
@@ -140,7 +142,7 @@ func init() {
 	flg.Uint64VarP(&o.MinFileSize, "min-size", "z", 1, "Minimum file size")
 	flg.Uint64VarP(&o.MaxFileSize, "max-size", "Z", 0, "Maximum file size")
 
-	flg.StringP("match", "m", "", "Regular expression used to match files")
+	flg.VarP(&o.CLIFileIncludes, "include", "i", "Regex(es) used to include files (overrides excludes)")
 	flg.VarP(&o.CLIFileExcludes, "exclude", "x", "Regex(es) used to exclude files")
 	flg.VarP(&o.CLIDirExcludes, "exclude-dir", "X", "Regex(es) used to exclude dirs")
 
