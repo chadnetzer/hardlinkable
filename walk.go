@@ -29,7 +29,7 @@ import (
 )
 
 // Return allowed pathnames through the given channel.
-func MatchedPathnames(directories []string) <-chan string {
+func MatchedPathnames(directories []string, options Options) <-chan string {
 	out := make(chan string)
 	go func() {
 		defer close(out)
@@ -37,14 +37,21 @@ func MatchedPathnames(directories []string) <-chan string {
 			err := godirwalk.Walk(dir, &godirwalk.Options{
 				Callback: func(osPathname string, de *godirwalk.Dirent) error {
 					if de.ModeType().IsDir() {
+						dirname := de.Name()
+						dirExcludes := options.DirExcludes
 						// Do not exclude dirs provided explicitly by the user
-						if dir != osPathname &&
-							isExcluded(de.Name(), MyOptions.DirExcludes) {
+						if dir != osPathname && isMatched(dirname, dirExcludes) {
 							return filepath.SkipDir
 						}
 						Stats.FoundDirectory()
 					} else if de.ModeType().IsRegular() {
-						if !isExcluded(de.Name(), MyOptions.FileExcludes) {
+						filename := de.Name()
+						fileIncludes := options.FileIncludes
+						fileExcludes := options.FileExcludes
+						// When excludes is not empty, include can override an exclude
+						if (len(fileExcludes) == 0 && len(fileIncludes) == 0) ||
+							(len(fileIncludes) > 0 && isMatched(filename, fileIncludes)) ||
+							(len(fileExcludes) > 0 && !isMatched(filename, fileExcludes)) {
 							out <- osPathname
 						}
 					}
@@ -59,7 +66,9 @@ func MatchedPathnames(directories []string) <-chan string {
 	return out
 }
 
-func isExcluded(name string, pattern []string) bool {
+// isMatched() returns true if name matches any of the patterns, and false
+// otherwise (or if there are no patterns).
+func isMatched(name string, pattern []string) bool {
 	for _, p := range pattern {
 		matched, err := regexp.MatchString(p, name)
 		if matched && err == nil {
