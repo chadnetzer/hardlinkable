@@ -373,28 +373,23 @@ func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat, useDigest bool
 		// equal, but which have some mismatched inode parameters.
 		addMismatchTotalBytes := false
 		if !(ps1.Sec == ps2.Sec && ps1.Nsec == ps2.Nsec) {
-			Stats.FoundMismatchedMtime()
 			Stats.AddMismatchedMtimeBytes(ps1.Size)
 			addMismatchTotalBytes = true
 		}
 		if ps1.Mode.Perm() != ps2.Mode.Perm() {
-			Stats.FoundMismatchedMode()
 			Stats.AddMismatchedModeBytes(ps1.Size)
 			addMismatchTotalBytes = true
 		}
 		if ps1.Uid != ps2.Uid {
-			Stats.FoundMismatchedUid()
 			Stats.AddMismatchedUidBytes(ps1.Size)
 			addMismatchTotalBytes = true
 		}
 		if ps1.Gid != ps2.Gid {
-			Stats.FoundMismatchedGid()
 			Stats.AddMismatchedGidBytes(ps1.Size)
 			addMismatchTotalBytes = true
 		}
 		eq, err := equalXAttrs(ps1.Join(), ps2.Join())
 		if err == nil && !eq {
-			Stats.FoundMismatchedXattr()
 			Stats.AddMismatchedXattrBytes(ps1.Size)
 			addMismatchTotalBytes = true
 		}

@@ -118,43 +118,28 @@ func (s *LinkingStats) FoundFileTooLarge() {
 	s.FileTooLargeCount += 1
 }
 
-func (s *LinkingStats) FoundMismatchedMtime() {
-	s.MismatchedMtimeCount += 1
-}
-
-func (s *LinkingStats) FoundMismatchedMode() {
-	s.MismatchedModeCount += 1
-}
-
-func (s *LinkingStats) FoundMismatchedUid() {
-	s.MismatchedUidCount += 1
-}
-
-func (s *LinkingStats) FoundMismatchedGid() {
-	s.MismatchedGidCount += 1
-}
-
-func (s *LinkingStats) FoundMismatchedXattr() {
-	s.MismatchedXattrCount += 1
-}
-
 func (s *LinkingStats) AddMismatchedMtimeBytes(size uint64) {
+	s.MismatchedMtimeCount += 1
 	s.MismatchedMtimeBytes += size
 }
 
 func (s *LinkingStats) AddMismatchedModeBytes(size uint64) {
+	s.MismatchedModeCount += 1
 	s.MismatchedModeBytes += size
 }
 
 func (s *LinkingStats) AddMismatchedUidBytes(size uint64) {
+	s.MismatchedUidCount += 1
 	s.MismatchedUidBytes += size
 }
 
 func (s *LinkingStats) AddMismatchedGidBytes(size uint64) {
+	s.MismatchedGidCount += 1
 	s.MismatchedGidBytes += size
 }
 
 func (s *LinkingStats) AddMismatchedXattrBytes(size uint64) {
+	s.MismatchedXattrCount += 1
 	s.MismatchedXattrBytes += size
 }
 
