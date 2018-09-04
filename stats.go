@@ -70,7 +70,13 @@ type CountingStats struct {
 	MismatchedUidCount   int64  `json:"mismatchedUidCount"`
 	MismatchedGidCount   int64  `json:"mismatchedGidCount"`
 	MismatchedXattrCount int64  `json:"mismatchedXattrCount"`
-	MismatchedBytes      uint64 `json:"mismatchedBytes"`
+	MismatchedTotalCount int64  `json:"mismatchedTotalCount"`
+	MismatchedMtimeBytes uint64 `json:"mismatchedMtimeBytes"`
+	MismatchedModeBytes  uint64 `json:"mismatchedModeBytes"`
+	MismatchedUidBytes   uint64 `json:"mismatchedUidBytes"`
+	MismatchedGidBytes   uint64 `json:"mismatchedGidBytes"`
+	MismatchedXattrBytes uint64 `json:"mismatchedXattrBytes"`
+	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
 
 	// Debugging counts
 	EqualComparisonCount int64 `json:"equalComparisonCount"`
@@ -113,28 +119,34 @@ func (s *LinkingStats) FoundFileTooLarge() {
 	s.FileTooLargeCount += 1
 }
 
-func (s *LinkingStats) FoundMismatchedMtime() {
+func (s *LinkingStats) AddMismatchedMtimeBytes(size uint64) {
 	s.MismatchedMtimeCount += 1
+	s.MismatchedMtimeBytes += size
 }
 
-func (s *LinkingStats) FoundMismatchedMode() {
+func (s *LinkingStats) AddMismatchedModeBytes(size uint64) {
 	s.MismatchedModeCount += 1
+	s.MismatchedModeBytes += size
 }
 
-func (s *LinkingStats) FoundMismatchedUid() {
+func (s *LinkingStats) AddMismatchedUidBytes(size uint64) {
 	s.MismatchedUidCount += 1
+	s.MismatchedUidBytes += size
 }
 
-func (s *LinkingStats) FoundMismatchedGid() {
+func (s *LinkingStats) AddMismatchedGidBytes(size uint64) {
 	s.MismatchedGidCount += 1
+	s.MismatchedGidBytes += size
 }
 
-func (s *LinkingStats) FoundMismatchedXattr() {
+func (s *LinkingStats) AddMismatchedXattrBytes(size uint64) {
 	s.MismatchedXattrCount += 1
+	s.MismatchedXattrBytes += size
 }
 
-func (s *LinkingStats) AddMismatchedBytes(size uint64) {
-	s.MismatchedBytes += size
+func (s *LinkingStats) AddMismatchedTotalBytes(size uint64) {
+	s.MismatchedTotalCount += 1
+	s.MismatchedTotalBytes += size
 }
 
 func (s *LinkingStats) FoundInode() {
@@ -296,23 +308,28 @@ func (ls *LinkingStats) outputLinkingStats() {
 			s = statStr(s, "Total too small files", ls.FileTooSmallCount)
 		}
 		if ls.MismatchedMtimeCount > 0 {
-			s = statStr(s, "Equal files w/ unequal time", ls.MismatchedMtimeCount)
+			s = statStr(s, "Equal files w/ unequal time", ls.MismatchedMtimeCount,
+				humanizeParens(ls.MismatchedMtimeBytes))
 		}
 		if ls.MismatchedModeCount > 0 {
-			s = statStr(s, "Equal files w/ unequal mode", ls.MismatchedModeCount)
+			s = statStr(s, "Equal files w/ unequal mode", ls.MismatchedModeCount,
+				humanizeParens(ls.MismatchedModeBytes))
 		}
 		if ls.MismatchedUidCount > 0 {
-			s = statStr(s, "Equal files w/ unequal uid", ls.MismatchedUidCount)
+			s = statStr(s, "Equal files w/ unequal uid", ls.MismatchedUidCount,
+				humanizeParens(ls.MismatchedUidBytes))
 		}
 		if ls.MismatchedGidCount > 0 {
-			s = statStr(s, "Equal files w/ unequal gid", ls.MismatchedGidCount)
+			s = statStr(s, "Equal files w/ unequal gid", ls.MismatchedGidCount,
+				humanizeParens(ls.MismatchedGidBytes))
 		}
 		if ls.MismatchedXattrCount > 0 {
-			s = statStr(s, "Equal files w/ unequal xattr", ls.MismatchedXattrCount)
+			s = statStr(s, "Equal files w/ unequal xattr", ls.MismatchedXattrCount,
+				humanizeParens(ls.MismatchedXattrBytes))
 		}
-		if ls.MismatchedBytes > 0 {
-			s = statStr(s, "Total mismatched file bytes",
-				ls.MismatchedBytes, humanizeParens(ls.MismatchedBytes))
+		if ls.MismatchedTotalBytes > 0 {
+			s = statStr(s, "Total equal file mismatches", ls.MismatchedTotalCount,
+				humanizeParens(ls.MismatchedTotalBytes))
 		}
 
 		remainingInodes := ls.InodeCount - ls.InodeConsolidationCount
@@ -321,7 +338,8 @@ func (ls *LinkingStats) outputLinkingStats() {
 	if MyOptions.DebugLevel > 0 {
 		// add additional stat output onto the last string
 		s = statStr(s, "Total file hash hits", ls.FoundHashCount,
-			fmt.Sprintf("misses: %v  sum total: %v", ls.MissedHashCount, ls.FoundHashCount+ls.MissedHashCount))
+			fmt.Sprintf("misses: %v  sum total: %v", ls.MissedHashCount,
+				ls.FoundHashCount+ls.MissedHashCount))
 		s = statStr(s, "Total hash mismatches", ls.HashMismatchCount,
 			fmt.Sprintf("(+ total links: %v)", ls.HashMismatchCount+totalLinks))
 		s = statStr(s, "Total hash searches", ls.InoSeqSearchCount)
@@ -330,7 +348,8 @@ func (ls *LinkingStats) outputLinkingStats() {
 			avg := float64(ls.InoSeqIterationCount) / float64(ls.InoSeqSearchCount)
 			avgItersPerSearch = fmt.Sprintf("%.1f", avg)
 		}
-		s = statStr(s, "Total hash list iterations", ls.InoSeqIterationCount, fmt.Sprintf("(avg per search: %v)", avgItersPerSearch))
+		s = statStr(s, "Total hash list iterations", ls.InoSeqIterationCount,
+			fmt.Sprintf("(avg per search: %v)", avgItersPerSearch))
 		s = statStr(s, "Total equal comparisons", ls.EqualComparisonCount)
 		s = statStr(s, "Total digests computed", ls.DigestComputedCount)
 	}
