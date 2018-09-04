@@ -113,10 +113,10 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 		Stats.FoundInode()
 	}
 
-	inoHash := InoHash(statInfo, MyOptions)
-	if _, ok := f.InoHashes[inoHash]; !ok {
+	H := InoHash(statInfo, MyOptions)
+	if _, ok := f.InoHashes[H]; !ok {
 		Stats.MissedHash()
-		f.InoHashes[inoHash] = NewInoSet(statInfo.Ino)
+		f.InoHashes[H] = NewInoSet(statInfo.Ino)
 	} else {
 		Stats.FoundHash()
 		if _, ok := f.InoStatInfo[statInfo.Ino]; ok {
@@ -127,7 +127,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 			Stats.FoundExistingLink(existingLinkInfo)
 		}
 		linkedInos := f.linkedInoSet(statInfo.Ino)
-		hashedInos := f.InoHashes[inoHash]
+		hashedInos := f.InoHashes[H]
 		linkedHashedInos := linkedInos.Intersection(hashedInos)
 		foundLinkedHashedInos := len(linkedHashedInos) > 0
 		if !foundLinkedHashedInos {
@@ -171,7 +171,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 			}
 			if !loopEndedEarly {
 				Stats.NoHashMatch()
-				inoSet := f.InoHashes[inoHash]
+				inoSet := f.InoHashes[H]
 				inoSet.Add(statInfo.Ino)
 				f.InoStatInfo[statInfo.Ino] = statInfo
 			}
