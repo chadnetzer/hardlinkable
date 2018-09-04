@@ -163,7 +163,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 			for _, cachedIno := range cachedInoSeq {
 				Stats.IncInoSeqIterations()
 				cachedPathStat := f.PathStatFromIno(cachedIno)
-				if f.areFilesHardlinkable(cachedPathStat, curPathStat, useDigest) {
+				if f.areFilesLinkable(cachedPathStat, curPathStat, useDigest) {
 					loopEndedEarly = true
 					f.addLinkableInos(cachedPathStat.Ino, curPathStat.Ino)
 					break
@@ -327,7 +327,7 @@ func (f *FSDev) addLinkableInos(ino1, ino2 Ino) {
 	}
 }
 
-func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat, useDigest bool) bool {
+func (fs *FSDev) areFilesLinkable(ps1 PathStat, ps2 PathStat, useDigest bool) bool {
 	// Dev is equal for both PathStats
 	if ps1.Ino == ps2.Ino {
 		return false
