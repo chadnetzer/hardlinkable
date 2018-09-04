@@ -115,10 +115,12 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 
 	H := InoHash(statInfo, MyOptions)
 	if _, ok := f.InoHashes[H]; !ok {
+		// Setup for a newly seen hash value
 		Stats.MissedHash()
 		f.InoHashes[H] = NewInoSet(statInfo.Ino)
 	} else {
 		Stats.FoundHash()
+		// See if the new file is an inode we've seen before
 		if _, ok := f.InoStatInfo[statInfo.Ino]; ok {
 			prevPath := f.ArbitraryPath(statInfo.Ino)
 			prevStatinfo := f.InoStatInfo[statInfo.Ino]
@@ -126,13 +128,18 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 			existingLinkInfo := ExistingLink{linkPair, prevStatinfo}
 			Stats.FoundExistingLink(existingLinkInfo)
 		}
+		// See if this inode is already one we've determined can be
+		// linked to another one, in which case we can avoid repeating
+		// the work of linking it again.
 		linkedInos := f.linkedInoSet(statInfo.Ino)
 		hashedInos := f.InoHashes[H]
 		linkedHashedInos := linkedInos.Intersection(hashedInos)
 		foundLinkedHashedInos := len(linkedHashedInos) > 0
 		if !foundLinkedHashedInos {
+			// Get a list of previously seen inodes that may be linkable
 			cachedSeq, useDigest := f.cachedInos(H, curPathStat)
 
+			// Search the list of potential inode, looking for a match
 			Stats.SearchedInoSeq()
 			foundLinkable := false
 			for _, cachedIno := range cachedSeq {
@@ -144,6 +151,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 					break
 				}
 			}
+			// Add hash to set if no match was found in current set
 			if !foundLinkable {
 				Stats.NoHashMatch()
 				inoSet := f.InoHashes[H]
@@ -152,6 +160,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 			}
 		}
 	}
+	// Remember Inode and filename/path information for each seen file
 	f.InoStatInfo[statInfo.Ino] = statInfo
 	f.InoAppendPathname(statInfo.Ino, curPath)
 }
