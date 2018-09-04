@@ -169,8 +169,8 @@ func init() {
 	flg.BoolVar(&o.IgnoreXattr, "ignore-xattr", false, "Xattrs need not match")
 
 	o.CLIMinFileSize.n = 1 // default
-	flg.VarP(&o.CLIMinFileSize, "min-size", "z", "Minimum file size")
-	flg.VarP(&o.CLIMaxFileSize, "max-size", "Z", "Maximum file size")
+	flg.VarP(&o.CLIMinFileSize, "min-size", "s", "Minimum file size")
+	flg.VarP(&o.CLIMaxFileSize, "max-size", "S", "Maximum file size")
 
 	flg.VarP(&o.CLIFileIncludes, "include", "i", "Regex(es) used to include files (overrides excludes)")
 	flg.VarP(&o.CLIFileExcludes, "exclude", "x", "Regex(es) used to exclude files")
