@@ -20,10 +20,6 @@
 
 package main
 
-import (
-	"fmt"
-)
-
 type Hash uint64
 
 type StatInfos map[string]StatInfo
@@ -108,10 +104,7 @@ func InoHash(stat StatInfo, opt *Options) Hash {
 }
 
 func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
-	if f.Dev != devStatInfo.Dev {
-		errStr := fmt.Sprintf("Mismatched Dev %d for %s", f.Dev, pathname)
-		panic(errStr)
-	}
+	PanicIf(f.Dev != devStatInfo.Dev, "Mismatched Dev %d for %s\n", f.Dev, pathname)
 	statInfo := devStatInfo.StatInfo
 	curPath := SplitPathname(pathname, f.pool)
 	curPathStat := PathStat{curPath, statInfo}
@@ -161,9 +154,9 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 					differentDigestSet := cachedInoSet.Difference(sameDigestSet).Difference(noDigestSet)
 					cachedInoSeq = append(sameDigestSet.AsSlice(), noDigestSet.AsSlice()...)
 
-					BugIf(noDigestSet.Has(statInfo.Ino), "New Ino found in noDigestSet")
-					BugIf(len(InoSetIntersection(sameDigestSet, differentDigestSet, noDigestSet)) > 0,
-						"Overlapping digest sets")
+					PanicIf(noDigestSet.Has(statInfo.Ino), "New Ino found in noDigestSet\n")
+					PanicIf(len(InoSetIntersection(sameDigestSet, differentDigestSet, noDigestSet)) > 0,
+						"Overlapping digest sets\n")
 				}
 			}
 			loopEndedEarly := false
