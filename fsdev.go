@@ -132,35 +132,10 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 		foundLinkedHashedInos := len(linkedHashedInos) > 0
 		if !foundLinkedHashedInos {
 			Stats.SearchedInoSeq()
-			cachedInoSet := f.InoHashes[inoHash]
-			cachedInoSeq := cachedInoSet.AsSlice()
-			// If digests are enabled, and cached inode lists are
-			// long enough, then switch on the use of digests.
-			useDigest := MyOptions.LinearSearchThresh >= 0 &&
-				len(cachedInoSeq) > MyOptions.LinearSearchThresh
-			if useDigest {
-				digest, err := contentDigest(curPath.Join())
-				if err == nil {
-					// With digests, we take the (potentially long) set of cached
-					// inodes (ie. those inodes that all have the same InoHash),
-					// and remove the inodes that are definitely not a match
-					// (because their digests do not match with the current inode).
-					// We also search the inodes that have the digest before those
-					// that have no digest yet, in hopes of more quickly finding an
-					// identical file.
-					f.addPathStatDigest(curPathStat, digest)
-					noDigestSet := cachedInoSet.Difference(f.InosWithDigest)
-					sameDigestSet := cachedInoSet.Intersection(f.DigestIno[digest])
-					differentDigestSet := cachedInoSet.Difference(sameDigestSet).Difference(noDigestSet)
-					cachedInoSeq = append(sameDigestSet.AsSlice(), noDigestSet.AsSlice()...)
+			cachedSeq, useDigest := f.cachedInos(H, curPathStat)
 
-					PanicIf(noDigestSet.Has(statInfo.Ino), "New Ino found in noDigestSet\n")
-					PanicIf(len(InoSetIntersection(sameDigestSet, differentDigestSet, noDigestSet)) > 0,
-						"Overlapping digest sets\n")
-				}
-			}
 			loopEndedEarly := false
-			for _, cachedIno := range cachedInoSeq {
+			for _, cachedIno := range cachedSeq {
 				Stats.IncInoSeqIterations()
 				cachedPathStat := f.PathStatFromIno(cachedIno)
 				if f.areFilesLinkable(cachedPathStat, curPathStat, useDigest) {
@@ -179,6 +154,39 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 	}
 	f.InoStatInfo[statInfo.Ino] = statInfo
 	f.InoAppendPathname(statInfo.Ino, curPath)
+}
+
+// possibleInos returns a slice of inos that can be searched for equal contents
+func (f *FSDev) cachedInos(H Hash, ps PathStat) ([]Ino, bool) {
+	var cachedSeq []Ino
+	cachedSet := f.InoHashes[H]
+	// If digests are enabled, and cached inode lists are
+	// long enough, then switch on the use of digests.
+	thresh := MyOptions.LinearSearchThresh
+	useDigest := thresh >= 0 && len(cachedSet) > thresh
+	if useDigest {
+		digest, err := contentDigest(ps.Pathsplit.Join())
+		if err == nil {
+			// With digests, we take the (potentially long) set of cached inodes (ie.
+			// those inodes that all have the same InoHash), and remove the inodes that
+			// are definitely not a match because their digests do not match with the
+			// current inode.  We also put the inodes with equal digests before those
+			// that have no digest yet, in hopes of more quickly finding an identical file.
+			f.addPathStatDigest(ps, digest)
+			noDigests := cachedSet.Difference(f.InosWithDigest)
+			sameDigests := cachedSet.Intersection(f.DigestIno[digest])
+			differentDigests := cachedSet.Difference(sameDigests).Difference(noDigests)
+			cachedSeq = append(sameDigests.AsSlice(), noDigests.AsSlice()...)
+
+			PanicIf(noDigests.Has(ps.StatInfo.Ino), "New Ino found in noDigests\n")
+			PanicIf(len(InoSetIntersection(sameDigests, differentDigests, noDigests)) > 0,
+				"Overlapping digest sets\n")
+		}
+	} else {
+		cachedSeq = cachedSet.AsSlice()
+	}
+
+	return cachedSeq, useDigest
 }
 
 func (f *FSDev) linkedInoSet(ino Ino) InoSet {
