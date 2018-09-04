@@ -70,6 +70,7 @@ type CountingStats struct {
 	MismatchedUidCount   int64  `json:"mismatchedUidCount"`
 	MismatchedGidCount   int64  `json:"mismatchedGidCount"`
 	MismatchedXattrCount int64  `json:"mismatchedXattrCount"`
+	MismatchedTotalCount int64  `json:"mismatchedTotalCount"`
 	MismatchedMtimeBytes uint64 `json:"mismatchedMtimeBytes"`
 	MismatchedModeBytes  uint64 `json:"mismatchedModeBytes"`
 	MismatchedUidBytes   uint64 `json:"mismatchedUidBytes"`
@@ -144,6 +145,7 @@ func (s *LinkingStats) AddMismatchedXattrBytes(size uint64) {
 }
 
 func (s *LinkingStats) AddMismatchedTotalBytes(size uint64) {
+	s.MismatchedTotalCount += 1
 	s.MismatchedTotalBytes += size
 }
 
@@ -326,7 +328,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 				humanizeParens(ls.MismatchedXattrBytes))
 		}
 		if ls.MismatchedTotalBytes > 0 {
-			s = statStr(s, "Total mismatched file bytes", ls.MismatchedTotalBytes,
+			s = statStr(s, "Total equal file mismatches", ls.MismatchedTotalCount,
 				humanizeParens(ls.MismatchedTotalBytes))
 		}
 
