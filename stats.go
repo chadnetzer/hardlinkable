@@ -338,7 +338,8 @@ func (ls *LinkingStats) outputLinkingStats() {
 	if MyOptions.DebugLevel > 0 {
 		// add additional stat output onto the last string
 		s = statStr(s, "Total file hash hits", ls.FoundHashCount,
-			fmt.Sprintf("misses: %v  sum total: %v", ls.MissedHashCount, ls.FoundHashCount+ls.MissedHashCount))
+			fmt.Sprintf("misses: %v  sum total: %v", ls.MissedHashCount,
+				ls.FoundHashCount+ls.MissedHashCount))
 		s = statStr(s, "Total hash mismatches", ls.HashMismatchCount,
 			fmt.Sprintf("(+ total links: %v)", ls.HashMismatchCount+totalLinks))
 		s = statStr(s, "Total hash searches", ls.InoSeqSearchCount)
@@ -347,7 +348,8 @@ func (ls *LinkingStats) outputLinkingStats() {
 			avg := float64(ls.InoSeqIterationCount) / float64(ls.InoSeqSearchCount)
 			avgItersPerSearch = fmt.Sprintf("%.1f", avg)
 		}
-		s = statStr(s, "Total hash list iterations", ls.InoSeqIterationCount, fmt.Sprintf("(avg per search: %v)", avgItersPerSearch))
+		s = statStr(s, "Total hash list iterations", ls.InoSeqIterationCount,
+			fmt.Sprintf("(avg per search: %v)", avgItersPerSearch))
 		s = statStr(s, "Total equal comparisons", ls.EqualComparisonCount)
 		s = statStr(s, "Total digests computed", ls.DigestComputedCount)
 	}
