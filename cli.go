@@ -127,7 +127,7 @@ func init() {
 	// Local flags
 	flg := rootCmd.Flags()
 	var o *CLIOptions = &MyCLIOptions
-	flg.CountVarP(&o.Verbosity, "verbose", "v", "Increase verbosity level")
+	flg.CountVarP(&o.Verbosity, "verbose", "v", "``Increase verbosity level (up to 3 times)")
 	flg.BoolVar(&o.StatsOutputDisabled, "no-stats", false, "Do not print the final stats")
 	flg.BoolVar(&o.ProgressOutputDisabled, "no-progress", false, "Disable progress output while processing")
 	flg.BoolVar(&o.JSONOutputEnabled, "json", false, "Output results as JSON")
