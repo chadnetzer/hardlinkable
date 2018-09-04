@@ -70,7 +70,12 @@ type CountingStats struct {
 	MismatchedUidCount   int64  `json:"mismatchedUidCount"`
 	MismatchedGidCount   int64  `json:"mismatchedGidCount"`
 	MismatchedXattrCount int64  `json:"mismatchedXattrCount"`
-	MismatchedBytes      uint64 `json:"mismatchedBytes"`
+	MismatchedMtimeBytes uint64 `json:"mismatchedMtimeBytes"`
+	MismatchedModeBytes  uint64 `json:"mismatchedModeBytes"`
+	MismatchedUidBytes   uint64 `json:"mismatchedUidBytes"`
+	MismatchedGidBytes   uint64 `json:"mismatchedGidBytes"`
+	MismatchedXattrBytes uint64 `json:"mismatchedXattrBytes"`
+	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
 
 	// Debugging counts
 	EqualComparisonCount int64 `json:"equalComparisonCount"`
@@ -133,8 +138,28 @@ func (s *LinkingStats) FoundMismatchedXattr() {
 	s.MismatchedXattrCount += 1
 }
 
-func (s *LinkingStats) AddMismatchedBytes(size uint64) {
-	s.MismatchedBytes += size
+func (s *LinkingStats) AddMismatchedMtimeBytes(size uint64) {
+	s.MismatchedMtimeBytes += size
+}
+
+func (s *LinkingStats) AddMismatchedModeBytes(size uint64) {
+	s.MismatchedModeBytes += size
+}
+
+func (s *LinkingStats) AddMismatchedUidBytes(size uint64) {
+	s.MismatchedUidBytes += size
+}
+
+func (s *LinkingStats) AddMismatchedGidBytes(size uint64) {
+	s.MismatchedGidBytes += size
+}
+
+func (s *LinkingStats) AddMismatchedXattrBytes(size uint64) {
+	s.MismatchedXattrBytes += size
+}
+
+func (s *LinkingStats) AddMismatchedTotalBytes(size uint64) {
+	s.MismatchedTotalBytes += size
 }
 
 func (s *LinkingStats) FoundInode() {
@@ -296,23 +321,28 @@ func (ls *LinkingStats) outputLinkingStats() {
 			s = statStr(s, "Total too small files", ls.FileTooSmallCount)
 		}
 		if ls.MismatchedMtimeCount > 0 {
-			s = statStr(s, "Equal files w/ unequal time", ls.MismatchedMtimeCount)
+			s = statStr(s, "Equal files w/ unequal time", ls.MismatchedMtimeCount,
+				humanizeParens(ls.MismatchedMtimeBytes))
 		}
 		if ls.MismatchedModeCount > 0 {
-			s = statStr(s, "Equal files w/ unequal mode", ls.MismatchedModeCount)
+			s = statStr(s, "Equal files w/ unequal mode", ls.MismatchedModeCount,
+				humanizeParens(ls.MismatchedModeBytes))
 		}
 		if ls.MismatchedUidCount > 0 {
-			s = statStr(s, "Equal files w/ unequal uid", ls.MismatchedUidCount)
+			s = statStr(s, "Equal files w/ unequal uid", ls.MismatchedUidCount,
+				humanizeParens(ls.MismatchedUidBytes))
 		}
 		if ls.MismatchedGidCount > 0 {
-			s = statStr(s, "Equal files w/ unequal gid", ls.MismatchedGidCount)
+			s = statStr(s, "Equal files w/ unequal gid", ls.MismatchedGidCount,
+				humanizeParens(ls.MismatchedGidBytes))
 		}
 		if ls.MismatchedXattrCount > 0 {
-			s = statStr(s, "Equal files w/ unequal xattr", ls.MismatchedXattrCount)
+			s = statStr(s, "Equal files w/ unequal xattr", ls.MismatchedXattrCount,
+				humanizeParens(ls.MismatchedXattrBytes))
 		}
-		if ls.MismatchedBytes > 0 {
-			s = statStr(s, "Total mismatched file bytes",
-				ls.MismatchedBytes, humanizeParens(ls.MismatchedBytes))
+		if ls.MismatchedTotalBytes > 0 {
+			s = statStr(s, "Total mismatched file bytes", ls.MismatchedTotalBytes,
+				humanizeParens(ls.MismatchedTotalBytes))
 		}
 
 		remainingInodes := ls.InodeCount - ls.InodeConsolidationCount
