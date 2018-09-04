@@ -131,9 +131,9 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 		linkedHashedInos := linkedInos.Intersection(hashedInos)
 		foundLinkedHashedInos := len(linkedHashedInos) > 0
 		if !foundLinkedHashedInos {
-			Stats.SearchedInoSeq()
 			cachedSeq, useDigest := f.cachedInos(H, curPathStat)
 
+			Stats.SearchedInoSeq()
 			foundLinkable := false
 			for _, cachedIno := range cachedSeq {
 				Stats.IncInoSeqIterations()
