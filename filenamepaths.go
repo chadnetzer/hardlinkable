@@ -54,12 +54,12 @@ func (p pathsplitSet) clone() pathsplitSet {
 // different paths to an inode), and also holds an arbitrary pathname that can
 // be used for consistency (rather than a fully random one from the map)
 type filenamePaths struct {
-	pMap    map[string][]Pathsplit
+	pMap    map[string]pathsplitSet
 	arbPath Pathsplit
 }
 
 func newFilenamePaths() filenamePaths {
-	p := make(map[string][]Pathsplit)
+	p := make(map[string]pathsplitSet)
 	return filenamePaths{p, Pathsplit{}}
 }
 
@@ -69,7 +69,7 @@ func newFilenamePaths() filenamePaths {
 func (f filenamePaths) any() Pathsplit {
 	if f.arbPath == (Pathsplit{}) {
 		for _, pathnames := range f.pMap {
-			f.arbPath = pathnames[0]
+			f.arbPath = pathnames.any()
 			return f.arbPath
 		}
 	}
@@ -79,32 +79,25 @@ func (f filenamePaths) any() Pathsplit {
 // anyWithFilename will return an arbitrary path with the given filename
 func (f filenamePaths) anyWithFilename(filename string) Pathsplit {
 	// Note - filename must exist in map, and if so len(pMap) will be > 0
-	f.arbPath = f.pMap[filename][0]
+	f.arbPath = f.pMap[filename].any()
 	return f.arbPath
 }
 
 func (f *filenamePaths) add(ps Pathsplit) {
 	p, ok := f.pMap[ps.Filename]
 	if !ok {
-		p = []Pathsplit{ps}
-	} else {
-		p = append(p, ps)
+		p = newPathsplitSet()
 	}
+	p.add(ps)
 	f.pMap[ps.Filename] = p
 }
 
 func (f *filenamePaths) remove(ps Pathsplit) {
 	// Find and remove given Pathsplit from pMap
-	name := ps.Filename
-	for i, v := range f.pMap[name] {
-		if v == ps {
-			f.pMap[name] = append(f.pMap[name][:i], f.pMap[name][i+1:]...)
-			if len(f.pMap) == 0 {
-				delete(f.pMap, name)
-				f.arbPath = Pathsplit{}
-			}
-			break
-		}
+	f.pMap[ps.Filename].remove(ps)
+	if len(f.pMap) == 0 {
+		delete(f.pMap, ps.Filename)
+		f.arbPath = Pathsplit{}
 	}
 }
 
@@ -114,9 +107,9 @@ func (f filenamePaths) isEmpty() bool {
 
 // Return a copy of the given filenamePaths
 func (f filenamePaths) clone() filenamePaths {
-	c := make(map[string][]Pathsplit, len(f.pMap))
+	c := make(map[string]pathsplitSet, len(f.pMap))
 	for k, v := range f.pMap {
-		c[k] = append([]Pathsplit(nil), v...) // Copy v
+		c[k] = v.clone()
 	}
 	return filenamePaths{c, f.arbPath}
 }

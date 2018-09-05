@@ -300,7 +300,7 @@ func (f *FSDev) allInoPaths(ino Ino) <-chan Pathsplit {
 	go func() {
 		defer close(out)
 		for _, paths := range fpClone.pMap {
-			for _, path := range paths {
+			for path := range paths {
 				out <- path
 			}
 		}
