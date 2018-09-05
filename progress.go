@@ -35,9 +35,13 @@ type Progress interface {
 type TTYProgress struct {
 	lastLineLen     int
 	lastTime        time.Time
+	lastFPSTime     time.Time
 	updateDelay     time.Duration
+	updateFPSDelay  time.Duration
 	dirFilesCounter int
 	counterMin      int
+	lastFPS         float64
+	lastFPSDiff     float64
 
 	stats   *LinkingStats
 	options *Options
@@ -47,11 +51,15 @@ type DisabledProgress struct{}
 
 // Initialize TTYProgress and return pointer to it
 func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
+	now := time.Now()
 	return &TTYProgress{
-		updateDelay: 100 * time.Millisecond,
-		counterMin:  11, // Prime number makes output more dynamic
-		stats:       stats,
-		options:     options,
+		lastTime:       now,
+		lastFPSTime:    now,
+		updateDelay:    60 * time.Millisecond,
+		updateFPSDelay: 180 * time.Millisecond,
+		counterMin:     151, // Prime number makes output more dynamic
+		stats:          stats,
+		options:        options,
 	}
 }
 
@@ -79,10 +87,23 @@ func (p *TTYProgress) ShowDirsFilesFound() {
 
 	duration := now.Sub(p.stats.StartTime)
 	durStr := duration.Round(time.Second).String()
-	fps := float64(numFiles) / duration.Seconds()
 
-	fmtStr := "\r%d files in %d dirs (elapsed time: %s files/sec: %.0f %v)"
-	s := fmt.Sprintf(fmtStr, numFiles, numDirs, durStr, fps, directionStr)
+	var fps, fpsDiff float64
+	timeSinceLastFPS := now.Sub(p.lastFPSTime)
+	if timeSinceLastFPS > p.updateFPSDelay {
+		fps = float64(numFiles) / duration.Seconds()
+		fpsDiff = fps - p.lastFPS
+
+		p.lastFPS = fps
+		p.lastFPSDiff = fpsDiff
+		p.lastFPSTime = now
+	} else {
+		fps = p.lastFPS
+		fpsDiff = p.lastFPSDiff
+	}
+
+	fmtStr := "\r%d files in %d dirs, elapsed time: %s  files/sec: %.0f (%+.0f)"
+	s := fmt.Sprintf(fmtStr, numFiles, numDirs, durStr, fps, fpsDiff)
 	p.line(s)
 }
 
