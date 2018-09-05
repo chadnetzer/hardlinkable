@@ -77,12 +77,12 @@ func (p *TTYProgress) ShowDirsFilesFound() {
 	if timeSinceLast < p.updateDelay {
 		return
 	}
-	p.lastTime = time.Now()
+	p.lastTime = now
 
 	numDirs := p.stats.DirCount
 	numFiles := p.stats.FileCount
 
-	duration := time.Now().Sub(p.stats.StartTime)
+	duration := now.Sub(p.stats.StartTime)
 	durStr := duration.Round(time.Second).String()
 	fps := float64(numFiles) / duration.Seconds()
 
