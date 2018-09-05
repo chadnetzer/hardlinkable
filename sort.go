@@ -111,7 +111,7 @@ func (f *FSDev) sendLinkedPairs(sortedInos []Ino, out chan<- PathStatPair) {
 				if MyOptions.SameName {
 					// Skip to next destination inode path if dst filename
 					// isn't also found as a src filename
-					srcPaths := f.InoPaths[srcIno]
+					srcPaths := f.InoPaths[srcIno].pMap
 					dstFilename := dstPath.Filename
 					if _, ok := srcPaths[dstFilename]; !ok {
 						continue
@@ -142,7 +142,7 @@ func (f *FSDev) sendLinkedPairs(sortedInos []Ino, out chan<- PathStatPair) {
 			// to zero (if not all links have a matching filename), so place on the
 			// remainingInos list to allow it to (possibly) be linked with other linked
 			// inodes
-			if len(f.InoPaths[dstIno]) > 0 {
+			if !f.InoPaths[dstIno].isEmpty() {
 				remainingInos = append(remainingInos, dstIno)
 			}
 		}
