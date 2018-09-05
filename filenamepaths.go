@@ -70,7 +70,7 @@ func newFilenamePaths() filenamePaths {
 // When choosing an arbitrary pathname, remember what was chosen and return it
 // consistently.  This prevents the source link paths from changing
 // unnecessarily, and basically makes the output a bit more friendly.
-func (f filenamePaths) any() Pathsplit {
+func (f *filenamePaths) any() Pathsplit {
 	if f.arbPath == (Pathsplit{}) {
 		for _, pathnames := range f.pMap {
 			f.arbPath = pathnames.any()
@@ -81,7 +81,7 @@ func (f filenamePaths) any() Pathsplit {
 }
 
 // anyWithFilename will return an arbitrary path with the given filename
-func (f filenamePaths) anyWithFilename(filename string) Pathsplit {
+func (f *filenamePaths) anyWithFilename(filename string) Pathsplit {
 	f.arbPath = f.pMap[filename].any()
 	return f.arbPath
 }
