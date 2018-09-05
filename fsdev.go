@@ -266,13 +266,19 @@ func (f *FSDev) linkedInoSets() <-chan InoSet {
 func (f *FSDev) ArbitraryPath(ino Ino) Pathsplit {
 	// ino must exist in f.InoPaths.  If it does, there will be at least
 	// one pathname to return
+
+	// Since a map value is modified implicitly, we must reassign it
 	filenamePaths := f.InoPaths[ino]
-	return filenamePaths.any()
+	path := filenamePaths.any()
+	f.InoPaths[ino] = filenamePaths
+	return path
 }
 
 func (f *FSDev) ArbitraryFilenamePath(ino Ino, filename string) Pathsplit {
 	filenamePaths := f.InoPaths[ino]
-	return filenamePaths.anyWithFilename(filename)
+	path := filenamePaths.anyWithFilename(filename)
+	f.InoPaths[ino] = filenamePaths
+	return path
 }
 
 func (f *FSDev) InoAppendPathname(ino Ino, path Pathsplit) {
@@ -282,6 +288,7 @@ func (f *FSDev) InoAppendPathname(ino Ino, path Pathsplit) {
 		f.InoPaths[ino] = filenamePaths
 	}
 	filenamePaths.add(path)
+	f.InoPaths[ino] = filenamePaths
 }
 
 func (f *FSDev) PathStatFromIno(ino Ino) PathStat {
@@ -395,6 +402,7 @@ func (fs *FSDev) moveLinkedPath(dstPath Pathsplit, srcIno Ino, dstIno Ino) {
 	// Get pathnames slice matching Ino and filename
 	fp := fs.InoPaths[dstIno]
 	fp.remove(dstPath)
+	fs.InoPaths[dstIno] = fp
 
 	if fs.InoPaths[dstIno].isEmpty() {
 		delete(fs.InoPaths, dstIno)
