@@ -23,8 +23,12 @@ package main
 // Make a set for pathnames (instead of a slice)
 type pathsplitSet map[Pathsplit]struct{}
 
-func newPathsplitSet() pathsplitSet {
-	return make(pathsplitSet)
+func newPathsplitSet(vals ...Pathsplit) pathsplitSet {
+	s := make(pathsplitSet)
+	for _, v := range vals {
+		s.add(v)
+	}
+	return s
 }
 
 func (p pathsplitSet) any() Pathsplit {
