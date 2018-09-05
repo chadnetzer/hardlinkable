@@ -63,3 +63,48 @@ func TestPathsplitSet(t *testing.T) {
 		t.Errorf("pathsplitSet clone: %v is unequal to original: %v", c, s)
 	}
 }
+
+func TestFilenamePaths(t *testing.T) {
+	var f filenamePaths
+	f = newFilenamePaths()
+	if len(f.pMap) != 0 {
+		t.Errorf("Empty filenamePaths length isn't 0: %v", f)
+	}
+	if !f.isEmpty() {
+		t.Errorf("isEmpty() on empty filenamePaths is wrong")
+	}
+
+	// Add two separate paths with same filename (ie. basename)
+	f.add(SplitPathname("/a/a"))
+	if len(f.pMap) != 1 {
+		t.Errorf("Length %d of filenamePaths pMap should be 1", len(f.pMap))
+	}
+	if f.isEmpty() {
+		t.Errorf("isEmpty() on non-empty filenamePaths is wrong")
+	}
+	f.add(SplitPathname("/b/a"))
+	if len(f.pMap) != 1 {
+		t.Errorf("Length %d of filenamePaths pMap should be 1", len(f.pMap))
+	}
+
+	// Add a new path with a unique filename
+	f.add(SplitPathname("/a/c"))
+	if len(f.pMap) != 2 {
+		t.Errorf("Length %d of filenamePaths pMap should be 2", len(f.pMap))
+	}
+	if len(f.pMap["a"]) != 2 {
+		t.Errorf("Length %d of filenamePaths pMap[\"a\"] should be 2", len(f.pMap["a"]))
+	}
+	if len(f.pMap["c"]) != 1 {
+		t.Errorf("Length %d of filenamePaths pMap[\"c\"] should be 1", len(f.pMap["c"]))
+	}
+
+	// Remove one of the path's with "a" filename
+	f.remove(SplitPathname("/a/a"))
+	if len(f.pMap) != 2 {
+		t.Errorf("Length %d of filenamePaths pMap should be 2", len(f.pMap))
+	}
+	if len(f.pMap["a"]) != 1 {
+		t.Errorf("Length %d of filenamePaths pMap[\"a\"] should be 1", len(f.pMap["a"]))
+	}
+}
