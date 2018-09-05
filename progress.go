@@ -98,9 +98,9 @@ func (p *TTYProgress) ShowDirsFilesFound() {
 	}
 	avgFPS := fpsSum / float64(numFPSes)
 	if avgFPS > p.lastAvgFPS {
-		directionStr = "⬇"
-	} else {
 		directionStr = "⬆"
+	} else {
+		directionStr = "⬇"
 	}
 	p.lastAvgFPS = avgFPS
 
