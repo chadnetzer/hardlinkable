@@ -26,8 +26,6 @@ import (
 	"time"
 )
 
-const numFPSes = 8
-
 type Progress interface {
 	ShowDirsFilesFound()
 	Clear()
@@ -40,9 +38,6 @@ type TTYProgress struct {
 	updateDelay     time.Duration
 	dirFilesCounter int
 	counterMin      int
-	fpsHist         [numFPSes]float64
-	fpsI            int
-	lastAvgFPS      float64
 
 	stats   *LinkingStats
 	options *Options
@@ -85,24 +80,6 @@ func (p *TTYProgress) ShowDirsFilesFound() {
 	duration := now.Sub(p.stats.StartTime)
 	durStr := duration.Round(time.Second).String()
 	fps := float64(numFiles) / duration.Seconds()
-
-	// Calculate a simple windowed average of the FPS, just to help
-	// determine roughly if the FPS rate is increasing or decreasing.  It's
-	// deliberately simplistic, as it's used more as a direction flag.
-	p.fpsHist[p.fpsI] = fps
-	p.fpsI = (p.fpsI + 1) % numFPSes
-	var fpsSum float64
-	var directionStr string
-	for _, v := range p.fpsHist {
-		fpsSum += v
-	}
-	avgFPS := fpsSum / float64(numFPSes)
-	if avgFPS > p.lastAvgFPS {
-		directionStr = "⬆"
-	} else {
-		directionStr = "⬇"
-	}
-	p.lastAvgFPS = avgFPS
 
 	fmtStr := "\r%d files in %d dirs (elapsed time: %s files/sec: %.0f %v)"
 	s := fmt.Sprintf(fmtStr, numFiles, numDirs, durStr, fps, directionStr)
