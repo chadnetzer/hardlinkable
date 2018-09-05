@@ -20,6 +20,36 @@
 
 package main
 
+// Make a set for pathnames (instead of a slice)
+type pathsplitSet map[Pathsplit]struct{}
+
+func newPathsplitSet() pathsplitSet {
+	return make(pathsplitSet)
+}
+
+func (p pathsplitSet) any() Pathsplit {
+	for k := range p {
+		return k
+	}
+	return Pathsplit{}
+}
+
+func (p pathsplitSet) add(ps Pathsplit) {
+	p[ps] = struct{}{}
+}
+
+func (p pathsplitSet) remove(ps Pathsplit) {
+	delete(p, ps)
+}
+
+func (p pathsplitSet) clone() pathsplitSet {
+	c := newPathsplitSet()
+	for k, _ := range p {
+		c.add(k)
+	}
+	return c
+}
+
 // filenamePaths holds a map of filenames to their full pathnames (ie. the
 // different paths to an inode), and also holds an arbitrary pathname that can
 // be used for consistency (rather than a fully random one from the map)
