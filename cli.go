@@ -39,6 +39,9 @@ import (
 // flags with a 'false' default.  So, for options that we want to default to
 // true (and thus disable when the option is given), we use a separate flag
 // with the opposite default, and toggle it manually after parsing.
+//
+// Other CLIOptions are converted from one type to another in the Options
+// struct
 type CLIOptions struct {
 	StatsOutputDisabled    bool
 	ProgressOutputDisabled bool
