@@ -186,9 +186,10 @@ func (s *LinkingStats) computedDigest() {
 }
 
 func (s *LinkingStats) FoundNewLink(src, dst PathStat) {
-	linkPair := LinkPair{src.Pathsplit, dst.Pathsplit}
-	// Make optional to save space...
-	s.linkPairs = append(s.linkPairs, linkPair)
+	if MyOptions.newLinkStatsEnabled {
+		linkPair := LinkPair{src.Pathsplit, dst.Pathsplit}
+		s.linkPairs = append(s.linkPairs, linkPair)
+	}
 
 	s.NewLinkCount += 1
 	if dst.Nlink == 1 {
@@ -200,6 +201,9 @@ func (s *LinkingStats) FoundNewLink(src, dst PathStat) {
 func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
 	s.PrevLinkCount += 1
 	s.PrevBytesSaved += e.SrcStatinfo.Size
+	if !MyOptions.existingLinkStatsEnabled {
+		return
+	}
 	srcPath := e.Src
 	dstPath := e.Dst
 	srcStatinfo := e.SrcStatinfo
@@ -210,7 +214,6 @@ func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
 	}
 	linkDestinations.paths = append(linkDestinations.paths, dstPath)
 	s.existingLinks[srcPath] = linkDestinations
-	//fmt.Println("currently linked: ", srcPath, linkDestinations)
 }
 
 func (ls *LinkingStats) outputResults() {
