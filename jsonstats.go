@@ -61,13 +61,21 @@ func (ls *LinkingStats) outputJSONResults() {
 	}
 	jstats.ExistingLinkSizes = existingLinkSizes
 
+	var links []string
 	linkPaths := make([][]string, 0)
+	prevPathsplit := Pathsplit{}
 	for _, p := range Stats.linkPairs {
-		pair := make([]string, 0, 2)
-		src := p.Src.Join()
-		dst := p.Dst.Join()
-		pair = append(pair, src, dst)
-		linkPaths = append(linkPaths, pair)
+		if p.Src != prevPathsplit {
+			if len(links) > 0 {
+				linkPaths = append(linkPaths, links)
+			}
+			links = []string{p.Src.Join()}
+			prevPathsplit = p.Src
+		}
+		links = append(links, p.Dst.Join())
+	}
+	if len(links) > 0 {
+		linkPaths = append(linkPaths, links)
 	}
 	jstats.LinkPaths = linkPaths
 
