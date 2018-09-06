@@ -47,6 +47,7 @@ type CLIOptions struct {
 	CLIFileIncludes        RegexArray
 	CLIFileExcludes        RegexArray
 	CLIDirExcludes         RegexArray
+	CLILinearSearchThresh  intN
 	Options
 }
 
@@ -59,6 +60,7 @@ func (c *CLIOptions) NewOptions() Options {
 	options.FileIncludes = c.CLIFileIncludes.vals
 	options.FileExcludes = c.CLIFileExcludes.vals
 	options.DirExcludes = c.CLIDirExcludes.vals
+	options.LinearSearchThresh = c.CLILinearSearchThresh.n
 	return options
 }
 
@@ -203,8 +205,9 @@ func init() {
 
 	// Hidden options
 	flg.CountVarP(&o.DebugLevel, "debug", "d", "``Increase debugging level")
-	flg.IntVarP(&o.LinearSearchThresh, "linear-search-thresh", "", 1, "Length of inode hash lists before switching to digests")
-	flg.MarkHidden("linear-search-thresh")
+
+	o.CLILinearSearchThresh.n = 1 // default
+	flg.VarP(&o.CLILinearSearchThresh, "search-thresh", "", "Ino search length before enabling digests")
 	flg.SortFlags = false
 }
 
