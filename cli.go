@@ -71,6 +71,12 @@ func (c *CLIOptions) NewOptions() Options {
 		options.IgnoreOwner = true
 		options.IgnoreXattr = true
 	}
+	if c.Verbosity > 1 {
+		options.newLinkStatsEnabled = true
+	}
+	if c.Verbosity > 2 {
+		options.existingLinkStatsEnabled = true
+	}
 	return options
 }
 
