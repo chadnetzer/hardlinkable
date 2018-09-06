@@ -359,6 +359,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 	}
 
 	if MyOptions.DebugLevel > 1 {
+		runtime.GC()
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
 		s = statStr(s, "Mem Alloc", humanize(m.Alloc))
