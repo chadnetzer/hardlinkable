@@ -183,7 +183,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 		}
 	}
 	f.InoStatInfo[statInfo.Ino] = statInfo
-	f.InoAppendPathname(statInfo.Ino, SplitPathname(pathname))
+	f.InoAppendPathname(statInfo.Ino, curPath)
 }
 
 func (f *FSDev) linkedInoSet(ino Ino) InoSet {
