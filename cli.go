@@ -189,11 +189,11 @@ func init() {
 	flg.BoolVar(&o.JSONOutputEnabled, "json", false, "Output results as JSON")
 
 	flg.BoolVarP(&o.SameName, "same-name", "f", false, "Filenames need to be identical")
-	flg.BoolVarP(&o.ContentOnly, "content-only", "c", false, "Only file contents have to match")
 	flg.BoolVarP(&o.IgnoreTime, "ignore-time", "t", false, "File modification times need not match")
 	flg.BoolVarP(&o.IgnorePerms, "ignore-perms", "p", false, "File permissions need not match")
 	flg.BoolVarP(&o.IgnoreOwner, "ignore-owner", "o", false, "File uid/gid need not match")
 	flg.BoolVarP(&o.IgnoreXattr, "ignore-xattr", "x", false, "Xattrs need not match")
+	flg.BoolVarP(&o.ContentOnly, "content-only", "c", false, "Only file contents have to match (ie. -potx)")
 
 	o.CLIMinFileSize.n = 1 // default
 	flg.VarP(&o.CLIMinFileSize, "min-size", "s", "Minimum file size")
