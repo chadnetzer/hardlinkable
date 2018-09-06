@@ -103,6 +103,29 @@ func (u *uintN) Set(num string) error {
 // Return "N" instead of "uint" for usage text
 func (u *uintN) Type() string { return "N" }
 
+// Custom pflag Value displays "N" instead of "int" in usage text
+type intN struct {
+	flag.Value // "inherit" Value interface
+	n          int
+}
+
+// Return the string "0" to disable default usage text
+func (i *intN) String() string {
+	return strconv.FormatInt(int64(i.n), 10)
+}
+
+// Implement Int64 humanized Value Set() semantics
+func (i *intN) Set(num string) error {
+	N, err := strconv.ParseInt(num, 10, 0)
+	if err != nil {
+		i.n = int(N)
+	}
+	return err
+}
+
+// Return "N" instead of "int" for usage text
+func (i *intN) Type() string { return "N" }
+
 var cfgFile string
 var MyCLIOptions CLIOptions
 
