@@ -219,7 +219,7 @@ func (ls *LinkingStats) outputResults() {
 		fmt.Println("")
 	}
 	if MyOptions.Verbosity > 1 {
-		ls.outputLinkedPairs()
+		ls.outputLinkedPaths()
 		if MyOptions.StatsOutputEnabled {
 			fmt.Println("")
 		}
@@ -245,7 +245,7 @@ func (ls *LinkingStats) outputCurrentHardlinks() {
 	fmt.Println(strings.Join(s, "\n"))
 }
 
-func (ls *LinkingStats) outputLinkedPairs() {
+func (ls *LinkingStats) outputLinkedPaths() {
 	s := make([]string, 0)
 	if MyOptions.LinkingEnabled {
 		s = append(s, "Files that were hardlinked this run")
