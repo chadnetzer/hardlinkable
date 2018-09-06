@@ -396,7 +396,7 @@ func (fs *FSDev) moveLinkedPath(dstPath Pathsplit, srcIno Ino, dstIno Ino) {
 	fp := fs.InoPaths[dstIno]
 	fp.remove(dstPath)
 
-	if fs.InoPaths[dstIno].isEmpty() {
+	if fp.isEmpty() {
 		delete(fs.InoPaths, dstIno)
 	}
 	fs.InoAppendPathname(srcIno, dstPath)
