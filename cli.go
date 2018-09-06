@@ -202,12 +202,11 @@ func init() {
 	flg.VarP(&o.CLIFileIncludes, "include", "i", "Regex(es) used to include files (overrides excludes)")
 	flg.VarP(&o.CLIFileExcludes, "exclude", "e", "Regex(es) used to exclude files")
 	flg.VarP(&o.CLIDirExcludes, "exclude-dir", "E", "Regex(es) used to exclude dirs")
-
-	// Hidden options
 	flg.CountVarP(&o.DebugLevel, "debug", "d", "``Increase debugging level")
 
 	o.CLILinearSearchThresh.n = 1 // default
 	flg.VarP(&o.CLILinearSearchThresh, "search-thresh", "", "Ino search length before enabling digests")
+	//flg.MarkHidden("search-thresh")
 	flg.SortFlags = false
 }
 
