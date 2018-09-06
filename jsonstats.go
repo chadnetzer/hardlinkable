@@ -29,7 +29,7 @@ import (
 type JSONStats struct {
 	ExistingLinks     map[string][]string `json:"existingLinks"`
 	ExistingLinkSizes map[string]uint64   `json:"existingLinkSizes"`
-	LinkPairs         [][]string          `json:"linkPairs"`
+	LinkPaths         [][]string          `json:"linkPaths"`
 	CountingStats
 	StartTime time.Time `json:"startTime"`
 	EndTime   time.Time `json:"endTime"`
@@ -61,15 +61,15 @@ func (ls *LinkingStats) outputJSONResults() {
 	}
 	jstats.ExistingLinkSizes = existingLinkSizes
 
-	linkPairs := make([][]string, 0)
+	linkPaths := make([][]string, 0)
 	for _, p := range Stats.linkPairs {
 		pair := make([]string, 0, 2)
 		src := p.Src.Join()
 		dst := p.Dst.Join()
 		pair = append(pair, src, dst)
-		linkPairs = append(linkPairs, pair)
+		linkPaths = append(linkPaths, pair)
 	}
-	jstats.LinkPairs = linkPairs
+	jstats.LinkPaths = linkPaths
 
 	b, _ := json.Marshal(jstats)
 	fmt.Println(string(b))
