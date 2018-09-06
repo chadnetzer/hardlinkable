@@ -179,8 +179,7 @@ func init() {
 	flg.VarP(&o.CLIDirExcludes, "exclude-dir", "E", "Regex(es) used to exclude dirs")
 
 	// Hidden options
-	flg.CountVarP(&o.DebugLevel, "debug", "d", "Increase debugging level")
-	flg.MarkHidden("debug")
+	flg.CountVarP(&o.DebugLevel, "debug", "d", "``Increase debugging level")
 	flg.IntVarP(&o.LinearSearchThresh, "linear-search-thresh", "", 1, "Length of inode hash lists before switching to digests")
 	flg.MarkHidden("linear-search-thresh")
 	flg.SortFlags = false
