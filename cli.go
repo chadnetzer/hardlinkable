@@ -39,14 +39,19 @@ import (
 // flags with a 'false' default.  So, for options that we want to default to
 // true (and thus disable when the option is given), we use a separate flag
 // with the opposite default, and toggle it manually after parsing.
+//
+// Other CLIOptions are converted from one type to another in the Options
+// struct
 type CLIOptions struct {
 	StatsOutputDisabled    bool
 	ProgressOutputDisabled bool
+	CLIContentOnly         bool
 	CLIMinFileSize         uintN
 	CLIMaxFileSize         uintN
 	CLIFileIncludes        RegexArray
 	CLIFileExcludes        RegexArray
 	CLIDirExcludes         RegexArray
+	CLILinearSearchThresh  intN
 	Options
 }
 
@@ -59,6 +64,13 @@ func (c *CLIOptions) NewOptions() Options {
 	options.FileIncludes = c.CLIFileIncludes.vals
 	options.FileExcludes = c.CLIFileExcludes.vals
 	options.DirExcludes = c.CLIDirExcludes.vals
+	options.LinearSearchThresh = c.CLILinearSearchThresh.n
+	if c.CLIContentOnly {
+		options.IgnoreTime = true
+		options.IgnorePerms = true
+		options.IgnoreOwner = true
+		options.IgnoreXattr = true
+	}
 	return options
 }
 
@@ -103,16 +115,41 @@ func (u *uintN) Set(num string) error {
 // Return "N" instead of "uint" for usage text
 func (u *uintN) Type() string { return "N" }
 
+// Custom pflag Value displays "N" instead of "int" in usage text
+type intN struct {
+	flag.Value // "inherit" Value interface
+	n          int
+}
+
+// Return the string "0" to disable default usage text
+func (i *intN) String() string {
+	return strconv.FormatInt(int64(i.n), 10)
+}
+
+// Implement Int64 humanized Value Set() semantics
+func (i *intN) Set(num string) error {
+	N, err := strconv.ParseInt(num, 10, 0)
+	if err != nil {
+		i.n = int(N)
+	}
+	return err
+}
+
+// Return "N" instead of "int" for usage text
+func (i *intN) Type() string { return "N" }
+
 var cfgFile string
 var MyCLIOptions CLIOptions
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "hardlinkable",
-	Short: "A tool to save space by hardlinking identical files",
+	Use:     "hardlinkable [OPTIONS] dir1 [dir2 ...]",
+	Version: "0.9 alpha - 2018-09-05 (Sep 5 2018)",
+	Short:   "A tool to save space by hardlinking identical files",
 	Long: `A tool to scan directories and report on the space that could be saved by hard
 linking identical files.  It can also perform the linking.`,
 	Args: cobra.MinimumNArgs(1),
+	DisableFlagsInUseLine: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		i, ok := ArgsAreDirs(args)
 		if ok {
@@ -162,25 +199,24 @@ func init() {
 	flg.BoolVar(&o.JSONOutputEnabled, "json", false, "Output results as JSON")
 
 	flg.BoolVarP(&o.SameName, "same-name", "f", false, "Filenames need to be identical")
-	flg.BoolVarP(&o.ContentOnly, "content-only", "c", false, "Only file contents have to match")
 	flg.BoolVarP(&o.IgnoreTime, "ignore-time", "t", false, "File modification times need not match")
 	flg.BoolVarP(&o.IgnorePerms, "ignore-perms", "p", false, "File permissions need not match")
 	flg.BoolVarP(&o.IgnoreOwner, "ignore-owner", "o", false, "File uid/gid need not match")
-	flg.BoolVar(&o.IgnoreXattr, "ignore-xattr", false, "Xattrs need not match")
+	flg.BoolVarP(&o.IgnoreXattr, "ignore-xattr", "x", false, "Xattrs need not match")
+	flg.BoolVarP(&o.CLIContentOnly, "content-only", "c", false, "Only file contents have to match (ie. -potx)")
 
 	o.CLIMinFileSize.n = 1 // default
 	flg.VarP(&o.CLIMinFileSize, "min-size", "s", "Minimum file size")
 	flg.VarP(&o.CLIMaxFileSize, "max-size", "S", "Maximum file size")
 
 	flg.VarP(&o.CLIFileIncludes, "include", "i", "Regex(es) used to include files (overrides excludes)")
-	flg.VarP(&o.CLIFileExcludes, "exclude", "x", "Regex(es) used to exclude files")
-	flg.VarP(&o.CLIDirExcludes, "exclude-dir", "X", "Regex(es) used to exclude dirs")
+	flg.VarP(&o.CLIFileExcludes, "exclude", "e", "Regex(es) used to exclude files")
+	flg.VarP(&o.CLIDirExcludes, "exclude-dir", "E", "Regex(es) used to exclude dirs")
+	flg.CountVarP(&o.DebugLevel, "debug", "d", "``Increase debugging level")
 
-	// Hidden options
-	flg.CountVarP(&o.DebugLevel, "debug", "d", "Increase debugging level")
-	flg.MarkHidden("debug")
-	flg.IntVarP(&o.LinearSearchThresh, "linear-search-thresh", "", 1, "Length of inode hash lists before switching to digests")
-	flg.MarkHidden("linear-search-thresh")
+	o.CLILinearSearchThresh.n = 1 // default
+	flg.VarP(&o.CLILinearSearchThresh, "search-thresh", "", "Ino search length before enabling digests")
+	//flg.MarkHidden("search-thresh")
 	flg.SortFlags = false
 }
 

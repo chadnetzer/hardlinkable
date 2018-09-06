@@ -26,7 +26,6 @@ type Options struct {
 	ProgressOutputEnabled bool
 	JSONOutputEnabled     bool
 	SameName              bool
-	ContentOnly           bool
 	IgnoreTime            bool
 	IgnorePerms           bool
 	IgnoreOwner           bool
