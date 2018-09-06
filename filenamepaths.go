@@ -62,9 +62,9 @@ type filenamePaths struct {
 	arbPath Pathsplit
 }
 
-func newFilenamePaths() filenamePaths {
+func newFilenamePaths() *filenamePaths {
 	p := make(map[string]pathsplitSet)
-	return filenamePaths{p, Pathsplit{}}
+	return &filenamePaths{p, Pathsplit{}}
 }
 
 // When choosing an arbitrary pathname, remember what was chosen and return it
