@@ -23,6 +23,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -355,6 +356,15 @@ func (ls *LinkingStats) outputLinkingStats() {
 			fmt.Sprintf("(avg per search: %v)", avgItersPerSearch))
 		s = statStr(s, "Total equal comparisons", ls.EqualComparisonCount)
 		s = statStr(s, "Total digests computed", ls.DigestComputedCount)
+	}
+
+	if MyOptions.DebugLevel > 1 {
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+		s = statStr(s, "Mem Alloc", humanize(m.Alloc))
+		s = statStr(s, "Mem Sys", humanize(m.Sys))
+		s = statStr(s, "Mem Mallocs", m.Mallocs)
+		s = statStr(s, "Mem Frees", m.Frees, fmt.Sprintf("num live objects: %v", m.Mallocs-m.Frees))
 	}
 	printSlices(s)
 }
