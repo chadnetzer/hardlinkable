@@ -173,8 +173,8 @@ func init() {
 	flg.VarP(&o.CLIMaxFileSize, "max-size", "S", "Maximum file size")
 
 	flg.VarP(&o.CLIFileIncludes, "include", "i", "Regex(es) used to include files (overrides excludes)")
-	flg.VarP(&o.CLIFileExcludes, "exclude", "x", "Regex(es) used to exclude files")
-	flg.VarP(&o.CLIDirExcludes, "exclude-dir", "X", "Regex(es) used to exclude dirs")
+	flg.VarP(&o.CLIFileExcludes, "exclude", "e", "Regex(es) used to exclude files")
+	flg.VarP(&o.CLIDirExcludes, "exclude-dir", "E", "Regex(es) used to exclude dirs")
 
 	// Hidden options
 	flg.CountVarP(&o.DebugLevel, "debug", "d", "Increase debugging level")
