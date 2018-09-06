@@ -45,6 +45,7 @@ import (
 type CLIOptions struct {
 	StatsOutputDisabled    bool
 	ProgressOutputDisabled bool
+	CLIContentOnly         bool
 	CLIMinFileSize         uintN
 	CLIMaxFileSize         uintN
 	CLIFileIncludes        RegexArray
@@ -64,6 +65,12 @@ func (c *CLIOptions) NewOptions() Options {
 	options.FileExcludes = c.CLIFileExcludes.vals
 	options.DirExcludes = c.CLIDirExcludes.vals
 	options.LinearSearchThresh = c.CLILinearSearchThresh.n
+	if c.CLIContentOnly {
+		options.IgnoreTime = true
+		options.IgnorePerms = true
+		options.IgnoreOwner = true
+		options.IgnoreXattr = true
+	}
 	return options
 }
 
@@ -196,7 +203,7 @@ func init() {
 	flg.BoolVarP(&o.IgnorePerms, "ignore-perms", "p", false, "File permissions need not match")
 	flg.BoolVarP(&o.IgnoreOwner, "ignore-owner", "o", false, "File uid/gid need not match")
 	flg.BoolVarP(&o.IgnoreXattr, "ignore-xattr", "x", false, "Xattrs need not match")
-	flg.BoolVarP(&o.ContentOnly, "content-only", "c", false, "Only file contents have to match (ie. -potx)")
+	flg.BoolVarP(&o.CLIContentOnly, "content-only", "c", false, "Only file contents have to match (ie. -potx)")
 
 	o.CLIMinFileSize.n = 1 // default
 	flg.VarP(&o.CLIMinFileSize, "min-size", "s", "Minimum file size")

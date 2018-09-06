@@ -97,7 +97,7 @@ func InoHash(stat StatInfo, opt *Options) Hash {
 	// hashes.  It's less important if unequal files also have the same
 	// hash value, since we will still compare the actual file content
 	// later.
-	if opt.IgnoreTime || opt.ContentOnly {
+	if opt.IgnoreTime {
 		value = size
 	} else {
 		value = size ^ Hash(stat.Sec) ^ Hash(stat.Nsec)
@@ -340,20 +340,18 @@ func (fs *FSDev) areFilesHardlinkable(ps1 PathStat, ps2 PathStat, useDigest bool
 	if ps1.Size != ps2.Size {
 		return false
 	}
-	if !MyOptions.ContentOnly {
-		if !MyOptions.IgnoreTime && !ps1.EqualTime(ps2) {
+	if !MyOptions.IgnoreTime && !ps1.EqualTime(ps2) {
+		return false
+	}
+	if !MyOptions.IgnorePerms && !ps1.EqualMode(ps2) {
+		return false
+	}
+	if !MyOptions.IgnoreOwner && !ps1.EqualOwnership(ps2) {
+		return false
+	}
+	if !MyOptions.IgnoreXattr {
+		if eq, _ := equalXAttrs(ps1.Join(), ps2.Join()); !eq {
 			return false
-		}
-		if !MyOptions.IgnorePerms && !ps1.EqualMode(ps2) {
-			return false
-		}
-		if !MyOptions.IgnoreOwner && !ps1.EqualOwnership(ps2) {
-			return false
-		}
-		if !MyOptions.IgnoreXattr {
-			if eq, _ := equalXAttrs(ps1.Join(), ps2.Join()); !eq {
-				return false
-			}
 		}
 	}
 
