@@ -24,8 +24,6 @@ type Hash uint64
 
 type StatInfos map[string]StatInfo
 
-type FilenamePaths map[string][]Pathsplit
-
 type PathStat struct {
 	Pathsplit
 	StatInfo
@@ -41,7 +39,7 @@ type FSDev struct {
 	MaxNLinks      uint64
 	InoHashes      map[Hash]InoSet
 	InoStatInfo    map[Ino]StatInfo
-	InoPaths       map[Ino]FilenamePaths
+	InoPaths       map[Ino]*filenamePaths
 	LinkedInos     map[Ino]InoSet
 	DigestIno      map[Digest]InoSet
 	InosWithDigest InoSet
@@ -77,7 +75,7 @@ func NewFSDev(dev, maxNLinks uint64) FSDev {
 	w.MaxNLinks = maxNLinks
 	w.InoHashes = make(map[Hash]InoSet)
 	w.InoStatInfo = make(map[Ino]StatInfo)
-	w.InoPaths = make(map[Ino]FilenamePaths)
+	w.InoPaths = make(map[Ino]*filenamePaths)
 	w.LinkedInos = make(map[Ino]InoSet)
 	w.DigestIno = make(map[Digest]InoSet)
 	w.InosWithDigest = NewInoSet()
@@ -269,57 +267,40 @@ func (f *FSDev) ArbitraryPath(ino Ino) Pathsplit {
 	// ino must exist in f.InoPaths.  If it does, there will be at least
 	// one pathname to return
 	filenamePaths := f.InoPaths[ino]
-	var v []Pathsplit
-	for _, v = range filenamePaths {
-		return v[0]
-	}
-	panic("Unexpected empty filenamePaths in ArbitraryPath()")
+	return filenamePaths.any()
 }
 
 func (f *FSDev) ArbitraryFilenamePath(ino Ino, filename string) Pathsplit {
 	filenamePaths := f.InoPaths[ino]
-	// Note - filename must exist in map, and if so len(paths) will be > 0
-	paths := filenamePaths[filename]
-	return paths[0]
+	return filenamePaths.anyWithFilename(filename)
 }
 
-func (f *FSDev) InoAppendPathname(ino Ino, pathsplit Pathsplit) {
-	filename := pathsplit.Filename
+func (f *FSDev) InoAppendPathname(ino Ino, path Pathsplit) {
 	filenamePaths, ok := f.InoPaths[ino]
 	if !ok {
-		filenamePaths = make(FilenamePaths)
+		filenamePaths = newFilenamePaths()
+		f.InoPaths[ino] = filenamePaths
 	}
-	var paths []Pathsplit
-	paths, ok = filenamePaths[filename]
-	if !ok {
-		paths = make([]Pathsplit, 0)
-	}
-	paths = append(paths, pathsplit)
-	filenamePaths[filename] = paths
-	f.InoPaths[ino] = filenamePaths
+	filenamePaths.add(path)
 }
 
 func (f *FSDev) PathStatFromIno(ino Ino) PathStat {
-	pathsplit := f.ArbitraryPath(ino)
+	path := f.ArbitraryPath(ino)
 	fi := f.InoStatInfo[ino]
-	return PathStat{pathsplit, fi}
+	return PathStat{path, fi}
 }
 
 func (f *FSDev) allInoPaths(ino Ino) <-chan Pathsplit {
 	// Deepcopy the FilenamePaths map so that we can update the original
 	// while iterating over it's contents
-	filenamePaths := f.InoPaths[ino]
-	m := make(FilenamePaths, len(filenamePaths))
-	for k, v := range filenamePaths {
-		m[k] = append([]Pathsplit(nil), v...) // Copy v
-	}
+	fpClone := f.InoPaths[ino].clone()
 
 	// Iterate over the copy of the FilenamePaths, and return each pathname
 	out := make(chan Pathsplit)
 	go func() {
 		defer close(out)
-		for _, paths := range m {
-			for _, path := range paths {
+		for _, paths := range fpClone.pMap {
+			for path := range paths {
 				out <- path
 			}
 		}
@@ -344,7 +325,7 @@ func (f *FSDev) addLinkableInos(ino1, ino2 Ino) {
 	}
 }
 
-func (fs *FSDev) areFilesLinkable(ps1 PathStat, ps2 PathStat, useDigest bool) bool {
+func (f *FSDev) areFilesLinkable(ps1 PathStat, ps2 PathStat, useDigest bool) bool {
 	// Dev is equal for both PathStats
 	if ps1.Ino == ps2.Ino {
 		return false
@@ -369,8 +350,8 @@ func (fs *FSDev) areFilesLinkable(ps1 PathStat, ps2 PathStat, useDigest bool) bo
 
 	// assert(st1.Dev == st2.Dev && st1.Ino != st2.Ino && st1.Size == st2.Size)
 	if useDigest {
-		fs.newPathStatDigest(ps1)
-		fs.newPathStatDigest(ps2)
+		f.newPathStatDigest(ps1)
+		f.newPathStatDigest(ps2)
 	}
 
 	Stats.DidComparison()
@@ -410,48 +391,39 @@ func (fs *FSDev) areFilesLinkable(ps1 PathStat, ps2 PathStat, useDigest bool) bo
 	return eq
 }
 
-func (fs *FSDev) moveLinkedPath(dstPath Pathsplit, srcIno Ino, dstIno Ino) {
-	// Get pathnames slice mathing Ino and filename
-	p := fs.InoPaths[dstIno][dstPath.Filename]
+func (f *FSDev) moveLinkedPath(dstPath Pathsplit, srcIno Ino, dstIno Ino) {
+	// Get pathnames slice matching Ino and filename
+	fp := f.InoPaths[dstIno]
+	fp.remove(dstPath)
 
-	// Find and remove dstPath from pathnames
-	for i, ps := range p {
-		if ps == dstPath {
-			p = append(p[:i], p[i+1:]...)
-			break
-		}
+	if fp.isEmpty() {
+		delete(f.InoPaths, dstIno)
 	}
-
-	if len(p) == 0 {
-		delete(fs.InoPaths[dstIno], dstPath.Filename)
-	} else {
-		fs.InoPaths[dstIno][dstPath.Filename] = p
-	}
-	fs.InoAppendPathname(srcIno, dstPath)
+	f.InoAppendPathname(srcIno, dstPath)
 }
 
-func (fs *FSDev) addPathStatDigest(ps PathStat, digest Digest) {
-	if !fs.InosWithDigest.Has(ps.Ino) {
-		fs.helperPathStatDigest(ps, digest)
+func (f *FSDev) addPathStatDigest(ps PathStat, digest Digest) {
+	if !f.InosWithDigest.Has(ps.Ino) {
+		f.helperPathStatDigest(ps, digest)
 	}
 }
 
-func (fs *FSDev) newPathStatDigest(ps PathStat) {
-	if !fs.InosWithDigest.Has(ps.Ino) {
+func (f *FSDev) newPathStatDigest(ps PathStat) {
+	if !f.InosWithDigest.Has(ps.Ino) {
 		pathname := ps.Pathsplit.Join()
 		digest, err := contentDigest(pathname)
 		if err == nil {
-			fs.helperPathStatDigest(ps, digest)
+			f.helperPathStatDigest(ps, digest)
 		}
 	}
 }
 
-func (fs *FSDev) helperPathStatDigest(ps PathStat, digest Digest) {
-	if _, ok := fs.DigestIno[digest]; !ok {
-		fs.DigestIno[digest] = NewInoSet(ps.Ino)
+func (f *FSDev) helperPathStatDigest(ps PathStat, digest Digest) {
+	if _, ok := f.DigestIno[digest]; !ok {
+		f.DigestIno[digest] = NewInoSet(ps.Ino)
 	} else {
-		set := fs.DigestIno[digest]
+		set := f.DigestIno[digest]
 		set.Add(ps.Ino)
 	}
-	fs.InosWithDigest.Add(ps.Ino)
+	f.InosWithDigest.Add(ps.Ino)
 }
