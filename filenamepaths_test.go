@@ -25,21 +25,25 @@ import (
 	"testing"
 )
 
+func SP(pathname string) Pathsplit {
+	return SplitPathname(pathname, nil)
+}
+
 func TestPathsplitSet(t *testing.T) {
 	var s pathsplitSet
 	s = newPathsplitSet()
 	if len(s) != 0 {
 		t.Errorf("Empty pathsplitSet length isn't 0: %v", s)
 	}
-	s = newPathsplitSet(SplitPathname("/a/a"), SplitPathname("/a/b"), SplitPathname("/b/a"))
+	s = newPathsplitSet(SP("/a/a"), SP("/a/b"), SP("/b/a"))
 	if len(s) != 3 {
 		t.Errorf("Length %d pathsplitSet should be 3", len(s))
 	}
-	s.add(SplitPathname("/c/b"))
+	s.add(SP("/c/b"))
 	if len(s) != 4 {
 		t.Errorf("Length %d pathsplitSet should be 4", len(s))
 	}
-	s.remove(SplitPathname("/a/a"))
+	s.remove(SP("/a/a"))
 	if len(s) != 3 {
 		t.Errorf("Length %d pathsplitSet should be 3", len(s))
 	}
@@ -47,11 +51,11 @@ func TestPathsplitSet(t *testing.T) {
 	if !reflect.DeepEqual(s, c) {
 		t.Errorf("pathsplitSet clone: %v is unequal to original: %v", c, s)
 	}
-	c.add(SplitPathname("/c/b"))
+	c.add(SP("/c/b"))
 	if !reflect.DeepEqual(s, c) {
 		t.Errorf("pathsplitSet clone: %v is unequal to original: %v", c, s)
 	}
-	c.remove(SplitPathname("/c/b"))
+	c.remove(SP("/c/b"))
 	if reflect.DeepEqual(s, c) {
 		t.Errorf("After path removal pathsplitSet clone: %v is equal to original: %v", c, s)
 	}
@@ -75,20 +79,20 @@ func TestFilenamePaths(t *testing.T) {
 	}
 
 	// Add two separate paths with same filename (ie. basename)
-	f.add(SplitPathname("/a/a"))
+	f.add(SP("/a/a"))
 	if len(f.pMap) != 1 {
 		t.Errorf("Length %d of filenamePaths pMap should be 1", len(f.pMap))
 	}
 	if f.isEmpty() {
 		t.Errorf("isEmpty() on non-empty filenamePaths is wrong")
 	}
-	f.add(SplitPathname("/b/a"))
+	f.add(SP("/b/a"))
 	if len(f.pMap) != 1 {
 		t.Errorf("Length %d of filenamePaths pMap should be 1", len(f.pMap))
 	}
 
 	// Add a new path with a unique filename
-	f.add(SplitPathname("/a/c"))
+	f.add(SP("/a/c"))
 	if len(f.pMap) != 2 {
 		t.Errorf("Length %d of filenamePaths pMap should be 2", len(f.pMap))
 	}
@@ -100,7 +104,7 @@ func TestFilenamePaths(t *testing.T) {
 	}
 
 	// Remove one of the path's with "a" filename
-	f.remove(SplitPathname("/a/a"))
+	f.remove(SP("/a/a"))
 	if len(f.pMap) != 2 {
 		t.Errorf("Length %d of filenamePaths pMap should be 2", len(f.pMap))
 	}
