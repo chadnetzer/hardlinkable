@@ -325,7 +325,7 @@ func (f *FSDev) addLinkableInos(ino1, ino2 Ino) {
 	}
 }
 
-func (fs *FSDev) areFilesLinkable(ps1 PathStat, ps2 PathStat, useDigest bool) bool {
+func (f *FSDev) areFilesLinkable(ps1 PathStat, ps2 PathStat, useDigest bool) bool {
 	// Dev is equal for both PathStats
 	if ps1.Ino == ps2.Ino {
 		return false
@@ -350,8 +350,8 @@ func (fs *FSDev) areFilesLinkable(ps1 PathStat, ps2 PathStat, useDigest bool) bo
 
 	// assert(st1.Dev == st2.Dev && st1.Ino != st2.Ino && st1.Size == st2.Size)
 	if useDigest {
-		fs.newPathStatDigest(ps1)
-		fs.newPathStatDigest(ps2)
+		f.newPathStatDigest(ps1)
+		f.newPathStatDigest(ps2)
 	}
 
 	Stats.DidComparison()
@@ -391,39 +391,39 @@ func (fs *FSDev) areFilesLinkable(ps1 PathStat, ps2 PathStat, useDigest bool) bo
 	return eq
 }
 
-func (fs *FSDev) moveLinkedPath(dstPath Pathsplit, srcIno Ino, dstIno Ino) {
+func (f *FSDev) moveLinkedPath(dstPath Pathsplit, srcIno Ino, dstIno Ino) {
 	// Get pathnames slice matching Ino and filename
-	fp := fs.InoPaths[dstIno]
+	fp := f.InoPaths[dstIno]
 	fp.remove(dstPath)
 
 	if fp.isEmpty() {
-		delete(fs.InoPaths, dstIno)
+		delete(f.InoPaths, dstIno)
 	}
-	fs.InoAppendPathname(srcIno, dstPath)
+	f.InoAppendPathname(srcIno, dstPath)
 }
 
-func (fs *FSDev) addPathStatDigest(ps PathStat, digest Digest) {
-	if !fs.InosWithDigest.Has(ps.Ino) {
-		fs.helperPathStatDigest(ps, digest)
+func (f *FSDev) addPathStatDigest(ps PathStat, digest Digest) {
+	if !f.InosWithDigest.Has(ps.Ino) {
+		f.helperPathStatDigest(ps, digest)
 	}
 }
 
-func (fs *FSDev) newPathStatDigest(ps PathStat) {
-	if !fs.InosWithDigest.Has(ps.Ino) {
+func (f *FSDev) newPathStatDigest(ps PathStat) {
+	if !f.InosWithDigest.Has(ps.Ino) {
 		pathname := ps.Pathsplit.Join()
 		digest, err := contentDigest(pathname)
 		if err == nil {
-			fs.helperPathStatDigest(ps, digest)
+			f.helperPathStatDigest(ps, digest)
 		}
 	}
 }
 
-func (fs *FSDev) helperPathStatDigest(ps PathStat, digest Digest) {
-	if _, ok := fs.DigestIno[digest]; !ok {
-		fs.DigestIno[digest] = NewInoSet(ps.Ino)
+func (f *FSDev) helperPathStatDigest(ps PathStat, digest Digest) {
+	if _, ok := f.DigestIno[digest]; !ok {
+		f.DigestIno[digest] = NewInoSet(ps.Ino)
 	} else {
-		set := fs.DigestIno[digest]
+		set := f.DigestIno[digest]
 		set.Add(ps.Ino)
 	}
-	fs.InosWithDigest.Add(ps.Ino)
+	f.InosWithDigest.Add(ps.Ino)
 }
