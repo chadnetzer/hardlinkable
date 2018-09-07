@@ -363,8 +363,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 		runtime.ReadMemStats(&m)
 		s = statStr(s, "Mem Alloc", humanize(m.Alloc))
 		s = statStr(s, "Mem Sys", humanize(m.Sys))
-		s = statStr(s, "Mem Mallocs", m.Mallocs)
-		s = statStr(s, "Mem Frees", m.Frees, fmt.Sprintf("num live objects: %v", m.Mallocs-m.Frees))
+		s = statStr(s, "Num live objects", m.Mallocs-m.Frees)
 	}
 	printSlices(s)
 }
