@@ -98,7 +98,7 @@ func (f *filenamePaths) add(ps Pathsplit) {
 func (f *filenamePaths) remove(ps Pathsplit) {
 	// Find and remove given Pathsplit from pMap
 	f.pMap[ps.Filename].remove(ps)
-	if len(f.pMap) == 0 {
+	if len(f.pMap[ps.Filename]) == 0 {
 		delete(f.pMap, ps.Filename)
 		f.arbPath = Pathsplit{}
 	} else if ps == f.arbPath {
