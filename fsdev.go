@@ -49,6 +49,7 @@ type FSDev struct {
 	LinkedInos     map[Ino]InoSet
 	DigestIno      map[Digest]InoSet
 	InosWithDigest InoSet
+	pool           internPool
 
 	// For each directory name, keep track of all the StatInfo structures
 	DirnameStatInfos map[string]StatInfos
@@ -84,6 +85,7 @@ func NewFSDev(dev, maxNLinks uint64) FSDev {
 	w.LinkedInos = make(map[Ino]InoSet)
 	w.DigestIno = make(map[Digest]InoSet)
 	w.InosWithDigest = NewInoSet()
+	w.pool = newInternPool()
 
 	return w
 }
@@ -111,7 +113,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 		panic(errStr)
 	}
 	statInfo := devStatInfo.StatInfo
-	curPath := SplitPathname(pathname)
+	curPath := SplitPathname(pathname, f.pool)
 	curPathStat := PathStat{curPath, statInfo}
 
 	if _, ok := f.InoStatInfo[statInfo.Ino]; !ok {
@@ -183,7 +185,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 		}
 	}
 	f.InoStatInfo[statInfo.Ino] = statInfo
-	f.InoAppendPathname(statInfo.Ino, SplitPathname(pathname))
+	f.InoAppendPathname(statInfo.Ino, curPath)
 }
 
 func (f *FSDev) linkedInoSet(ino Ino) InoSet {

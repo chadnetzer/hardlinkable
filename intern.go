@@ -20,23 +20,24 @@
 
 package main
 
-import "path"
+// "Strings" are really headers with a backing store, so by storing and reusing
+// strings, we may be able to reuse the underlying backing store.
+type internPool map[string]string
 
-type Pathsplit struct {
-	Dirname  string
-	Filename string
+func newInternPool() internPool {
+	p := make(internPool)
+	return p
 }
 
-func SplitPathname(pathname string, pool internPool) Pathsplit {
-	dirname, filename := path.Split(pathname)
-	if pool != nil {
-		dirname = pool.intern(dirname)
-		filename = pool.intern(filename)
+// Try to find and return a string in the pool map, and add it if it isn't
+// already there.  Not concurrency safe
+func (p internPool) intern(s string) string {
+	if r, ok := p[s]; ok {
+		return r
 	}
-	pathSplit := Pathsplit{dirname, filename}
-	return pathSplit
-}
+	// "Unpin" the memory used in the given s string (by double-copy)
+	s = string([]byte(s))
 
-func (ps Pathsplit) Join() string {
-	return path.Join(ps.Dirname, ps.Filename)
+	p[s] = s
+	return s
 }
