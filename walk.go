@@ -30,10 +30,16 @@ import (
 
 // Return allowed pathnames through the given channel.
 func MatchedPathnames(directories []string, options Options) <-chan string {
+	seenDirs := make(map[string]struct{})
 	out := make(chan string)
 	go func() {
 		defer close(out)
 		for _, dir := range directories {
+			if _, ok := seenDirs[dir]; ok {
+				continue
+			} else {
+				seenDirs[dir] = struct{}{}
+			}
 			err := godirwalk.Walk(dir, &godirwalk.Options{
 				Callback: func(osPathname string, de *godirwalk.Dirent) error {
 					if de.ModeType().IsDir() {
