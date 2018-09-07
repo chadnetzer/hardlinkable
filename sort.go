@@ -142,7 +142,8 @@ func (f *FSDev) sendLinkedPairs(sortedInos []Ino, out chan<- PathStatPair) {
 			// to zero (if not all links have a matching filename), so place on the
 			// remainingInos list to allow it to (possibly) be linked with other linked
 			// inodes
-			if !f.InoPaths[dstIno].isEmpty() {
+			fp, ok := f.InoPaths[dstIno]
+			if ok && !fp.isEmpty() {
 				remainingInos = append(remainingInos, dstIno)
 			}
 		}
