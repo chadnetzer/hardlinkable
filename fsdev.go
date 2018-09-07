@@ -120,6 +120,10 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 		Stats.FoundHash()
 		// See if the new file is an inode we've seen before
 		if _, ok := f.InoStatInfo[statInfo.Ino]; ok {
+			// If it's a path we've seen before, ignore it
+			if f.haveSeenPath(statInfo.Ino, curPath) {
+				return
+			}
 			prevPath := f.ArbitraryPath(statInfo.Ino)
 			prevStatinfo := f.InoStatInfo[statInfo.Ino]
 			linkPair := LinkPair{prevPath, curPath}
