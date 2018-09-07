@@ -275,6 +275,11 @@ func (f *FSDev) ArbitraryFilenamePath(ino Ino, filename string) Pathsplit {
 	return filenamePaths.anyWithFilename(filename)
 }
 
+func (f *FSDev) haveSeenPath(ino Ino, path Pathsplit) bool {
+	fp := f.InoPaths[ino]
+	return fp.hasPath(path)
+}
+
 func (f *FSDev) InoAppendPathname(ino Ino, path Pathsplit) {
 	filenamePaths, ok := f.InoPaths[ino]
 	if !ok {
