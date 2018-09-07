@@ -104,15 +104,15 @@ func (f *filenamePaths) remove(ps Pathsplit) {
 	}
 }
 
-func (f filenamePaths) isEmpty() bool {
+func (f *filenamePaths) isEmpty() bool {
 	return len(f.pMap) == 0
 }
 
 // Return a copy of the given filenamePaths
-func (f filenamePaths) clone() filenamePaths {
+func (f *filenamePaths) clone() *filenamePaths {
 	c := make(map[string]pathsplitSet, len(f.pMap))
 	for k, v := range f.pMap {
 		c[k] = v.clone()
 	}
-	return filenamePaths{c, f.arbPath}
+	return &filenamePaths{c, f.arbPath}
 }
