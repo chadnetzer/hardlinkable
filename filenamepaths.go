@@ -101,6 +101,8 @@ func (f *filenamePaths) remove(ps Pathsplit) {
 	if len(f.pMap) == 0 {
 		delete(f.pMap, ps.Filename)
 		f.arbPath = Pathsplit{}
+	} else if ps == f.arbPath {
+		f.arbPath = Pathsplit{}
 	}
 }
 
