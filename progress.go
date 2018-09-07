@@ -22,6 +22,7 @@ package main
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -45,6 +46,8 @@ type TTYProgress struct {
 
 	stats   *LinkingStats
 	options *Options
+
+	m runtime.MemStats
 }
 
 type DisabledProgress struct{}
@@ -97,6 +100,10 @@ func (p *TTYProgress) ShowDirsFilesFound() {
 		p.lastFPS = fps
 		p.lastFPSDiff = fpsDiff
 		p.lastFPSTime = now
+
+		if p.options.DebugLevel > 1 {
+			runtime.ReadMemStats(&p.m)
+		}
 	} else {
 		fps = p.lastFPS
 		fpsDiff = p.lastFPSDiff
@@ -104,6 +111,10 @@ func (p *TTYProgress) ShowDirsFilesFound() {
 
 	fmtStr := "\r%d files in %d dirs, elapsed time: %s  files/sec: %.0f (%+.0f)"
 	s := fmt.Sprintf(fmtStr, numFiles, numDirs, durStr, fps, fpsDiff)
+
+	if p.options.DebugLevel > 1 {
+		s += fmt.Sprintf("  Allocs %v", humanize(p.m.Alloc))
+	}
 	p.line(s)
 }
 

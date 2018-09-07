@@ -38,6 +38,10 @@ type Options struct {
 	FileIncludes          []string
 	FileExcludes          []string
 	DirExcludes           []string
+
+	// Indirect options, set based on debug and/or verbosity level
+	existingLinkStatsEnabled bool
+	newLinkStatsEnabled      bool
 }
 
 var MyOptions *Options

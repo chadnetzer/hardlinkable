@@ -23,6 +23,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -186,9 +187,10 @@ func (s *LinkingStats) computedDigest() {
 }
 
 func (s *LinkingStats) FoundNewLink(src, dst PathStat) {
-	linkPair := LinkPair{src.Pathsplit, dst.Pathsplit}
-	// Make optional to save space...
-	s.linkPairs = append(s.linkPairs, linkPair)
+	if MyOptions.newLinkStatsEnabled {
+		linkPair := LinkPair{src.Pathsplit, dst.Pathsplit}
+		s.linkPairs = append(s.linkPairs, linkPair)
+	}
 
 	s.NewLinkCount += 1
 	if dst.Nlink == 1 {
@@ -200,6 +202,9 @@ func (s *LinkingStats) FoundNewLink(src, dst PathStat) {
 func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
 	s.PrevLinkCount += 1
 	s.PrevBytesSaved += e.SrcStatinfo.Size
+	if !MyOptions.existingLinkStatsEnabled {
+		return
+	}
 	srcPath := e.Src
 	dstPath := e.Dst
 	srcStatinfo := e.SrcStatinfo
@@ -210,15 +215,14 @@ func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
 	}
 	linkDestinations.paths = append(linkDestinations.paths, dstPath)
 	s.existingLinks[srcPath] = linkDestinations
-	//fmt.Println("currently linked: ", srcPath, linkDestinations)
 }
 
 func (ls *LinkingStats) outputResults() {
-	if MyOptions.Verbosity > 2 {
+	if MyOptions.existingLinkStatsEnabled {
 		ls.outputCurrentHardlinks()
 		fmt.Println("")
 	}
-	if MyOptions.Verbosity > 1 {
+	if MyOptions.newLinkStatsEnabled {
 		ls.outputLinkedPaths()
 		if MyOptions.StatsOutputEnabled {
 			fmt.Println("")
@@ -352,6 +356,15 @@ func (ls *LinkingStats) outputLinkingStats() {
 			fmt.Sprintf("(avg per search: %v)", avgItersPerSearch))
 		s = statStr(s, "Total equal comparisons", ls.EqualComparisonCount)
 		s = statStr(s, "Total digests computed", ls.DigestComputedCount)
+	}
+
+	if MyOptions.DebugLevel > 1 {
+		runtime.GC()
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+		s = statStr(s, "Mem Alloc", humanize(m.Alloc))
+		s = statStr(s, "Mem Sys", humanize(m.Sys))
+		s = statStr(s, "Num live objects", m.Mallocs-m.Frees)
 	}
 	printSlices(s)
 }
