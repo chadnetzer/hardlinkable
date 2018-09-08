@@ -110,6 +110,17 @@ func (f *filenamePaths) isEmpty() bool {
 	return len(f.pMap) == 0
 }
 
+func (f *filenamePaths) hasPath(ps Pathsplit) bool {
+	paths, ok := f.pMap[ps.Filename]
+	if !ok {
+		return false
+	}
+	if _, ok := paths[ps]; !ok {
+		return false
+	}
+	return true
+}
+
 // Return a copy of the given filenamePaths
 func (f *filenamePaths) clone() *filenamePaths {
 	c := make(map[string]pathsplitSet, len(f.pMap))

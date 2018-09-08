@@ -120,6 +120,10 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 		Stats.FoundHash()
 		// See if the new file is an inode we've seen before
 		if _, ok := f.InoStatInfo[statInfo.Ino]; ok {
+			// If it's a path we've seen before, ignore it
+			if f.haveSeenPath(statInfo.Ino, curPath) {
+				return
+			}
 			prevPath := f.ArbitraryPath(statInfo.Ino)
 			prevStatinfo := f.InoStatInfo[statInfo.Ino]
 			linkPair := LinkPair{prevPath, curPath}
@@ -273,6 +277,11 @@ func (f *FSDev) ArbitraryPath(ino Ino) Pathsplit {
 func (f *FSDev) ArbitraryFilenamePath(ino Ino, filename string) Pathsplit {
 	filenamePaths := f.InoPaths[ino]
 	return filenamePaths.anyWithFilename(filename)
+}
+
+func (f *FSDev) haveSeenPath(ino Ino, path Pathsplit) bool {
+	fp := f.InoPaths[ino]
+	return fp.hasPath(path)
 }
 
 func (f *FSDev) InoAppendPathname(ino Ino, path Pathsplit) {
