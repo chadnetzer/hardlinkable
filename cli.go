@@ -167,7 +167,7 @@ linking identical files.  It can also perform the linking.`,
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(2)
 		}
-		Run(argPaths.dirs)
+		Run(argPaths.dirs, argPaths.files)
 	},
 }
 

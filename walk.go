@@ -29,7 +29,7 @@ import (
 )
 
 // Return allowed pathnames through the given channel.
-func MatchedPathnames(directories []string, options Options) <-chan string {
+func MatchedPathnames(directories []string, pathnames []string, options Options) <-chan string {
 	out := make(chan string)
 	go func() {
 		defer close(out)
@@ -61,6 +61,12 @@ func MatchedPathnames(directories []string, options Options) <-chan string {
 			if err != nil {
 				fmt.Println(err)
 			}
+		}
+		// Also return any given pathnames, ignoring excludes and
+		// matches (the assumption being if the user supplied the
+		// pathname directly, it needn't be filtered)
+		for _, pathname := range pathnames {
+			out <- pathname
 		}
 	}()
 	return out
