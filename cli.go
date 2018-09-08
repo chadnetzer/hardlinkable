@@ -144,6 +144,11 @@ func (i *intN) Set(num string) error {
 // Return "N" instead of "int" for usage text
 func (i *intN) Type() string { return "N" }
 
+type argPaths struct {
+	dirs  []string
+	files []string
+}
+
 var cfgFile string
 var MyCLIOptions CLIOptions
 
@@ -157,14 +162,39 @@ linking identical files.  It can also perform the linking.`,
 	Args: cobra.MinimumNArgs(1),
 	DisableFlagsInUseLine: true,
 	Run: func(cmd *cobra.Command, args []string) {
-		i, ok := ArgsAreDirs(args)
-		if ok {
-			Run(args)
-		} else {
-			fmt.Fprintf(os.Stderr, "'%v' is not a directory.", args[i])
+		argPaths, err := separateArgs(args)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
 			os.Exit(2)
 		}
+		Run(argPaths.dirs)
 	},
+}
+
+// separateArgs will remove duplicate args and separate into dirs and files
+func separateArgs(args []string) (argPaths, error) {
+	a := argPaths{make([]string, 0), make([]string, 0)}
+	seenPaths := make(map[string]struct{})
+	for _, name := range args {
+		if _, ok := seenPaths[name]; ok {
+			continue
+		}
+		fi, err := os.Lstat(name)
+		if err != nil {
+			return a, err
+		}
+		seenPaths[name] = struct{}{}
+		if fi.IsDir() {
+			a.dirs = append(a.dirs, name)
+			continue
+		}
+		if fi.Mode().IsRegular() {
+			a.files = append(a.files, name)
+			continue
+		}
+		return a, fmt.Errorf("'%v' is neither a directory or a regular file", name)
+	}
+	return a, nil
 }
 
 // Return ok if all args are directories, or the index of the first
