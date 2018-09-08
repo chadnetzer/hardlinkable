@@ -55,11 +55,12 @@ func MatchedPathnames(dirs []string, files []string, opts Options) <-chan string
 				fmt.Println(err)
 			}
 		}
-		// Also return any given pathnames, ignoring excludes and
-		// matches (the assumption being if the user supplied the
-		// pathname directly, it needn't be filtered)
+		// Also pass back some or all (depending on includes and
+		// excludes) of the passed in file pathnames.
 		for _, pathname := range files {
-			out <- pathname
+			if isFileIncluded(pathname, opts) {
+				out <- pathname
+			}
 		}
 	}()
 	return out
