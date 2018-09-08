@@ -44,13 +44,7 @@ func MatchedPathnames(dirs []string, files []string, opts Options) <-chan string
 						}
 						Stats.FoundDirectory()
 					} else if de.ModeType().IsRegular() {
-						filename := de.Name()
-						fileIncludes := opts.FileIncludes
-						fileExcludes := opts.FileExcludes
-						// When excludes is not empty, include can override an exclude
-						if (len(fileExcludes) == 0 && len(fileIncludes) == 0) ||
-							(len(fileIncludes) > 0 && isMatched(filename, fileIncludes)) ||
-							(len(fileExcludes) > 0 && !isMatched(filename, fileExcludes)) {
+						if isFileIncluded(de.Name(), opts) {
 							out <- osPathname
 						}
 					}
@@ -79,6 +73,23 @@ func isMatched(name string, pattern []string) bool {
 		if matched && err == nil {
 			return true
 		}
+	}
+	return false
+}
+
+// isFileIncluded returns true if the given pathname is not excluded, or is
+// specifically included by the command line options.
+func isFileIncluded(name string, opts Options) bool {
+	inc := opts.FileIncludes
+	exc := opts.FileExcludes
+	if len(exc) == 0 && len(inc) == 0 {
+		return true
+	}
+	if len(inc) > 0 && isMatched(name, inc) {
+		return true
+	}
+	if len(exc) > 0 && !isMatched(name, exc) {
+		return true
 	}
 	return false
 }
