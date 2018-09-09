@@ -78,6 +78,7 @@ type CountingStats struct {
 	MismatchedGidBytes   uint64 `json:"mismatchedGidBytes"`
 	MismatchedXattrBytes uint64 `json:"mismatchedXattrBytes"`
 	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
+	BytesCompared        uint64 `json:"bytesCompared"`
 
 	// Debugging counts
 	EqualComparisonCount int64 `json:"equalComparisonCount"`
@@ -176,6 +177,10 @@ func (s *LinkingStats) NoHashMatch() {
 
 func (s *LinkingStats) DidComparison() {
 	s.ComparisonCount += 1
+}
+
+func (s *LinkingStats) AddBytesCompared(n uint64) {
+	s.BytesCompared += n
 }
 
 func (s *LinkingStats) FoundEqualFiles() {
@@ -334,6 +339,10 @@ func (ls *LinkingStats) outputLinkingStats() {
 		if ls.MismatchedTotalBytes > 0 {
 			s = statStr(s, "Total equal file mismatches", ls.MismatchedTotalCount,
 				humanizeParens(ls.MismatchedTotalBytes))
+		}
+		if ls.BytesCompared > 0 {
+			s = statStr(s, "Total bytes compared", ls.BytesCompared,
+				humanizeParens(ls.BytesCompared))
 		}
 
 		remainingInodes := ls.InodeCount - ls.InodeConsolidationCount
