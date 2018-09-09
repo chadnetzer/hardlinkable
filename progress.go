@@ -40,7 +40,6 @@ type TTYProgress struct {
 	updateDelay     time.Duration
 	updateFPSDelay  time.Duration
 	dirFilesCounter int
-	counterMin      int
 	lastFPS         float64
 	lastFPSDiff     float64
 
@@ -60,7 +59,6 @@ func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
 		lastFPSTime:    now,
 		updateDelay:    60 * time.Millisecond,
 		updateFPSDelay: 180 * time.Millisecond,
-		counterMin:     151, // Prime number makes output more dynamic
 		stats:          stats,
 		options:        options,
 	}
@@ -72,10 +70,7 @@ func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
 // calculation loop.
 func (p *TTYProgress) ShowDirsFilesFound() {
 	p.dirFilesCounter += 1
-	if p.dirFilesCounter < p.counterMin {
 		return
-	} else {
-		p.dirFilesCounter = 0
 	}
 
 	now := time.Now()
