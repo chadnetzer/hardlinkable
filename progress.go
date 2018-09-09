@@ -35,7 +35,6 @@ type Progress interface {
 // A simple progress meter while scanning directories and performing linking
 type TTYProgress struct {
 	lastLineLen     int
-	lastTime        time.Time
 	lastFPSTime     time.Time
 	updateDelay     time.Duration
 	updateFPSDelay  time.Duration
@@ -57,7 +56,6 @@ type DisabledProgress struct{}
 func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
 	now := time.Now()
 	p := TTYProgress{
-		lastTime:       now,
 		lastFPSTime:    now,
 		updateDelay:    60 * time.Millisecond,
 		updateFPSDelay: 180 * time.Millisecond,
@@ -98,11 +96,6 @@ func (p *TTYProgress) ShowDirsFilesFound() {
 	}
 
 	now := time.Now()
-	timeSinceLast := now.Sub(p.lastTime)
-	if timeSinceLast < p.updateDelay {
-		return
-	}
-	p.lastTime = now
 
 	numDirs := p.stats.DirCount
 	numFiles := p.stats.FileCount
