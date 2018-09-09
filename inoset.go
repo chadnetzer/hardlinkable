@@ -51,6 +51,19 @@ func (s InoSet) Has(ino Ino) bool {
 	return ok
 }
 
+// Return true if all given Inos are in the InoSet (false if empty)
+func (s InoSet) HasAll(inos ...Ino) bool {
+	if len(inos) == 0 || len(s) == 0 {
+		return false
+	}
+	for _, ino := range inos {
+		if _, ok := s[ino]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
 // Return a duplicate of the InoSet
 func (s InoSet) Copy() InoSet {
 	newSet := make(map[Ino]struct{}, len(s))
