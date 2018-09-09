@@ -43,6 +43,8 @@ type TTYProgress struct {
 	lastFPS         float64
 	lastFPSDiff     float64
 
+	timer chan struct{}
+
 	stats   *LinkingStats
 	options *Options
 
@@ -54,14 +56,30 @@ type DisabledProgress struct{}
 // Initialize TTYProgress and return pointer to it
 func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
 	now := time.Now()
-	return &TTYProgress{
+	p := TTYProgress{
 		lastTime:       now,
 		lastFPSTime:    now,
 		updateDelay:    60 * time.Millisecond,
 		updateFPSDelay: 180 * time.Millisecond,
+		timer:          make(chan struct{}),
 		stats:          stats,
 		options:        options,
 	}
+
+	// Send a message after delaying, controlling progress update rate
+	go func() {
+		for {
+			time.Sleep(p.updateDelay)
+			select {
+			case <-p.timer:
+				return
+			default:
+				p.timer <- struct{}{}
+			}
+		}
+	}()
+
+	return &p
 }
 
 // Output a line (without a newline at the end) of progress on directory
@@ -70,6 +88,12 @@ func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
 // calculation loop.
 func (p *TTYProgress) ShowDirsFilesFound() {
 	p.dirFilesCounter += 1
+
+	// Return if our timer hasn't yet fired
+	select {
+	case <-p.timer:
+		// Do nothing
+	default:
 		return
 	}
 
@@ -116,6 +140,7 @@ func (p *TTYProgress) ShowDirsFilesFound() {
 // Call to erase the progress loop (before 'normal' program post-processing
 // output)
 func (p *TTYProgress) Clear() {
+	defer close(p.timer)
 	p.line("\r")
 	p.lastLineLen = 1
 	p.line("\r")
