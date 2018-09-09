@@ -40,6 +40,11 @@ func (s InoSet) Add(ino Ino) {
 	s[ino] = exists
 }
 
+// Remove an Ino to the InoSet
+func (s InoSet) Remove(ino Ino) {
+	delete(s, ino)
+}
+
 // Return true if given Ino is in the InoSet
 func (s InoSet) Has(ino Ino) bool {
 	_, ok := s[ino]
