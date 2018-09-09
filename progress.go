@@ -124,6 +124,10 @@ func (p *TTYProgress) ShowDirsFilesFound() {
 	fmtStr := "\r%d files and %d dirs in %s  files/sec: %.0f (%+.0f)"
 	s := fmt.Sprintf(fmtStr, numFiles, numDirs, durStr, fps, fpsDiff)
 
+	if p.options.DebugLevel > 0 {
+		s += fmt.Sprintf(" cmps %v", p.stats.ComparisonCount)
+	}
+
 	if p.options.DebugLevel > 1 {
 		s += fmt.Sprintf(" Allocs %v", humanize(p.m.Alloc))
 	}
