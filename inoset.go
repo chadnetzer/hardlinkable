@@ -28,7 +28,7 @@ var exists = struct{}{}
 
 // Return a non-nil InoSet with the optional inos in it
 func NewInoSet(inos ...Ino) InoSet {
-	set := make(map[Ino]struct{})
+	set := make(map[Ino]struct{}, len(inos))
 	for _, ino := range inos {
 		set[ino] = exists
 	}
@@ -48,7 +48,7 @@ func (s InoSet) Has(ino Ino) bool {
 
 // Return a duplicate of the InoSet
 func (s InoSet) Copy() InoSet {
-	newSet := NewInoSet()
+	newSet := make(map[Ino]struct{}, len(s))
 	for k := range s {
 		newSet[k] = exists
 	}
