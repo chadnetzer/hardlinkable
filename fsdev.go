@@ -204,6 +204,76 @@ func (f *FSDev) linkedInoSet(ino Ino) InoSet {
 	if _, ok := f.LinkedInos[ino]; !ok {
 		return NewInoSet(ino)
 	}
+	seen := NewInoSet()
+	results := NewInoSet(ino)
+	pending := NewInoSet(ino)
+	for len(pending) > 0 {
+		// Pop item from pending set
+		for ino = range pending {
+			break
+		}
+		pending.Remove(ino)
+		results.Add(ino)
+
+		// Don't check for linked inos that we've seen already
+		if seen.Has(ino) {
+			continue
+		}
+		seen.Add(ino)
+
+		// Add connected inos to pending
+		if linked, ok := f.LinkedInos[ino]; ok {
+			for k := range linked {
+				pending.Add(k)
+			}
+		}
+	}
+	return results
+}
+
+func (f *FSDev) linkedInoSets() <-chan InoSet {
+	out := make(chan InoSet)
+	go func() {
+		defer close(out)
+		seen := NewInoSet()
+		for startIno := range f.LinkedInos {
+			ino := startIno
+			if _, ok := seen[ino]; ok {
+				continue
+			}
+			results := NewInoSet(ino)
+			pending := NewInoSet(ino)
+			for len(pending) > 0 {
+				// Pop item from pending set
+				for ino = range pending {
+					break
+				}
+				pending.Remove(ino)
+				results.Add(ino)
+
+				// Don't check for linked inos that we've seen already
+				if seen.Has(ino) {
+					continue
+				}
+				seen.Add(ino)
+
+				// Add connected inos to pending
+				if linked, ok := f.LinkedInos[ino]; ok {
+					for k := range linked {
+						pending.Add(k)
+					}
+				}
+			}
+			out <- results
+		}
+	}()
+	return out
+}
+
+func (f *FSDev) linkedInoSetSlow(ino Ino) InoSet {
+	if _, ok := f.LinkedInos[ino]; !ok {
+		return NewInoSet(ino)
+	}
 	remainingInos := f.LinkedInosCopy()
 	resultSet := NewInoSet()
 	pending := append(make([]Ino, 0, 1), ino)
@@ -230,7 +300,7 @@ func (f *FSDev) linkedInoSet(ino Ino) InoSet {
 	return resultSet
 }
 
-func (f *FSDev) linkedInoSets() <-chan InoSet {
+func (f *FSDev) linkedInoSetsSlow() <-chan InoSet {
 	out := make(chan InoSet)
 	go func() {
 		defer close(out)
