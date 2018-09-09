@@ -340,7 +340,8 @@ func (f *FSDev) areFilesLinkable(ps1 PathStat, ps2 PathStat, useDigest bool) boo
 
 	Stats.DidComparison()
 	// error handling deferred
-	eq, _ := areFileContentsEqual(ps1.Join(), ps2.Join())
+	eq, bytesRead, _ := areFileContentsEqual(ps1.Join(), ps2.Join())
+	Stats.AddBytesCompared(bytesRead)
 	if eq {
 		Stats.FoundEqualFiles()
 
