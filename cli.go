@@ -154,7 +154,7 @@ var MyCLIOptions CLIOptions
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:     "hardlinkable [OPTIONS] dir1 [dir2 ...]",
+	Use:     "hardlinkable [OPTIONS] dir1 [dir2 ...] [files...]",
 	Version: "0.9 alpha - 2018-09-05 (Sep 5 2018)",
 	Short:   "A tool to save space by hardlinking identical files",
 	Long: `A tool to scan directories and report on the space that could be saved by hard
@@ -167,7 +167,7 @@ linking identical files.  It can also perform the linking.`,
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(2)
 		}
-		Run(argPaths.dirs)
+		Run(argPaths.dirs, argPaths.files)
 	},
 }
 

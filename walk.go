@@ -29,29 +29,22 @@ import (
 )
 
 // Return allowed pathnames through the given channel.
-func MatchedPathnames(directories []string, options Options) <-chan string {
+func MatchedPathnames(dirs []string, files []string, opts Options) <-chan string {
 	out := make(chan string)
 	go func() {
 		defer close(out)
-		for _, dir := range directories {
+		for _, dir := range dirs {
 			err := godirwalk.Walk(dir, &godirwalk.Options{
 				Callback: func(osPathname string, de *godirwalk.Dirent) error {
 					if de.ModeType().IsDir() {
-						dirname := de.Name()
-						dirExcludes := options.DirExcludes
+						dirExcludes := opts.DirExcludes
 						// Do not exclude dirs provided explicitly by the user
-						if dir != osPathname && isMatched(dirname, dirExcludes) {
+						if dir != osPathname && isMatched(de.Name(), dirExcludes) {
 							return filepath.SkipDir
 						}
 						Stats.FoundDirectory()
 					} else if de.ModeType().IsRegular() {
-						filename := de.Name()
-						fileIncludes := options.FileIncludes
-						fileExcludes := options.FileExcludes
-						// When excludes is not empty, include can override an exclude
-						if (len(fileExcludes) == 0 && len(fileIncludes) == 0) ||
-							(len(fileIncludes) > 0 && isMatched(filename, fileIncludes)) ||
-							(len(fileExcludes) > 0 && !isMatched(filename, fileExcludes)) {
+						if isFileIncluded(de.Name(), opts) {
 							out <- osPathname
 						}
 					}
@@ -60,6 +53,13 @@ func MatchedPathnames(directories []string, options Options) <-chan string {
 			})
 			if err != nil {
 				fmt.Println(err)
+			}
+		}
+		// Also pass back some or all (depending on includes and
+		// excludes) of the passed in file pathnames.
+		for _, pathname := range files {
+			if isFileIncluded(pathname, opts) {
+				out <- pathname
 			}
 		}
 	}()
@@ -74,6 +74,23 @@ func isMatched(name string, pattern []string) bool {
 		if matched && err == nil {
 			return true
 		}
+	}
+	return false
+}
+
+// isFileIncluded returns true if the given pathname is not excluded, or is
+// specifically included by the command line options.
+func isFileIncluded(name string, opts Options) bool {
+	inc := opts.FileIncludes
+	exc := opts.FileExcludes
+	if len(exc) == 0 && len(inc) == 0 {
+		return true
+	}
+	if len(inc) > 0 && isMatched(name, inc) {
+		return true
+	}
+	if len(exc) > 0 && !isMatched(name, exc) {
+		return true
 	}
 	return false
 }

@@ -54,7 +54,7 @@ func (ln *Linkable) Dev(dsi DevStatInfo, pathname string) FSDev {
 	}
 }
 
-func Run(dirs []string) {
+func Run(dirs []string, files []string) {
 	options := MyCLIOptions.NewOptions()
 	MyOptions = &options // Compatibility setup for now
 
@@ -65,7 +65,7 @@ func Run(dirs []string) {
 		MyLinkable.progress = &DisabledProgress{}
 	}
 	Stats.StartTime = time.Now()
-	c := MatchedPathnames(dirs, *MyOptions)
+	c := MatchedPathnames(dirs, files, *MyOptions)
 	for pathname := range c {
 		MyLinkable.progress.ShowDirsFilesFound()
 		dsi, err := LStatInfo(pathname)
