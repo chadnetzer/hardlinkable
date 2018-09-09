@@ -78,7 +78,7 @@ func TestWalkFileIncludes(t *testing.T) {
 		options.FileIncludes = v.in
 		options.FileExcludes = v.ex
 
-		c := MatchedPathnames(dirs, options)
+		c := MatchedPathnames(dirs, []string{}, options)
 		n := 0
 		var filenames []string
 		foundMatch := false
