@@ -51,15 +51,15 @@ type ExistingLink struct {
 }
 
 type CountingStats struct {
-	DirCount                int64  `json:"dirCount"`
-	FileCount               int64  `json:"fileCount"`
-	FileTooSmallCount       int64  `json:"fileTooSmallCount"`
-	FileTooLargeCount       int64  `json:"fileTooLargeCount"`
-	ComparisonCount         int64  `json:"comparisonCount"`
-	InodeCount              int64  `json:"inodeCount"`
+	DirCount               int64  `json:"dirCount"`
+	FileCount              int64  `json:"fileCount"`
+	FileTooSmallCount      int64  `json:"fileTooSmallCount"`
+	FileTooLargeCount      int64  `json:"fileTooLargeCount"`
+	ComparisonCount        int64  `json:"comparisonCount"`
+	InodeCount             int64  `json:"inodeCount"`
 	InodeRemovedCount      int64  `json:"inodeRemovedCount"`
-	PrevLinkCount           int64  `json:"prevLinkCount"`
-	NewLinkCount            int64  `json:"newLinkCount"`
+	PrevLinkCount          int64  `json:"prevLinkCount"`
+	NewLinkCount           int64  `json:"newLinkCount"`
 	PrevLinkedByteAmount   uint64 `json:"prevLinkedByteAmount"`
 	InodeRemovedByteAmount uint64 `json:"inodeRemovedByteAmount"`
 
