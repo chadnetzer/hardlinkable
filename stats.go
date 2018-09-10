@@ -57,11 +57,11 @@ type CountingStats struct {
 	FileTooLargeCount       int64  `json:"fileTooLargeCount"`
 	ComparisonCount         int64  `json:"comparisonCount"`
 	InodeCount              int64  `json:"inodeCount"`
-	InodeConsolidationCount int64  `json:"inodeConsolidationCount"`
+	InodeRemovedCount      int64  `json:"inodeRemovedCount"`
 	PrevLinkCount           int64  `json:"prevLinkCount"`
 	NewLinkCount            int64  `json:"newLinkCount"`
-	PrevBytesSaved          uint64 `json:"prevBytesSaved"`
-	NewBytesSaved           uint64 `json:"newBytesSaved"`
+	PrevLinkedByteAmount   uint64 `json:"prevLinkedByteAmount"`
+	InodeRemovedByteAmount uint64 `json:"inodeRemovedByteAmount"`
 
 	// Some stats on files that compared equal, but which had some
 	// mismatching inode parameters.  This can be helpful for tuning the
@@ -199,14 +199,14 @@ func (s *LinkingStats) FoundNewLink(src, dst PathStat) {
 
 	s.NewLinkCount += 1
 	if dst.Nlink == 1 {
-		s.NewBytesSaved += dst.Size
-		s.InodeConsolidationCount += 1
+		s.InodeRemovedByteAmount += dst.Size
+		s.InodeRemovedCount += 1
 	}
 }
 
 func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
 	s.PrevLinkCount += 1
-	s.PrevBytesSaved += e.SrcStatinfo.Size
+	s.PrevLinkedByteAmount += e.SrcStatinfo.Size
 	if !MyOptions.existingLinkStatsEnabled {
 		return
 	}
@@ -281,24 +281,24 @@ func (ls *LinkingStats) outputLinkingStats() {
 	s = statStr(s, "Directories", ls.DirCount)
 	s = statStr(s, "Files", ls.FileCount)
 	if MyOptions.LinkingEnabled {
-		s = statStr(s, "Consolidated inodes", ls.InodeConsolidationCount)
 		s = statStr(s, "Hardlinked this run", ls.NewLinkCount)
+		s = statStr(s, "Removed inodes", ls.InodeRemovedCount)
 	} else {
-		s = statStr(s, "Consolidatable inodes", ls.InodeConsolidationCount)
 		s = statStr(s, "Hardlinkable this run", ls.NewLinkCount)
+		s = statStr(s, "Removable inodes", ls.InodeRemovedCount)
 	}
-	s = statStr(s, "Currently linked bytes", ls.PrevBytesSaved, humanizeParens(ls.PrevBytesSaved))
-	totalBytes := ls.PrevBytesSaved + ls.NewBytesSaved
+	s = statStr(s, "Currently linked bytes", ls.PrevLinkedByteAmount, humanizeParens(ls.PrevLinkedByteAmount))
+	totalBytes := ls.PrevLinkedByteAmount + ls.InodeRemovedByteAmount
 	var s1, s2 string
 	if MyOptions.LinkingEnabled {
-		s1 = "Additional linked bytes"
-		s2 = "Total linked bytes"
+		s1 = "Additional saved bytes"
+		s2 = "Total saved bytes"
 	} else {
-		s1 = "Additional linkable bytes"
-		s2 = "Total linkable bytes"
+		s1 = "Additional saveable bytes"
+		s2 = "Total saveable bytes"
 	}
 	// Append some humanized size values to the byte string outputs
-	s = statStr(s, s1, ls.NewBytesSaved, humanizeParens(ls.NewBytesSaved))
+	s = statStr(s, s1, ls.InodeRemovedByteAmount, humanizeParens(ls.InodeRemovedByteAmount))
 	s = statStr(s, s2, totalBytes, humanizeParens(totalBytes))
 
 	duration := ls.EndTime.Sub(ls.StartTime)
@@ -345,7 +345,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 				humanizeParens(ls.BytesCompared))
 		}
 
-		remainingInodes := ls.InodeCount - ls.InodeConsolidationCount
+		remainingInodes := ls.InodeCount - ls.InodeRemovedCount
 		s = statStr(s, "Total remaining inodes", remainingInodes)
 	}
 	if MyOptions.DebugLevel > 0 {
