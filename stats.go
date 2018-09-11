@@ -113,6 +113,11 @@ func (s *LinkingStats) FoundFile() {
 	s.FileCount += 1
 }
 
+func (s *LinkingStats) FileAndDirectoryCount(fileCount, dirCount int64) {
+	s.FileCount = fileCount
+	s.DirCount = dirCount
+}
+
 func (s *LinkingStats) FoundFileTooSmall() {
 	s.FileTooSmallCount += 1
 }

@@ -431,3 +431,32 @@ func (f *FSDev) helperPathStatDigest(ps PathStat, digest Digest) {
 	}
 	f.InosWithDigest.Add(ps.Ino)
 }
+
+// pathCount returns the number of unique paths and dirs encountered after the
+// initial walk is completed.  This can give us an accurate count of the number
+// of inode nlinks we should encounter if all linked paths are included in the
+// walk.  Conversely, if we count the nlinks from all the encountered inodes,
+// and compare to the number of paths this function returns, we should have a
+// count of how many inode paths were not seen by the walk.
+func (f *FSDev) pathCount() (paths int64, dirs int64) {
+	var numPaths, numDirs int64
+
+	// Make a set for storing unique dirs
+	dirMap := make(map[string]struct{})
+
+	// loop over all inos, getting filenamePaths
+	for _, fp := range f.InoPaths {
+		// loop over all filenames, getting paths
+		for _, paths := range fp.pMap {
+			// Loop over all paths
+			for p := range paths {
+				numPaths++
+				dirMap[p.Dirname] = struct{}{}
+			}
+		}
+		// Count the number of unique dirs and increment
+	}
+	numDirs = int64(len(dirMap))
+
+	return numPaths, numDirs
+}

@@ -94,6 +94,18 @@ func Run(dirs []string, files []string) {
 	}
 
 	MyLinkable.progress.Clear()
+
+	// Calculate and store the number of unique paths and directories
+	// encountered by the walk, overwriting the less accurate counts
+	// gathered during the walk.
+	var numPaths, numDirs int64
+	for _, fsdev := range MyLinkable.FSDevs {
+		p, d := fsdev.pathCount()
+		numPaths += p
+		numDirs += d
+	}
+	Stats.FileAndDirectoryCount(numPaths, numDirs)
+
 	for _, fsdev := range MyLinkable.FSDevs {
 		for pair := range fsdev.sortedLinks() {
 			_ = pair
