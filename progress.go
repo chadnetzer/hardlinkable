@@ -97,7 +97,6 @@ func (p *TTYProgress) ShowDirsFilesFound() {
 
 	now := time.Now()
 
-	numDirs := p.stats.DirCount
 	numFiles := p.stats.FileCount
 
 	duration := now.Sub(p.stats.StartTime)
@@ -121,11 +120,11 @@ func (p *TTYProgress) ShowDirsFilesFound() {
 		fpsDiff = p.lastFPSDiff
 	}
 
-	fmtStr := "\r%d files and %d dirs in %s  files/sec: %.0f (%+.0f)"
-	s := fmt.Sprintf(fmtStr, numFiles, numDirs, durStr, fps, fpsDiff)
+	fmtStr := "\r%d files in %s  files/sec: %.0f (%+.0f)"
+	s := fmt.Sprintf(fmtStr, numFiles, durStr, fps, fpsDiff)
 
 	if p.options.DebugLevel > 0 {
-		s += fmt.Sprintf(" cmps %v", p.stats.ComparisonCount)
+		s += fmt.Sprintf("  comparedBytes %v", humanize(p.stats.BytesCompared))
 	}
 
 	if p.options.DebugLevel > 1 {
