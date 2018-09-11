@@ -106,6 +106,8 @@ func Run(dirs []string, files []string) {
 	}
 	Stats.FileAndDirectoryCount(numPaths, numDirs)
 
+	// Iterate over all the inode sorted links.  We discard each link pair
+	// (for now), since the links are stored in the Stats type.
 	for _, fsdev := range MyLinkable.FSDevs {
 		for pair := range fsdev.sortedLinks() {
 			_ = pair

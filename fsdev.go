@@ -102,7 +102,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 	curPathStat := PathStat{curPath, statInfo}
 
 	if _, ok := f.InoStatInfo[statInfo.Ino]; !ok {
-		Stats.FoundInode()
+		Stats.FoundInode(statInfo.Nlink)
 	}
 
 	H := InoHash(statInfo, MyOptions)
