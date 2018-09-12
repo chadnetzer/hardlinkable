@@ -35,14 +35,14 @@ type Progress interface {
 // A simple progress meter while scanning directories and performing linking
 type TTYProgress struct {
 	lastLineLen     int
-	lastTime        time.Time
 	lastFPSTime     time.Time
 	updateDelay     time.Duration
 	updateFPSDelay  time.Duration
 	dirFilesCounter int
-	counterMin      int
 	lastFPS         float64
 	lastFPSDiff     float64
+
+	timer chan struct{}
 
 	stats   *LinkingStats
 	options *Options
@@ -55,15 +55,29 @@ type DisabledProgress struct{}
 // Initialize TTYProgress and return pointer to it
 func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
 	now := time.Now()
-	return &TTYProgress{
-		lastTime:       now,
+	p := TTYProgress{
 		lastFPSTime:    now,
 		updateDelay:    60 * time.Millisecond,
 		updateFPSDelay: 180 * time.Millisecond,
-		counterMin:     151, // Prime number makes output more dynamic
+		timer:          make(chan struct{}),
 		stats:          stats,
 		options:        options,
 	}
+
+	// Send a message after delaying, controlling progress update rate
+	go func() {
+		for {
+			time.Sleep(p.updateDelay)
+			select {
+			case <-p.timer:
+				return
+			default:
+				p.timer <- struct{}{}
+			}
+		}
+	}()
+
+	return &p
 }
 
 // Output a line (without a newline at the end) of progress on directory
@@ -72,18 +86,16 @@ func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
 // calculation loop.
 func (p *TTYProgress) ShowDirsFilesFound() {
 	p.dirFilesCounter += 1
-	if p.dirFilesCounter < p.counterMin {
+
+	// Return if our timer hasn't yet fired
+	select {
+	case <-p.timer:
+		// Do nothing
+	default:
 		return
-	} else {
-		p.dirFilesCounter = 0
 	}
 
 	now := time.Now()
-	timeSinceLast := now.Sub(p.lastTime)
-	if timeSinceLast < p.updateDelay {
-		return
-	}
-	p.lastTime = now
 
 	numDirs := p.stats.DirCount
 	numFiles := p.stats.FileCount
@@ -109,11 +121,15 @@ func (p *TTYProgress) ShowDirsFilesFound() {
 		fpsDiff = p.lastFPSDiff
 	}
 
-	fmtStr := "\r%d files in %d dirs, elapsed time: %s  files/sec: %.0f (%+.0f)"
+	fmtStr := "\r%d files and %d dirs in %s  files/sec: %.0f (%+.0f)"
 	s := fmt.Sprintf(fmtStr, numFiles, numDirs, durStr, fps, fpsDiff)
 
+	if p.options.DebugLevel > 0 {
+		s += fmt.Sprintf(" cmps %v", p.stats.ComparisonCount)
+	}
+
 	if p.options.DebugLevel > 1 {
-		s += fmt.Sprintf("  Allocs %v", humanize(p.m.Alloc))
+		s += fmt.Sprintf(" Allocs %v", humanize(p.m.Alloc))
 	}
 	p.line(s)
 }
@@ -121,6 +137,7 @@ func (p *TTYProgress) ShowDirsFilesFound() {
 // Call to erase the progress loop (before 'normal' program post-processing
 // output)
 func (p *TTYProgress) Clear() {
+	defer close(p.timer)
 	p.line("\r")
 	p.lastLineLen = 1
 	p.line("\r")
