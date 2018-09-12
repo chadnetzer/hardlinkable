@@ -67,7 +67,7 @@ func Run(dirs []string, files []string) {
 	Stats.StartTime = time.Now()
 	c := MatchedPathnames(dirs, files, *MyOptions)
 	for pathname := range c {
-		MyLinkable.progress.ShowDirsFilesFound()
+		MyLinkable.progress.Show()
 		dsi, err := LStatInfo(pathname)
 		if err != nil {
 			continue

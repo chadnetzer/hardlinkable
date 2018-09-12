@@ -28,7 +28,7 @@ import (
 )
 
 type Progress interface {
-	ShowDirsFilesFound()
+	Show()
 	Clear()
 }
 
@@ -84,7 +84,7 @@ func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
 // scanning and inode linking (ie. which inodes have identical content and
 // matching inode parameters).  Call in the main directory walk/link
 // calculation loop.
-func (p *TTYProgress) ShowDirsFilesFound() {
+func (p *TTYProgress) Show() {
 	p.dirFilesCounter += 1
 
 	// Return if our timer hasn't yet fired
@@ -151,5 +151,5 @@ func (p *TTYProgress) line(s string) {
 	fmt.Print(s)
 }
 
-func (p *DisabledProgress) ShowDirsFilesFound() {}
-func (p *DisabledProgress) Clear()              {}
+func (p *DisabledProgress) Show()  {}
+func (p *DisabledProgress) Clear() {}
