@@ -34,12 +34,12 @@ type Progress interface {
 
 // A simple progress meter while scanning directories and performing linking
 type TTYProgress struct {
-	lastLineLen     int
-	lastFPSTime     time.Time
-	updateDelay     time.Duration
-	updateFPSDelay  time.Duration
-	lastFPS         float64
-	lastFPSDiff     float64
+	lastLineLen    int
+	lastFPSTime    time.Time
+	updateDelay    time.Duration
+	updateFPSDelay time.Duration
+	lastFPS        float64
+	lastFPSDiff    float64
 
 	timer chan struct{}
 
