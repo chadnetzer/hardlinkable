@@ -62,7 +62,7 @@ func TestInoSort(t *testing.T) {
 
 	fsdev := &FSDev{}
 	setupInoStatInfo(fsdev, inoSet)
-	inoSetSorted := fsdev.sortInoSet(inoSet)
+	inoSetSorted := fsdev.sortInoSetByNlink(inoSet)
 	if !sort.IsSorted(sort.Reverse(byIno(inoSetSorted))) {
 		t.Errorf("Sorting of InoSet by nLink value failed")
 	}

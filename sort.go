@@ -31,11 +31,13 @@ type inoNlink struct {
 }
 type byNlink []inoNlink
 
-func (a byNlink) Len() int           { return len(a) }
-func (a byNlink) Less(i, j int) bool { return a[i].Nlink < a[j].Nlink }
-func (a byNlink) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byNlink) Len() int { return len(a) }
+func (a byNlink) Less(i, j int) bool {
+	return a[i].Nlink < a[j].Nlink || (a[i].Nlink == a[j].Nlink && a[i].Ino > a[j].Ino)
+}
+func (a byNlink) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
-func (f *FSDev) sortInoSet(inoSet InoSet) []Ino {
+func (f *FSDev) sortInoSetByNlink(inoSet InoSet) []Ino {
 	seq := make(byNlink, len(inoSet))
 	i := 0
 	for ino, _ := range inoSet {
@@ -69,7 +71,7 @@ func (f *FSDev) sortedLinks() <-chan PathStatPair {
 		c := f.linkedInoSets()
 		for linkableSet := range c {
 			// Sort links highest nlink to lowest
-			sortedInos := f.sortInoSet(linkableSet)
+			sortedInos := f.sortInoSetByNlink(linkableSet)
 			f.sendLinkedPairs(sortedInos, out)
 		}
 	}()

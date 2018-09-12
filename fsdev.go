@@ -20,6 +20,8 @@
 
 package main
 
+import "sort"
+
 type Hash uint64
 
 type StatInfos map[string]StatInfo
@@ -227,12 +229,30 @@ func (f *FSDev) linkedInoSet(ino Ino) InoSet {
 	return f.linkedInoSetHelper(ino, seen)
 }
 
+// linkedInoSets sends all the linked InoSets over the returned channel.
+// The InoSets are ordered, by starting with the lowest inode and progressing
+// through the highest (rather than returning InoSets in random order).
 func (f *FSDev) linkedInoSets() <-chan InoSet {
 	out := make(chan InoSet)
 	go func() {
 		defer close(out)
+
+		// Make a slice of the Ino keys in f.LinkedInos, so that we can
+		// sort them.  This allows us to output the full number of
+		// linkedInoSets in a deterministic order (leading to
+		// more repeatable ordering of link pairs across multiple
+		// dry-runs).  It's not completely deterministic because there
+		// can still be multiple choices for pre-linked src paths.
+		i := 0
+		sortedInos := make([]Ino, len(f.LinkedInos))
+		for ino := range f.LinkedInos {
+			sortedInos[i] = ino
+			i++
+		}
+		sort.Slice(sortedInos, func(i, j int) bool { return sortedInos[i] < sortedInos[j] })
+
 		seen := NewInoSet()
-		for startIno := range f.LinkedInos {
+		for _, startIno := range sortedInos {
 			if _, ok := seen[startIno]; ok {
 				continue
 			}
