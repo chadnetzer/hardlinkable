@@ -38,7 +38,6 @@ type TTYProgress struct {
 	lastFPSTime     time.Time
 	updateDelay     time.Duration
 	updateFPSDelay  time.Duration
-	dirFilesCounter int
 	lastFPS         float64
 	lastFPSDiff     float64
 
@@ -85,8 +84,6 @@ func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
 // matching inode parameters).  Call in the main directory walk/link
 // calculation loop.
 func (p *TTYProgress) Show() {
-	p.dirFilesCounter += 1
-
 	// Return if our timer hasn't yet fired
 	select {
 	case <-p.timer:
