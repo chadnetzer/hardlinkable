@@ -120,12 +120,12 @@ func (p *TTYProgress) Show() {
 	fmtStr := "\r%d files in %s  files/sec: %.0f (%+.0f)"
 	s := fmt.Sprintf(fmtStr, numFiles, durStr, fps, fpsDiff)
 
-	if p.options.DebugLevel > 0 {
+	if p.options.DebugLevel > 0 || p.options.Verbosity > 0 {
 		s += fmt.Sprintf("  comparedBytes %v", humanize(p.stats.BytesCompared))
 	}
 
 	if p.options.DebugLevel > 1 {
-		s += fmt.Sprintf(" Allocs %v", humanize(p.m.Alloc))
+		s += fmt.Sprintf("  Allocs %v", humanize(p.m.Alloc))
 	}
 	p.line(s)
 }
