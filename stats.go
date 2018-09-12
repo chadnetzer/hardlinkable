@@ -58,6 +58,7 @@ type CountingStats struct {
 	ComparisonCount        int64  `json:"comparisonCount"`
 	InodeCount             int64  `json:"inodeCount"`
 	InodeRemovedCount      int64  `json:"inodeRemovedCount"`
+	NlinkCount             int64  `json:"nlinkCount"`
 	PrevLinkCount          int64  `json:"prevLinkCount"`
 	NewLinkCount           int64  `json:"newLinkCount"`
 	PrevLinkedByteAmount   uint64 `json:"prevLinkedByteAmount"`
@@ -113,6 +114,11 @@ func (s *LinkingStats) FoundFile() {
 	s.FileCount += 1
 }
 
+func (s *LinkingStats) FileAndDirectoryCount(fileCount, dirCount int64) {
+	s.FileCount = fileCount
+	s.DirCount = dirCount
+}
+
 func (s *LinkingStats) FoundFileTooSmall() {
 	s.FileTooSmallCount += 1
 }
@@ -151,8 +157,9 @@ func (s *LinkingStats) AddMismatchedTotalBytes(size uint64) {
 	s.MismatchedTotalBytes += size
 }
 
-func (s *LinkingStats) FoundInode() {
+func (s *LinkingStats) FoundInode(n uint32) {
 	s.InodeCount += 1
+	s.NlinkCount += int64(n)
 }
 
 func (s *LinkingStats) MissedHash() {
@@ -308,7 +315,12 @@ func (ls *LinkingStats) outputLinkingStats() {
 	if MyOptions.Verbosity > 0 || MyOptions.DebugLevel > 0 {
 		s = statStr(s, "Comparisons", ls.ComparisonCount)
 		s = statStr(s, "Inodes", ls.InodeCount)
-		s = statStr(s, "Current links", ls.PrevLinkCount)
+		unwalkedNlinks := ls.NlinkCount - ls.FileCount
+		if unwalkedNlinks > 0 {
+			unwalkedNlinkStr := fmt.Sprintf("(Unwalked Nlinks: %v)", unwalkedNlinks)
+			s = statStr(s, "Inode total nlinks", ls.NlinkCount, unwalkedNlinkStr)
+		}
+		s = statStr(s, "Existing links", ls.PrevLinkCount)
 		s = statStr(s, "Total old + new links", totalLinks)
 		if ls.FileTooLargeCount > 0 {
 			s = statStr(s, "Total too large files", ls.FileTooLargeCount)
