@@ -136,9 +136,10 @@ func (i *intN) String() string {
 func (i *intN) Set(num string) error {
 	N, err := strconv.ParseInt(num, 10, 0)
 	if err != nil {
-		i.n = int(N)
+		return err
 	}
-	return err
+	i.n = int(N)
+	return nil
 }
 
 // Return "N" instead of "int" for usage text
