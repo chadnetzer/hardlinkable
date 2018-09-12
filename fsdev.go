@@ -61,14 +61,6 @@ func (s1 PathStat) EqualOwnership(s2 PathStat) bool {
 	return s1.Uid == s2.Uid && s1.Gid == s2.Gid
 }
 
-func (f *FSDev) LinkedInosCopy() map[Ino]InoSet {
-	newLinkedInos := make(map[Ino]InoSet)
-	for k, v := range f.LinkedInos {
-		newLinkedInos[k] = v.Copy()
-	}
-	return newLinkedInos
-}
-
 func NewFSDev(dev, maxNLinks uint64) FSDev {
 	var w FSDev
 	w.Dev = dev
@@ -200,68 +192,51 @@ func (f *FSDev) cachedInos(H Hash, ps PathStat) ([]Ino, bool) {
 	return cachedSeq, useDigest
 }
 
+func (f *FSDev) linkedInoSetHelper(ino Ino, seen InoSet) InoSet {
+	results := NewInoSet(ino)
+	pending := NewInoSet(ino)
+	for len(pending) > 0 {
+		// Pop item from pending set
+		for ino = range pending {
+			break
+		}
+		pending.Remove(ino)
+		results.Add(ino)
+
+		// Don't check for linked inos that we've seen already
+		if seen.Has(ino) {
+			continue
+		}
+		seen.Add(ino)
+
+		// Add connected inos to pending
+		if linked, ok := f.LinkedInos[ino]; ok {
+			for k := range linked {
+				pending.Add(k)
+			}
+		}
+	}
+	return results
+}
+
 func (f *FSDev) linkedInoSet(ino Ino) InoSet {
 	if _, ok := f.LinkedInos[ino]; !ok {
 		return NewInoSet(ino)
 	}
-	remainingInos := f.LinkedInosCopy()
-	resultSet := NewInoSet()
-	pending := append(make([]Ino, 0, 1), ino)
-	for len(pending) > 0 {
-		// Pop last item from pending as ino
-		ino = pending[len(pending)-1]
-		pending = pending[:len(pending)-1]
-
-		// Add ino to results
-		resultSet[ino] = exists
-		// Add connected inos to pending
-		if _, ok := remainingInos[ino]; ok {
-			linkedInos := remainingInos[ino]
-			delete(remainingInos, ino)
-			linkedInoSlice := make([]Ino, len(linkedInos))
-			i := 0
-			for k := range linkedInos {
-				linkedInoSlice[i] = k
-				i++
-			}
-			pending = append(pending, linkedInoSlice...)
-		}
-	}
-	return resultSet
+	seen := NewInoSet()
+	return f.linkedInoSetHelper(ino, seen)
 }
 
 func (f *FSDev) linkedInoSets() <-chan InoSet {
 	out := make(chan InoSet)
 	go func() {
 		defer close(out)
-		remainingInos := f.LinkedInosCopy()
+		seen := NewInoSet()
 		for startIno := range f.LinkedInos {
-			if _, ok := remainingInos[startIno]; !ok {
+			if _, ok := seen[startIno]; ok {
 				continue
 			}
-			resultSet := NewInoSet()
-			pending := append(make([]Ino, 0, 1), startIno)
-			for len(pending) > 0 {
-				// Pop last item from pending as ino
-				ino := pending[len(pending)-1]
-				pending = pending[:len(pending)-1]
-
-				// Add ino to results
-				resultSet[ino] = exists
-				// Add connected inos to pending
-				if _, ok := remainingInos[ino]; ok {
-					linkedInos := remainingInos[ino]
-					delete(remainingInos, ino)
-					linkedInoSlice := make([]Ino, len(linkedInos))
-					i := 0
-					for k := range linkedInos {
-						linkedInoSlice[i] = k
-						i++
-					}
-					pending = append(pending, linkedInoSlice...)
-				}
-			}
-			out <- resultSet
+			out <- f.linkedInoSetHelper(startIno, seen)
 		}
 	}()
 	return out
