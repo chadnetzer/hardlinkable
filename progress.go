@@ -39,7 +39,6 @@ type TTYProgress struct {
 	updateDelay    time.Duration
 	updateFPSDelay time.Duration
 	lastFPS        float64
-	lastFPSDiff    float64
 	bytesCompared  uint64
 
 	timer chan struct{}
@@ -100,14 +99,11 @@ func (p *TTYProgress) Show() {
 	duration := now.Sub(p.stats.StartTime)
 	durStr := duration.Round(time.Second).String()
 
-	var fps, fpsDiff float64
+	var fps float64
 	timeSinceLastFPS := now.Sub(p.lastFPSTime)
 	if timeSinceLastFPS > p.updateFPSDelay {
 		fps = float64(numFiles) / duration.Seconds()
-		fpsDiff = fps - p.lastFPS
-
 		p.lastFPS = fps
-		p.lastFPSDiff = fpsDiff
 		p.lastFPSTime = now
 
 		p.bytesCompared = p.stats.BytesCompared
@@ -117,16 +113,11 @@ func (p *TTYProgress) Show() {
 		}
 	} else {
 		fps = p.lastFPS
-		fpsDiff = p.lastFPSDiff
 	}
 
-	fmtStr := "\r%d files in %s  files/sec: %.0f (%+.0f)"
-	s := fmt.Sprintf(fmtStr, numFiles, durStr, fps, fpsDiff)
-
-	if p.options.DebugLevel > 0 || p.options.Verbosity > 0 {
-		s += fmt.Sprintf("  comparedBytes %v",
-			humanizeWithPrecision(p.bytesCompared, 3))
-	}
+	fmtStr := "\r%d files in %s (%.0f/sec)  compared %v"
+	s := fmt.Sprintf(fmtStr, numFiles, durStr, fps,
+		humanizeWithPrecision(p.bytesCompared, 3))
 
 	if p.options.DebugLevel > 1 {
 		s += fmt.Sprintf("  Allocs %v", humanize(p.m.Alloc))
