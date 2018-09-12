@@ -26,47 +26,47 @@ import (
 	"os"
 )
 
-func areFileContentsEqual(pathname1, pathname2 string) (bool, uint64, error) {
+func (l Linkable) areFileContentsEqual(pathname1, pathname2 string) (bool, error) {
 	f1, openErr := os.Open(pathname1)
 	if openErr != nil {
-		return false, 0, openErr
+		return false, openErr
 	}
 	defer f1.Close()
 
 	f2, openErr := os.Open(pathname2)
 	if openErr != nil {
-		return false, 0, openErr
+		return false, openErr
 	}
 	defer f2.Close()
 
-	eq, bytes, err := cmpReaderContents(f1, f2)
-	return eq, bytes, err
+	eq, err := l.cmpReaderContents(f1, f2)
+	return eq, err
 }
 
 // Return true if r1 and r2 have identical contents. Otherwise return false.
-func cmpReaderContents(r1, r2 io.Reader) (bool, uint64, error) {
+func (l Linkable) cmpReaderContents(r1, r2 io.Reader) (bool, error) {
 	const bufSize = 8192
 	buf1 := make([]byte, bufSize)
 	buf2 := make([]byte, bufSize)
-	var N uint64 // total bytes compared
 
 	for {
 		n1, err1 := r1.Read(buf1)
 		_, err2 := r2.Read(buf2)
 		if err1 != nil || err2 != nil {
 			if err1 == io.EOF && err2 == io.EOF {
-				return true, N, nil
+				return true, nil
 			} else if err1 == io.EOF && err2 != io.EOF {
-				return false, N, err2
+				return false, err2
 			} else {
-				return false, N, err1
+				return false, err1
 			}
 		}
 
 		if !bytes.Equal(buf1, buf2) {
-			return false, N, nil
+			return false, nil
 		}
-		N += uint64(n1)
+		l.stats.AddBytesCompared(uint64(n1))
+		l.progress.Show()
 	}
-	return false, N, nil // never reached
+	return false, nil // never reached
 }
