@@ -78,6 +78,7 @@ type CountingStats struct {
 	MismatchedGidBytes   uint64 `json:"mismatchedGidBytes"`
 	MismatchedXattrBytes uint64 `json:"mismatchedXattrBytes"`
 	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
+	BytesCompared        uint64 `json:"bytesCompared"`
 
 	// Debugging counts
 	EqualComparisonCount int64 `json:"equalComparisonCount"`
@@ -176,6 +177,10 @@ func (s *LinkingStats) NoHashMatch() {
 
 func (s *LinkingStats) DidComparison() {
 	s.ComparisonCount += 1
+}
+
+func (s *LinkingStats) AddBytesCompared(n uint64) {
+	s.BytesCompared += n
 }
 
 func (s *LinkingStats) FoundEqualFiles() {
@@ -335,6 +340,10 @@ func (ls *LinkingStats) outputLinkingStats() {
 			s = statStr(s, "Total equal file mismatches", ls.MismatchedTotalCount,
 				humanizeParens(ls.MismatchedTotalBytes))
 		}
+		if ls.BytesCompared > 0 {
+			s = statStr(s, "Total bytes compared", ls.BytesCompared,
+				humanizeParens(ls.BytesCompared))
+		}
 
 		remainingInodes := ls.InodeCount - ls.InodeConsolidationCount
 		s = statStr(s, "Total remaining inodes", remainingInodes)
@@ -415,12 +424,18 @@ func printSlices(a [][]string) {
 
 // Return a string with bytecount "humanized" to a shortened amount
 func humanize(n uint64) string {
+	// -1 precision removes trailing zeros
+	return humanizeWithPrecision(n, -1)
+}
+
+// humanizeWithPrecision allows providing FormatFloat precision value
+func humanizeWithPrecision(n uint64, prec int) string {
 	var s string
 	var m string
 	F := func(N uint64, div float64) string {
 		reduced := float64(N) / div
 		rounded := math.Round(reduced*1000) / 1000.0
-		s = strconv.FormatFloat(rounded, 'f', -1, 64)
+		s = strconv.FormatFloat(rounded, 'f', prec, 64)
 		return s
 	}
 	if n >= (uint64(1) << 50) {

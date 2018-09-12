@@ -27,23 +27,26 @@ import (
 
 func TestFileContentComparison(t *testing.T) {
 	R := strings.NewReader
+	linkable := NewLinkable()
+	linkable.stats = &LinkingStats{}
+	linkable.progress = &DisabledProgress{}
 
-	eq, err := cmpReaderContents(R(""), R(""))
+	eq, err := linkable.cmpReaderContents(R(""), R(""))
 	if !eq || err != nil {
 		t.Errorf("Zero length cmpContents() compared unequal")
 	}
 
-	eq, err = cmpReaderContents(R("1"), R("1"))
+	eq, err = linkable.cmpReaderContents(R("1"), R("1"))
 	if !eq || err != nil {
 		t.Errorf("Equal length 1 cmpContents() compared unequal")
 	}
 
-	eq, err = cmpReaderContents(R("1234"), R("123"))
+	eq, err = linkable.cmpReaderContents(R("1234"), R("123"))
 	if eq || err != nil {
 		t.Errorf("Unequal length cmpContents() compared equal")
 	}
 
-	eq, err = cmpReaderContents(R("A"), R("B"))
+	eq, err = linkable.cmpReaderContents(R("A"), R("B"))
 	if eq || err != nil {
 		t.Errorf("Unequal length 1 cmpContents() compared equal")
 	}

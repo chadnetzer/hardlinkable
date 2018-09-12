@@ -26,7 +26,7 @@ import (
 	"os"
 )
 
-func areFileContentsEqual(pathname1, pathname2 string) (bool, error) {
+func (l Linkable) areFileContentsEqual(pathname1, pathname2 string) (bool, error) {
 	f1, openErr := os.Open(pathname1)
 	if openErr != nil {
 		return false, openErr
@@ -39,18 +39,18 @@ func areFileContentsEqual(pathname1, pathname2 string) (bool, error) {
 	}
 	defer f2.Close()
 
-	eq, err := cmpReaderContents(f1, f2)
+	eq, err := l.cmpReaderContents(f1, f2)
 	return eq, err
 }
 
 // Return true if r1 and r2 have identical contents. Otherwise return false.
-func cmpReaderContents(r1, r2 io.Reader) (bool, error) {
+func (l Linkable) cmpReaderContents(r1, r2 io.Reader) (bool, error) {
 	const bufSize = 8192
 	buf1 := make([]byte, bufSize)
 	buf2 := make([]byte, bufSize)
 
 	for {
-		_, err1 := r1.Read(buf1)
+		n1, err1 := r1.Read(buf1)
 		_, err2 := r2.Read(buf2)
 		if err1 != nil || err2 != nil {
 			if err1 == io.EOF && err2 == io.EOF {
@@ -65,6 +65,8 @@ func cmpReaderContents(r1, r2 io.Reader) (bool, error) {
 		if !bytes.Equal(buf1, buf2) {
 			return false, nil
 		}
+		l.stats.AddBytesCompared(uint64(n1))
+		l.progress.Show()
 	}
 	return false, nil // never reached
 }

@@ -28,19 +28,18 @@ import (
 )
 
 type Progress interface {
-	ShowDirsFilesFound()
+	Show()
 	Clear()
 }
 
 // A simple progress meter while scanning directories and performing linking
 type TTYProgress struct {
-	lastLineLen     int
-	lastFPSTime     time.Time
-	updateDelay     time.Duration
-	updateFPSDelay  time.Duration
-	dirFilesCounter int
-	lastFPS         float64
-	lastFPSDiff     float64
+	lastLineLen    int
+	lastFPSTime    time.Time
+	updateDelay    time.Duration
+	updateFPSDelay time.Duration
+	lastFPS        float64
+	bytesCompared  uint64
 
 	timer chan struct{}
 
@@ -58,7 +57,7 @@ func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
 	p := TTYProgress{
 		lastFPSTime:    now,
 		updateDelay:    60 * time.Millisecond,
-		updateFPSDelay: 180 * time.Millisecond,
+		updateFPSDelay: 180 * time.Millisecond, // A slower rate for readability
 		timer:          make(chan struct{}),
 		stats:          stats,
 		options:        options,
@@ -84,9 +83,7 @@ func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
 // scanning and inode linking (ie. which inodes have identical content and
 // matching inode parameters).  Call in the main directory walk/link
 // calculation loop.
-func (p *TTYProgress) ShowDirsFilesFound() {
-	p.dirFilesCounter += 1
-
+func (p *TTYProgress) Show() {
 	// Return if our timer hasn't yet fired
 	select {
 	case <-p.timer:
@@ -97,39 +94,33 @@ func (p *TTYProgress) ShowDirsFilesFound() {
 
 	now := time.Now()
 
-	numDirs := p.stats.DirCount
 	numFiles := p.stats.FileCount
 
 	duration := now.Sub(p.stats.StartTime)
 	durStr := duration.Round(time.Second).String()
 
-	var fps, fpsDiff float64
+	var fps float64
 	timeSinceLastFPS := now.Sub(p.lastFPSTime)
 	if timeSinceLastFPS > p.updateFPSDelay {
 		fps = float64(numFiles) / duration.Seconds()
-		fpsDiff = fps - p.lastFPS
-
 		p.lastFPS = fps
-		p.lastFPSDiff = fpsDiff
 		p.lastFPSTime = now
+
+		p.bytesCompared = p.stats.BytesCompared
 
 		if p.options.DebugLevel > 1 {
 			runtime.ReadMemStats(&p.m)
 		}
 	} else {
 		fps = p.lastFPS
-		fpsDiff = p.lastFPSDiff
 	}
 
-	fmtStr := "\r%d files and %d dirs in %s  files/sec: %.0f (%+.0f)"
-	s := fmt.Sprintf(fmtStr, numFiles, numDirs, durStr, fps, fpsDiff)
-
-	if p.options.DebugLevel > 0 {
-		s += fmt.Sprintf(" cmps %v", p.stats.ComparisonCount)
-	}
+	fmtStr := "\r%d files in %s (%.0f/sec)  compared %v"
+	s := fmt.Sprintf(fmtStr, numFiles, durStr, fps,
+		humanizeWithPrecision(p.bytesCompared, 3))
 
 	if p.options.DebugLevel > 1 {
-		s += fmt.Sprintf(" Allocs %v", humanize(p.m.Alloc))
+		s += fmt.Sprintf("  Allocs %v", humanize(p.m.Alloc))
 	}
 	p.line(s)
 }
@@ -152,5 +143,5 @@ func (p *TTYProgress) line(s string) {
 	fmt.Print(s)
 }
 
-func (p *DisabledProgress) ShowDirsFilesFound() {}
-func (p *DisabledProgress) Clear()              {}
+func (p *DisabledProgress) Show()  {}
+func (p *DisabledProgress) Clear() {}

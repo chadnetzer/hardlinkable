@@ -29,6 +29,8 @@ import (
 
 type Linkable struct {
 	FSDevs   map[uint64]FSDev
+	options  *Options
+	stats    *LinkingStats
 	progress Progress
 }
 
@@ -57,6 +59,8 @@ func (ln *Linkable) Dev(dsi DevStatInfo, pathname string) FSDev {
 func Run(dirs []string, files []string) {
 	options := MyCLIOptions.NewOptions()
 	MyOptions = &options // Compatibility setup for now
+	MyLinkable.options = &options
+	MyLinkable.stats = &Stats
 
 	if MyOptions.ProgressOutputEnabled &&
 		terminal.IsTerminal(int(os.Stdout.Fd())) {
@@ -67,7 +71,7 @@ func Run(dirs []string, files []string) {
 	Stats.StartTime = time.Now()
 	c := MatchedPathnames(dirs, files, *MyOptions)
 	for pathname := range c {
-		MyLinkable.progress.ShowDirsFilesFound()
+		MyLinkable.progress.Show()
 		dsi, err := LStatInfo(pathname)
 		if err != nil {
 			continue
