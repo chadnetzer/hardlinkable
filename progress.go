@@ -40,6 +40,7 @@ type TTYProgress struct {
 	updateFPSDelay time.Duration
 	lastFPS        float64
 	lastFPSDiff    float64
+	bytesCompared  uint64
 
 	timer chan struct{}
 
@@ -57,7 +58,7 @@ func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
 	p := TTYProgress{
 		lastFPSTime:    now,
 		updateDelay:    60 * time.Millisecond,
-		updateFPSDelay: 180 * time.Millisecond,
+		updateFPSDelay: 180 * time.Millisecond, // A slower rate for readability
 		timer:          make(chan struct{}),
 		stats:          stats,
 		options:        options,
@@ -109,6 +110,8 @@ func (p *TTYProgress) Show() {
 		p.lastFPSDiff = fpsDiff
 		p.lastFPSTime = now
 
+		p.bytesCompared = p.stats.BytesCompared
+
 		if p.options.DebugLevel > 1 {
 			runtime.ReadMemStats(&p.m)
 		}
@@ -121,7 +124,8 @@ func (p *TTYProgress) Show() {
 	s := fmt.Sprintf(fmtStr, numFiles, durStr, fps, fpsDiff)
 
 	if p.options.DebugLevel > 0 || p.options.Verbosity > 0 {
-		s += fmt.Sprintf("  comparedBytes %v", humanize(p.stats.BytesCompared))
+		s += fmt.Sprintf("  comparedBytes %v",
+			humanizeWithPrecision(p.bytesCompared, 3))
 	}
 
 	if p.options.DebugLevel > 1 {
