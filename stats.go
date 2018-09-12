@@ -424,12 +424,18 @@ func printSlices(a [][]string) {
 
 // Return a string with bytecount "humanized" to a shortened amount
 func humanize(n uint64) string {
+	// -1 precision removes trailing zeros
+	return humanizeWithPrecision(n, -1)
+}
+
+// humanizeWithPrecision allows providing FormatFloat precision value
+func humanizeWithPrecision(n uint64, prec int) string {
 	var s string
 	var m string
 	F := func(N uint64, div float64) string {
 		reduced := float64(N) / div
 		rounded := math.Round(reduced*1000) / 1000.0
-		s = strconv.FormatFloat(rounded, 'f', -1, 64)
+		s = strconv.FormatFloat(rounded, 'f', prec, 64)
 		return s
 	}
 	if n >= (uint64(1) << 50) {
