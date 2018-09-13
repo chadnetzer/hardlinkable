@@ -180,21 +180,6 @@ func separateArgs(args []string) (argPaths, error) {
 	return a, nil
 }
 
-// Return ok if all args are directories, or the index of the first
-// non-directory argument
-func ArgsAreDirs(args []string) (i int, ok bool) {
-	for i, name := range args {
-		fi, err := os.Lstat(name)
-		if err != nil {
-			return i, false
-		}
-		if !fi.IsDir() {
-			return i, false
-		}
-	}
-	return 0, true
-}
-
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
