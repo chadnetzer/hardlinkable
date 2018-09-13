@@ -134,6 +134,8 @@ func (p *TTYProgress) Clear() {
 	p.line("\r")
 }
 
+// line outputs a string that is right-padded with enough space to overwrite
+// the previous line
 func (p *TTYProgress) line(s string) {
 	numSpaces := p.lastLineLen - len(s)
 	p.lastLineLen = len(s)
