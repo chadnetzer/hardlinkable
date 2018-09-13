@@ -22,13 +22,7 @@ package main
 
 import "log"
 
-func ExitIf(predicate bool, s string, v ...interface{}) {
-	if predicate {
-		log.Fatalf(s, v...)
-	}
-}
-
-func PanicIf(predicate bool, s string, v ...interface{}) {
+func panicIf(predicate bool, s string, v ...interface{}) {
 	if predicate {
 		log.Panicf(s, v...)
 	}

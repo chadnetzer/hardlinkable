@@ -100,7 +100,7 @@ func InoHash(stat StatInfo, opt *Options) Hash {
 }
 
 func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
-	PanicIf(f.Dev != devStatInfo.Dev, "Mismatched Dev %d for %s\n", f.Dev, pathname)
+	panicIf(f.Dev != devStatInfo.Dev, "Mismatched Dev %d for %s\n", f.Dev, pathname)
 	statInfo := devStatInfo.StatInfo
 	curPath := SplitPathname(pathname, f.pool)
 	curPathStat := PathStat{curPath, statInfo}
@@ -186,8 +186,8 @@ func (f *FSDev) cachedInos(H Hash, ps PathStat) ([]Ino, bool) {
 			differentDigests := cachedSet.Difference(sameDigests).Difference(noDigests)
 			cachedSeq = append(sameDigests.AsSlice(), noDigests.AsSlice()...)
 
-			PanicIf(noDigests.Has(ps.StatInfo.Ino), "New Ino found in noDigests\n")
-			PanicIf(len(InoSetIntersection(sameDigests, differentDigests, noDigests)) > 0,
+			panicIf(noDigests.Has(ps.StatInfo.Ino), "New Ino found in noDigests\n")
+			panicIf(len(InoSetIntersection(sameDigests, differentDigests, noDigests)) > 0,
 				"Overlapping digest sets\n")
 		}
 	} else {
