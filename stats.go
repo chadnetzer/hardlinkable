@@ -29,12 +29,6 @@ import (
 	"time"
 )
 
-var Stats LinkingStats
-
-func init() {
-	Stats = NewLinkingStats()
-}
-
 type LinkDestinations struct {
 	size  uint64
 	paths []Pathsplit
@@ -105,130 +99,130 @@ func NewLinkingStats(o *Options) *LinkingStats {
 		existingLinks: make(map[Pathsplit]LinkDestinations),
 		options:       o,
 	}
-	return ls
+	return &ls
 }
 
-func (s *LinkingStats) FoundDirectory() {
-	s.DirCount += 1
+func (ls *LinkingStats) FoundDirectory() {
+	ls.DirCount += 1
 }
 
-func (s *LinkingStats) FoundFile() {
-	s.FileCount += 1
+func (ls *LinkingStats) FoundFile() {
+	ls.FileCount += 1
 }
 
-func (s *LinkingStats) FileAndDirectoryCount(fileCount, dirCount int64) {
-	s.FileCount = fileCount
-	s.DirCount = dirCount
+func (ls *LinkingStats) FileAndDirectoryCount(fileCount, dirCount int64) {
+	ls.FileCount = fileCount
+	ls.DirCount = dirCount
 }
 
-func (s *LinkingStats) FoundFileTooSmall() {
-	s.FileTooSmallCount += 1
+func (ls *LinkingStats) FoundFileTooSmall() {
+	ls.FileTooSmallCount += 1
 }
 
-func (s *LinkingStats) FoundFileTooLarge() {
-	s.FileTooLargeCount += 1
+func (ls *LinkingStats) FoundFileTooLarge() {
+	ls.FileTooLargeCount += 1
 }
 
-func (s *LinkingStats) AddMismatchedMtimeBytes(size uint64) {
-	s.MismatchedMtimeCount += 1
-	s.MismatchedMtimeBytes += size
+func (ls *LinkingStats) AddMismatchedMtimeBytes(size uint64) {
+	ls.MismatchedMtimeCount += 1
+	ls.MismatchedMtimeBytes += size
 }
 
-func (s *LinkingStats) AddMismatchedModeBytes(size uint64) {
-	s.MismatchedModeCount += 1
-	s.MismatchedModeBytes += size
+func (ls *LinkingStats) AddMismatchedModeBytes(size uint64) {
+	ls.MismatchedModeCount += 1
+	ls.MismatchedModeBytes += size
 }
 
-func (s *LinkingStats) AddMismatchedUidBytes(size uint64) {
-	s.MismatchedUidCount += 1
-	s.MismatchedUidBytes += size
+func (ls *LinkingStats) AddMismatchedUidBytes(size uint64) {
+	ls.MismatchedUidCount += 1
+	ls.MismatchedUidBytes += size
 }
 
-func (s *LinkingStats) AddMismatchedGidBytes(size uint64) {
-	s.MismatchedGidCount += 1
-	s.MismatchedGidBytes += size
+func (ls *LinkingStats) AddMismatchedGidBytes(size uint64) {
+	ls.MismatchedGidCount += 1
+	ls.MismatchedGidBytes += size
 }
 
-func (s *LinkingStats) AddMismatchedXattrBytes(size uint64) {
-	s.MismatchedXattrCount += 1
-	s.MismatchedXattrBytes += size
+func (ls *LinkingStats) AddMismatchedXattrBytes(size uint64) {
+	ls.MismatchedXattrCount += 1
+	ls.MismatchedXattrBytes += size
 }
 
-func (s *LinkingStats) AddMismatchedTotalBytes(size uint64) {
-	s.MismatchedTotalCount += 1
-	s.MismatchedTotalBytes += size
+func (ls *LinkingStats) AddMismatchedTotalBytes(size uint64) {
+	ls.MismatchedTotalCount += 1
+	ls.MismatchedTotalBytes += size
 }
 
-func (s *LinkingStats) FoundInode(n uint32) {
-	s.InodeCount += 1
-	s.NlinkCount += int64(n)
+func (ls *LinkingStats) FoundInode(n uint32) {
+	ls.InodeCount += 1
+	ls.NlinkCount += int64(n)
 }
 
-func (s *LinkingStats) MissedHash() {
-	s.MissedHashCount += 1
+func (ls *LinkingStats) MissedHash() {
+	ls.MissedHashCount += 1
 }
 
-func (s *LinkingStats) FoundHash() {
-	s.FoundHashCount += 1
+func (ls *LinkingStats) FoundHash() {
+	ls.FoundHashCount += 1
 }
 
-func (s *LinkingStats) SearchedInoSeq() {
-	s.InoSeqSearchCount += 1
+func (ls *LinkingStats) SearchedInoSeq() {
+	ls.InoSeqSearchCount += 1
 }
 
-func (s *LinkingStats) IncInoSeqIterations() {
-	s.InoSeqIterationCount += 1
+func (ls *LinkingStats) IncInoSeqIterations() {
+	ls.InoSeqIterationCount += 1
 }
 
-func (s *LinkingStats) NoHashMatch() {
-	s.HashMismatchCount += 1
+func (ls *LinkingStats) NoHashMatch() {
+	ls.HashMismatchCount += 1
 }
 
-func (s *LinkingStats) DidComparison() {
-	s.ComparisonCount += 1
+func (ls *LinkingStats) DidComparison() {
+	ls.ComparisonCount += 1
 }
 
-func (s *LinkingStats) AddBytesCompared(n uint64) {
-	s.BytesCompared += n
+func (ls *LinkingStats) AddBytesCompared(n uint64) {
+	ls.BytesCompared += n
 }
 
-func (s *LinkingStats) FoundEqualFiles() {
-	s.EqualComparisonCount += 1
+func (ls *LinkingStats) FoundEqualFiles() {
+	ls.EqualComparisonCount += 1
 }
 
-func (s *LinkingStats) computedDigest() {
-	s.DigestComputedCount += 1
+func (ls *LinkingStats) computedDigest() {
+	ls.DigestComputedCount += 1
 }
 
-func (s *LinkingStats) FoundNewLink(src, dst PathStat) {
-	if MyOptions.newLinkStatsEnabled {
+func (ls *LinkingStats) FoundNewLink(src, dst PathStat) {
+	if ls.options.newLinkStatsEnabled {
 		linkPair := LinkPair{src.Pathsplit, dst.Pathsplit}
-		s.linkPairs = append(s.linkPairs, linkPair)
+		ls.linkPairs = append(ls.linkPairs, linkPair)
 	}
 
-	s.NewLinkCount += 1
+	ls.NewLinkCount += 1
 	if dst.Nlink == 1 {
-		s.InodeRemovedByteAmount += dst.Size
-		s.InodeRemovedCount += 1
+		ls.InodeRemovedByteAmount += dst.Size
+		ls.InodeRemovedCount += 1
 	}
 }
 
-func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
-	s.PrevLinkCount += 1
-	s.PrevLinkedByteAmount += e.SrcStatinfo.Size
-	if !MyOptions.existingLinkStatsEnabled {
+func (ls *LinkingStats) FoundExistingLink(e ExistingLink) {
+	ls.PrevLinkCount += 1
+	ls.PrevLinkedByteAmount += e.SrcStatinfo.Size
+	if !ls.options.existingLinkStatsEnabled {
 		return
 	}
 	srcPath := e.Src
 	dstPath := e.Dst
 	srcStatinfo := e.SrcStatinfo
-	linkDestinations, ok := s.existingLinks[srcPath]
+	linkDestinations, ok := ls.existingLinks[srcPath]
 	if !ok {
 		size := srcStatinfo.Size
 		linkDestinations = LinkDestinations{size, make([]Pathsplit, 0)}
 	}
 	linkDestinations.paths = append(linkDestinations.paths, dstPath)
-	s.existingLinks[srcPath] = linkDestinations
+	ls.existingLinks[srcPath] = linkDestinations
 }
 
 func (ls *LinkingStats) outputResults() {
@@ -273,7 +267,7 @@ func (ls *LinkingStats) outputLinkedPaths() {
 		s = append(s, "---------------------------")
 	}
 	prevPathsplit := Pathsplit{}
-	for _, p := range Stats.linkPairs {
+	for _, p := range ls.linkPairs {
 		if p.Src != prevPathsplit {
 			s = append(s, "from: "+p.Src.Join())
 			prevPathsplit = p.Src

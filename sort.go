@@ -127,7 +127,7 @@ func (f *FSDev) sendLinkedPairs(sortedInos []Ino, out chan<- PathStatPair) {
 
 				out <- PathStatPair{srcPathStat, dstPathStat}
 
-				Stats.FoundNewLink(srcPathStat, dstPathStat)
+				f.stats.FoundNewLink(srcPathStat, dstPathStat)
 
 				// Update StatInfo information for inodes
 				srcSI.Nlink += 1

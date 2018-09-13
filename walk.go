@@ -29,7 +29,7 @@ import (
 )
 
 // Return allowed pathnames through the given channel.
-func MatchedPathnames(dirs []string, files []string, opts Options) <-chan string {
+func (ls *LinkingStats) MatchedPathnames(dirs []string, files []string, opts Options) <-chan string {
 	out := make(chan string)
 	go func() {
 		defer close(out)
@@ -42,7 +42,7 @@ func MatchedPathnames(dirs []string, files []string, opts Options) <-chan string
 						if dir != osPathname && isMatched(de.Name(), dirExcludes) {
 							return filepath.SkipDir
 						}
-						Stats.FoundDirectory()
+						ls.FoundDirectory()
 					} else if de.ModeType().IsRegular() {
 						if isFileIncluded(de.Name(), opts) {
 							out <- osPathname

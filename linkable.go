@@ -71,8 +71,8 @@ func Run(dirs []string, files []string, options Options) {
 	} else {
 		MyLinkable.progress = &DisabledProgress{}
 	}
-	Stats.StartTime = time.Now()
-	c := MatchedPathnames(dirs, files, *MyOptions)
+	MyLinkable.stats.StartTime = time.Now()
+	c := MyLinkable.stats.MatchedPathnames(dirs, files, options)
 	for pathname := range c {
 		MyLinkable.progress.Show()
 		dsi, err := LStatInfo(pathname)
@@ -80,17 +80,17 @@ func Run(dirs []string, files []string, options Options) {
 			continue
 		}
 		if dsi.Size < options.MinFileSize {
-			Stats.FoundFileTooSmall()
+			MyLinkable.stats.FoundFileTooSmall()
 			continue
 		}
 		if options.MaxFileSize > 0 &&
 			dsi.Size > options.MaxFileSize {
-			Stats.FoundFileTooLarge()
+			MyLinkable.stats.FoundFileTooLarge()
 			continue
 		}
 		// If the file hasn't been rejected by this
 		// point, add it to the found count
-		Stats.FoundFile()
+		MyLinkable.stats.FoundFile()
 
 		fsdev := MyLinkable.Dev(dsi, pathname)
 		fsdev.findIdenticalFiles(dsi, pathname)
@@ -107,7 +107,7 @@ func Run(dirs []string, files []string, options Options) {
 		numPaths += p
 		numDirs += d
 	}
-	Stats.FileAndDirectoryCount(numPaths, numDirs)
+	MyLinkable.stats.FileAndDirectoryCount(numPaths, numDirs)
 
 	// Iterate over all the inode sorted links.  We discard each link pair
 	// (for now), since the links are stored in the Stats type.
@@ -116,10 +116,10 @@ func Run(dirs []string, files []string, options Options) {
 			_ = pair
 		}
 	}
-	Stats.EndTime = time.Now()
-	if MyOptions.JSONOutputEnabled {
-		Stats.outputJSONResults()
+	MyLinkable.stats.EndTime = time.Now()
+	if options.JSONOutputEnabled {
+		MyLinkable.stats.outputJSONResults()
 	} else {
-		Stats.outputResults()
+		MyLinkable.stats.outputResults()
 	}
 }

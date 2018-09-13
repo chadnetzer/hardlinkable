@@ -39,14 +39,14 @@ type JSONStats struct {
 func (ls *LinkingStats) outputJSONResults() {
 	duration := ls.EndTime.Sub(ls.StartTime)
 	jstats := JSONStats{
-		CountingStats: Stats.CountingStats,
-		StartTime:     Stats.StartTime,
-		EndTime:       Stats.EndTime,
+		CountingStats: ls.CountingStats,
+		StartTime:     ls.StartTime,
+		EndTime:       ls.EndTime,
 		RunTime:       duration.Round(time.Millisecond).String(),
 	}
 
 	existingLinks := make(map[string][]string)
-	for src, v := range Stats.existingLinks {
+	for src, v := range ls.existingLinks {
 		dsts := make([]string, 0, len(v.paths))
 		for _, pathsplit := range v.paths {
 			dsts = append(dsts, pathsplit.Join())
@@ -56,7 +56,7 @@ func (ls *LinkingStats) outputJSONResults() {
 	jstats.ExistingLinks = existingLinks
 
 	existingLinkSizes := make(map[string]uint64)
-	for src, v := range Stats.existingLinks {
+	for src, v := range ls.existingLinks {
 		existingLinkSizes[src.Join()] = v.size
 	}
 	jstats.ExistingLinkSizes = existingLinkSizes
@@ -64,7 +64,7 @@ func (ls *LinkingStats) outputJSONResults() {
 	var links []string
 	linkPaths := make([][]string, 0)
 	prevPathsplit := Pathsplit{}
-	for _, p := range Stats.linkPairs {
+	for _, p := range ls.linkPairs {
 		if p.Src != prevPathsplit {
 			if len(links) > 0 {
 				linkPaths = append(linkPaths, links)

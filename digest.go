@@ -33,7 +33,7 @@ type Digest uint32
 // performed anyway (incurring the IO overhead), and saving the digest to help
 // quickly reduce the set of possibly equal inodes later (ie. reducing the
 // length of the repeated linear searches).
-func contentDigest(pathname string) (Digest, error) {
+func (ls *LinkingStats) contentDigest(pathname string) (Digest, error) {
 	const bufSize = 8192
 
 	f, err := os.Open(pathname)
@@ -48,7 +48,7 @@ func contentDigest(pathname string) (Digest, error) {
 		return 0, err
 	}
 
-	Stats.computedDigest()
+	ls.computedDigest()
 
 	hash := fnv.New32a()
 	hash.Write(buf)
