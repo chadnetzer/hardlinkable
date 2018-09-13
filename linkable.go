@@ -50,7 +50,7 @@ func (ln *Linkable) Dev(dsi DevStatInfo, pathname string) FSDev {
 	if fsdev, ok := ln.FSDevs[dsi.Dev]; ok {
 		return fsdev
 	} else {
-		fsdev = NewFSDev(dsi.Dev, MaxNlink(pathname))
+		fsdev = NewFSDev(ln.options, ln.stats, dsi.Dev, MaxNlink(pathname))
 		ln.FSDevs[dsi.Dev] = fsdev
 		return fsdev
 	}
@@ -67,7 +67,7 @@ func Run(dirs []string, files []string, options Options) {
 
 	if options.ProgressOutputEnabled &&
 		terminal.IsTerminal(int(os.Stdout.Fd())) {
-		MyLinkable.progress = NewTTYProgress(&Stats, MyOptions)
+		MyLinkable.progress = NewTTYProgress(MyLinkable.stats, &options)
 	} else {
 		MyLinkable.progress = &DisabledProgress{}
 	}

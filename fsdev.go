@@ -37,6 +37,8 @@ type PathStatPair struct {
 }
 
 type FSDev struct {
+	options        *Options
+	stats          *LinkingStats
 	Dev            uint64
 	MaxNLinks      uint64
 	InoHashes      map[Hash]InoSet
@@ -63,8 +65,10 @@ func (s1 PathStat) EqualOwnership(s2 PathStat) bool {
 	return s1.Uid == s2.Uid && s1.Gid == s2.Gid
 }
 
-func NewFSDev(dev, maxNLinks uint64) FSDev {
+func NewFSDev(options *Options, stats *LinkingStats, dev, maxNLinks uint64) FSDev {
 	var w FSDev
+	w.options = options
+	w.stats = stats
 	w.Dev = dev
 	w.MaxNLinks = maxNLinks
 	w.InoHashes = make(map[Hash]InoSet)
