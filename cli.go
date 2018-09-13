@@ -150,27 +150,9 @@ type argPaths struct {
 	files []string
 }
 
-var cfgFile string
-var MyCLIOptions CLIOptions
-
 // rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:     "hardlinkable [OPTIONS] dir1 [dir2 ...] [files...]",
-	Version: "0.9 alpha - 2018-09-05 (Sep 5 2018)",
-	Short:   "A tool to save space by hardlinking identical files",
-	Long: `A tool to scan directories and report on the space that could be saved by hard
-linking identical files.  It can also perform the linking.`,
-	Args: cobra.MinimumNArgs(1),
-	DisableFlagsInUseLine: true,
-	Run: func(cmd *cobra.Command, args []string) {
-		argP, err := separateArgs(args)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(2)
-		}
-		Run(argP.dirs, argP.files)
-	},
-}
+var rootCmd *cobra.Command
+var cfgFile string
 
 // separateArgs will remove duplicate args and separate into dirs and files
 func separateArgs(args []string) (argPaths, error) {
@@ -223,6 +205,26 @@ func Execute() {
 }
 
 func init() {
+	co := CLIOptions{}
+
+	// rootCmd represents the base command when called without any subcommands
+	rootCmd = &cobra.Command{
+		Use:     "hardlinkable [OPTIONS] dir1 [dir2 ...] [files...]",
+		Version: "0.9 alpha - 2018-09-05 (Sep 5 2018)",
+		Short:   "A tool to save space by hardlinking identical files",
+		Long: `A tool to scan directories and report on the space that could be saved by hard
+	linking identical files.  It can also perform the linking.`,
+		Args: cobra.MinimumNArgs(1),
+		DisableFlagsInUseLine: true,
+		Run: func(cmd *cobra.Command, args []string) {
+			argP, err := separateArgs(args)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(2)
+			}
+			cliRun(argP.dirs, argP.files, co)
+		},
+	}
 	cobra.OnInitialize(initConfig)
 
 	//rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.hardlinkable.yaml)")

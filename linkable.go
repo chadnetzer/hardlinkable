@@ -56,13 +56,16 @@ func (ln *Linkable) Dev(dsi DevStatInfo, pathname string) FSDev {
 	}
 }
 
-func Run(dirs []string, files []string) {
-	options := MyCLIOptions.NewOptions()
-	MyOptions = &options // Compatibility setup for now
-	MyLinkable.options = &options
-	MyLinkable.stats = &Stats
+func cliRun(dirs []string, files []string, co CLIOptions) {
+	options := co.toOptions()
+	Run(dirs, files, options)
+}
 
-	if MyOptions.ProgressOutputEnabled &&
+func Run(dirs []string, files []string, options Options) {
+	MyLinkable.options = &options
+	MyLinkable.stats = NewLinkingStats(&options)
+
+	if options.ProgressOutputEnabled &&
 		terminal.IsTerminal(int(os.Stdout.Fd())) {
 		MyLinkable.progress = NewTTYProgress(&Stats, MyOptions)
 	} else {
