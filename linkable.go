@@ -56,7 +56,7 @@ func (ln *Linkable) Dev(dsi DevStatInfo, pathname string) FSDev {
 	}
 }
 
-func cliRun(dirs []string, files []string, co CLIOptions) {
+func cliRun(dirs []string, files []string, co cliOptions) {
 	options := co.toOptions()
 	Run(dirs, files, options)
 }
