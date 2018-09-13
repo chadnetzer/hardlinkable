@@ -58,8 +58,8 @@ func TestEqualXattrs(t *testing.T) {
 		defer os.Remove(f2.Name())
 	}
 
-	if eq, err := equalXAttrs(f1.Name(), f2.Name()); !eq || err != nil {
-		t.Errorf("Unexpected Xattr mismatch for files %s and %s.  Should have no attributes: %v", f1.Name(), f2.Name(), err)
+	if eq, errX1 := equalXAttrs(f1.Name(), f2.Name()); !eq || err != nil {
+		t.Errorf("Unexpected Xattr mismatch for files %s and %s.  Should have no attributes: %v", f1.Name(), f2.Name(), errX1)
 	}
 
 	err = xattr.LSet(f1.Name(), "a", []byte("a1"))
@@ -67,8 +67,8 @@ func TestEqualXattrs(t *testing.T) {
 		t.Fatalf("Couldn't LSet key 'a' to 'a1' on file1 %v: %v", f1, err)
 	}
 
-	if eq, err := equalXAttrs(f1.Name(), f2.Name()); eq || err != nil {
-		t.Errorf("Unexpected Xattr match or error for files %s and %s.: %v", f1.Name(), f2.Name(), err)
+	if eq, errX2 := equalXAttrs(f1.Name(), f2.Name()); eq || err != nil {
+		t.Errorf("Unexpected Xattr match or error for files %s and %s.: %v", f1.Name(), f2.Name(), errX2)
 	}
 
 	err = xattr.LSet(f2.Name(), "a", []byte("a1"))
@@ -76,8 +76,8 @@ func TestEqualXattrs(t *testing.T) {
 		t.Fatalf("Couldn't LSet key 'a' to 'a1' on file2 %v: %v", f1, err)
 	}
 
-	if eq, err := equalXAttrs(f1.Name(), f2.Name()); !eq || err != nil {
-		t.Errorf("Unexpected Xattr mismatch or error for files %s and %s.: %v", f1.Name(), f2.Name(), err)
+	if eq, errX3 := equalXAttrs(f1.Name(), f2.Name()); !eq || err != nil {
+		t.Errorf("Unexpected Xattr mismatch or error for files %s and %s.: %v", f1.Name(), f2.Name(), errX3)
 	}
 
 	err = xattr.LSet(f1.Name(), "b", []byte("b1"))
@@ -85,7 +85,7 @@ func TestEqualXattrs(t *testing.T) {
 		t.Fatalf("Couldn't LSet key 'b' to 'b1' on file %v: %v", f1, err)
 	}
 
-	if eq, err := equalXAttrs(f1.Name(), f2.Name()); eq || err != nil {
-		t.Errorf("Unexpected Xattr match or error for files %s and %s.: %v", f1.Name(), f2.Name(), err)
+	if eq, errX4 := equalXAttrs(f1.Name(), f2.Name()); eq || err != nil {
+		t.Errorf("Unexpected Xattr match or error for files %s and %s.: %v", f1.Name(), f2.Name(), errX4)
 	}
 }

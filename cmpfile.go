@@ -68,5 +68,4 @@ func (l Linkable) cmpReaderContents(r1, r2 io.Reader) (bool, error) {
 		l.stats.AddBytesCompared(uint64(n1))
 		l.progress.Show()
 	}
-	return false, nil // never reached
 }

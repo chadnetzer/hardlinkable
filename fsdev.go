@@ -383,7 +383,8 @@ func (f *FSDev) areFilesLinkable(ps1 PathStat, ps2 PathStat, useDigest bool) boo
 			Stats.AddMismatchedGidBytes(ps1.Size)
 			addMismatchTotalBytes = true
 		}
-		eq, err := equalXAttrs(ps1.Join(), ps2.Join())
+		var err error
+		eq, err = equalXAttrs(ps1.Join(), ps2.Join())
 		if err == nil && !eq {
 			Stats.AddMismatchedXattrBytes(ps1.Size)
 			addMismatchTotalBytes = true

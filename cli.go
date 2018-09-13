@@ -163,12 +163,12 @@ linking identical files.  It can also perform the linking.`,
 	Args: cobra.MinimumNArgs(1),
 	DisableFlagsInUseLine: true,
 	Run: func(cmd *cobra.Command, args []string) {
-		argPaths, err := separateArgs(args)
+		argP, err := separateArgs(args)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(2)
 		}
-		Run(argPaths.dirs, argPaths.files)
+		Run(argP.dirs, argP.files)
 	},
 }
 
