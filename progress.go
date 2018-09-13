@@ -22,9 +22,12 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type Progress interface {
@@ -137,12 +140,18 @@ func (p *TTYProgress) Clear() {
 // line outputs a string that is right-padded with enough space to overwrite
 // the previous line
 func (p *TTYProgress) line(s string) {
-	numSpaces := p.lastLineLen - len(s)
-	p.lastLineLen = len(s)
+	thisLen := len(s) - 1 // Ignore the '\r'
+	numSpaces := p.lastLineLen - thisLen
 	if numSpaces > 0 {
 		s += strings.Repeat(" ", numSpaces)
 	}
+	width, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+	if err == nil && width < thisLen {
+		s = s[:width]
+	}
+
 	fmt.Print(s)
+	p.lastLineLen = thisLen
 }
 
 func (p *DisabledProgress) Show()  {}
