@@ -42,7 +42,7 @@ func (ls *LinkingStats) MatchedPathnames(dirs []string, files []string, opts Opt
 						if dir != osPathname && isMatched(de.Name(), dirExcludes) {
 							return filepath.SkipDir
 						}
-						ls.FoundDirectory()
+						ls.foundDirectory()
 					} else if de.ModeType().IsRegular() {
 						if isFileIncluded(de.Name(), opts) {
 							out <- osPathname

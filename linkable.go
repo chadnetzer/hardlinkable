@@ -63,7 +63,7 @@ func cliRun(dirs []string, files []string, co cliOptions) {
 
 func Run(dirs []string, files []string, options Options) {
 	MyLinkable.options = &options
-	MyLinkable.stats = NewLinkingStats(&options)
+	MyLinkable.stats = newLinkingStats(&options)
 
 	if options.ProgressOutputEnabled &&
 		terminal.IsTerminal(int(os.Stdout.Fd())) {
@@ -80,17 +80,17 @@ func Run(dirs []string, files []string, options Options) {
 			continue
 		}
 		if dsi.Size < options.MinFileSize {
-			MyLinkable.stats.FoundFileTooSmall()
+			MyLinkable.stats.foundFileTooSmall()
 			continue
 		}
 		if options.MaxFileSize > 0 &&
 			dsi.Size > options.MaxFileSize {
-			MyLinkable.stats.FoundFileTooLarge()
+			MyLinkable.stats.foundFileTooLarge()
 			continue
 		}
 		// If the file hasn't been rejected by this
 		// point, add it to the found count
-		MyLinkable.stats.FoundFile()
+		MyLinkable.stats.foundFile()
 
 		fsdev := MyLinkable.Dev(dsi, pathname)
 		fsdev.findIdenticalFiles(dsi, pathname)
@@ -107,7 +107,7 @@ func Run(dirs []string, files []string, options Options) {
 		numPaths += p
 		numDirs += d
 	}
-	MyLinkable.stats.FileAndDirectoryCount(numPaths, numDirs)
+	MyLinkable.stats.fileAndDirectoryCount(numPaths, numDirs)
 
 	// Iterate over all the inode sorted links.  We discard each link pair
 	// (for now), since the links are stored in the Stats type.

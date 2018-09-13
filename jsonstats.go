@@ -46,7 +46,7 @@ func (ls *LinkingStats) outputJSONResults() {
 	}
 
 	existingLinks := make(map[string][]string)
-	for src, v := range ls.existingLinks {
+	for src, v := range ls.ExistingLinks {
 		dsts := make([]string, 0, len(v.paths))
 		for _, pathsplit := range v.paths {
 			dsts = append(dsts, pathsplit.Join())
@@ -56,7 +56,7 @@ func (ls *LinkingStats) outputJSONResults() {
 	jstats.ExistingLinks = existingLinks
 
 	existingLinkSizes := make(map[string]uint64)
-	for src, v := range ls.existingLinks {
+	for src, v := range ls.ExistingLinks {
 		existingLinkSizes[src.Join()] = v.size
 	}
 	jstats.ExistingLinkSizes = existingLinkSizes
@@ -64,7 +64,7 @@ func (ls *LinkingStats) outputJSONResults() {
 	var links []string
 	linkPaths := make([][]string, 0)
 	prevPathsplit := Pathsplit{}
-	for _, p := range ls.linkPairs {
+	for _, p := range ls.LinkPairs {
 		if p.Src != prevPathsplit {
 			if len(links) > 0 {
 				linkPaths = append(linkPaths, links)

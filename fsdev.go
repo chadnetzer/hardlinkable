@@ -106,16 +106,16 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 	curPathStat := PathStat{curPath, statInfo}
 
 	if _, ok := f.InoStatInfo[statInfo.Ino]; !ok {
-		f.stats.FoundInode(statInfo.Nlink)
+		f.stats.foundInode(statInfo.Nlink)
 	}
 
 	H := InoHash(statInfo, f.options)
 	if _, ok := f.InoHashes[H]; !ok {
 		// Setup for a newly seen hash value
-		f.stats.MissedHash()
+		f.stats.missedHash()
 		f.InoHashes[H] = NewInoSet(statInfo.Ino)
 	} else {
-		f.stats.FoundHash()
+		f.stats.foundHash()
 		// See if the new file is an inode we've seen before
 		if _, ok := f.InoStatInfo[statInfo.Ino]; ok {
 			// If it's a path we've seen before, ignore it
@@ -125,8 +125,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 			prevPath := f.ArbitraryPath(statInfo.Ino)
 			prevStatinfo := f.InoStatInfo[statInfo.Ino]
 			linkPair := LinkPair{prevPath, curPath}
-			existingLinkInfo := ExistingLink{linkPair, prevStatinfo}
-			f.stats.FoundExistingLink(existingLinkInfo)
+			f.stats.foundExistingLink(ExistingLink{linkPair, prevStatinfo})
 		}
 		// See if this inode is already one we've determined can be
 		// linked to another one, in which case we can avoid repeating
@@ -140,10 +139,10 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 			cachedSeq, useDigest := f.cachedInos(H, curPathStat)
 
 			// Search the list of potential inode, looking for a match
-			f.stats.SearchedInoSeq()
+			f.stats.searchedInoSeq()
 			foundLinkable := false
 			for _, cachedIno := range cachedSeq {
-				f.stats.IncInoSeqIterations()
+				f.stats.incInoSeqIterations()
 				cachedPathStat := f.PathStatFromIno(cachedIno)
 				if f.areFilesLinkable(cachedPathStat, curPathStat, useDigest) {
 					f.addLinkableInos(cachedPathStat.Ino, curPathStat.Ino)
@@ -153,7 +152,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 			}
 			// Add hash to set if no match was found in current set
 			if !foundLinkable {
-				f.stats.NoHashMatch()
+				f.stats.noHashMatch()
 				inoSet := f.InoHashes[H]
 				inoSet.Add(statInfo.Ino)
 				f.InoStatInfo[statInfo.Ino] = statInfo
@@ -362,39 +361,39 @@ func (f *FSDev) areFilesLinkable(ps1 PathStat, ps2 PathStat, useDigest bool) boo
 		f.newPathStatDigest(ps2)
 	}
 
-	f.stats.DidComparison()
+	f.stats.didComparison()
 	// error handling deferred
 	eq, _ := MyLinkable.areFileContentsEqual(ps1.Join(), ps2.Join())
 	if eq {
-		f.stats.FoundEqualFiles()
+		f.stats.foundEqualFiles()
 
 		// Add some debugging statistics for files that are found to be
 		// equal, but which have some mismatched inode parameters.
 		addMismatchTotalBytes := false
 		if !(ps1.Sec == ps2.Sec && ps1.Nsec == ps2.Nsec) {
-			f.stats.AddMismatchedMtimeBytes(ps1.Size)
+			f.stats.addMismatchedMtimeBytes(ps1.Size)
 			addMismatchTotalBytes = true
 		}
 		if ps1.Mode.Perm() != ps2.Mode.Perm() {
-			f.stats.AddMismatchedModeBytes(ps1.Size)
+			f.stats.addMismatchedModeBytes(ps1.Size)
 			addMismatchTotalBytes = true
 		}
 		if ps1.Uid != ps2.Uid {
-			f.stats.AddMismatchedUidBytes(ps1.Size)
+			f.stats.addMismatchedUidBytes(ps1.Size)
 			addMismatchTotalBytes = true
 		}
 		if ps1.Gid != ps2.Gid {
-			f.stats.AddMismatchedGidBytes(ps1.Size)
+			f.stats.addMismatchedGidBytes(ps1.Size)
 			addMismatchTotalBytes = true
 		}
 		var err error
 		eq, err = equalXAttrs(ps1.Join(), ps2.Join())
 		if err == nil && !eq {
-			f.stats.AddMismatchedXattrBytes(ps1.Size)
+			f.stats.addMismatchedXattrBytes(ps1.Size)
 			addMismatchTotalBytes = true
 		}
 		if addMismatchTotalBytes {
-			f.stats.AddMismatchedTotalBytes(ps1.Size)
+			f.stats.addMismatchedTotalBytes(ps1.Size)
 		}
 	}
 	return eq

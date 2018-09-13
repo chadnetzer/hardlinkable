@@ -26,7 +26,7 @@ import (
 
 func TestLinkedInoSet(t *testing.T) {
 	options := &Options{}
-	stats := NewLinkingStats(options)
+	stats := newLinkingStats(options)
 	fs := NewFSDev(options, stats, 10000, 10000) // Arbitrary args
 
 	// Test when no linkable inos have been added yet
