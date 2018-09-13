@@ -105,7 +105,7 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 		Stats.FoundInode(statInfo.Nlink)
 	}
 
-	H := InoHash(statInfo, MyOptions)
+	H := InoHash(statInfo, f.options)
 	if _, ok := f.InoHashes[H]; !ok {
 		// Setup for a newly seen hash value
 		Stats.MissedHash()
@@ -167,7 +167,7 @@ func (f *FSDev) cachedInos(H Hash, ps PathStat) ([]Ino, bool) {
 	cachedSet := f.InoHashes[H]
 	// If digests are enabled, and cached inode lists are
 	// long enough, then switch on the use of digests.
-	thresh := MyOptions.LinearSearchThresh
+	thresh := f.options.LinearSearchThresh
 	useDigest := thresh >= 0 && len(cachedSet) > thresh
 	if useDigest {
 		digest, err := contentDigest(ps.Pathsplit.Join())
@@ -337,16 +337,16 @@ func (f *FSDev) areFilesLinkable(ps1 PathStat, ps2 PathStat, useDigest bool) boo
 	if ps1.Size != ps2.Size {
 		return false
 	}
-	if !MyOptions.IgnoreTime && !ps1.EqualTime(ps2) {
+	if !f.options.IgnoreTime && !ps1.EqualTime(ps2) {
 		return false
 	}
-	if !MyOptions.IgnorePerms && !ps1.EqualMode(ps2) {
+	if !f.options.IgnorePerms && !ps1.EqualMode(ps2) {
 		return false
 	}
-	if !MyOptions.IgnoreOwner && !ps1.EqualOwnership(ps2) {
+	if !f.options.IgnoreOwner && !ps1.EqualOwnership(ps2) {
 		return false
 	}
-	if !MyOptions.IgnoreXattr {
+	if !f.options.IgnoreXattr {
 		if eq, _ := equalXAttrs(ps1.Join(), ps2.Join()); !eq {
 			return false
 		}

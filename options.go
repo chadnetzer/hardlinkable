@@ -43,5 +43,3 @@ type Options struct {
 	existingLinkStatsEnabled bool
 	newLinkStatsEnabled      bool
 }
-
-var MyOptions *Options

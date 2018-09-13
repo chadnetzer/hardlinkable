@@ -97,11 +97,13 @@ type LinkingStats struct {
 	EndTime       time.Time
 	linkPairs     []LinkPair
 	existingLinks map[Pathsplit]LinkDestinations
+	options       *Options
 }
 
-func NewLinkingStats() LinkingStats {
+func NewLinkingStats(o *Options) *LinkingStats {
 	ls := LinkingStats{
 		existingLinks: make(map[Pathsplit]LinkDestinations),
+		options:       o,
 	}
 	return ls
 }
@@ -230,17 +232,17 @@ func (s *LinkingStats) FoundExistingLink(e ExistingLink) {
 }
 
 func (ls *LinkingStats) outputResults() {
-	if MyOptions.existingLinkStatsEnabled {
+	if ls.options.existingLinkStatsEnabled {
 		ls.outputCurrentHardlinks()
 		fmt.Println("")
 	}
-	if MyOptions.newLinkStatsEnabled {
+	if ls.options.newLinkStatsEnabled {
 		ls.outputLinkedPaths()
-		if MyOptions.StatsOutputEnabled {
+		if ls.options.StatsOutputEnabled {
 			fmt.Println("")
 		}
 	}
-	if MyOptions.StatsOutputEnabled {
+	if ls.options.StatsOutputEnabled {
 		ls.outputLinkingStats()
 	}
 }
@@ -263,7 +265,7 @@ func (ls *LinkingStats) outputCurrentHardlinks() {
 
 func (ls *LinkingStats) outputLinkedPaths() {
 	s := make([]string, 0)
-	if MyOptions.LinkingEnabled {
+	if ls.options.LinkingEnabled {
 		s = append(s, "Files that were hardlinked this run")
 		s = append(s, "-----------------------------------")
 	} else {
@@ -287,7 +289,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 	s = statStr(s, "-----------------------")
 	s = statStr(s, "Directories", ls.DirCount)
 	s = statStr(s, "Files", ls.FileCount)
-	if MyOptions.LinkingEnabled {
+	if ls.options.LinkingEnabled {
 		s = statStr(s, "Hardlinked this run", ls.NewLinkCount)
 		s = statStr(s, "Removed inodes", ls.InodeRemovedCount)
 	} else {
@@ -297,7 +299,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 	s = statStr(s, "Currently linked bytes", ls.PrevLinkedByteAmount, humanizeParens(ls.PrevLinkedByteAmount))
 	totalBytes := ls.PrevLinkedByteAmount + ls.InodeRemovedByteAmount
 	var s1, s2 string
-	if MyOptions.LinkingEnabled {
+	if ls.options.LinkingEnabled {
 		s1 = "Additional saved bytes"
 		s2 = "Total saved bytes"
 	} else {
@@ -312,7 +314,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 	s = statStr(s, "Total run time", duration.Round(time.Millisecond).String())
 
 	totalLinks := ls.PrevLinkCount + ls.NewLinkCount
-	if MyOptions.Verbosity > 0 || MyOptions.DebugLevel > 0 {
+	if ls.options.Verbosity > 0 || ls.options.DebugLevel > 0 {
 		s = statStr(s, "Comparisons", ls.ComparisonCount)
 		s = statStr(s, "Inodes", ls.InodeCount)
 		unwalkedNlinks := ls.NlinkCount - ls.FileCount
@@ -360,7 +362,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 		remainingInodes := ls.InodeCount - ls.InodeRemovedCount
 		s = statStr(s, "Total remaining inodes", remainingInodes)
 	}
-	if MyOptions.DebugLevel > 0 {
+	if ls.options.DebugLevel > 0 {
 		// add additional stat output onto the last string
 		s = statStr(s, "Total file hash hits", ls.FoundHashCount,
 			fmt.Sprintf("misses: %v  sum total: %v", ls.MissedHashCount,
@@ -379,7 +381,7 @@ func (ls *LinkingStats) outputLinkingStats() {
 		s = statStr(s, "Total digests computed", ls.DigestComputedCount)
 	}
 
-	if MyOptions.DebugLevel > 1 {
+	if ls.options.DebugLevel > 1 {
 		runtime.GC()
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)

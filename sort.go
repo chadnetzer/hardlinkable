@@ -110,7 +110,7 @@ func (f *FSDev) sendLinkedPairs(sortedInos []Ino, out chan<- PathStatPair) {
 			dstPaths := f.allInoPaths(dstIno)
 			for dstPath := range dstPaths {
 				var srcPath Pathsplit
-				if MyOptions.SameName {
+				if f.options.SameName {
 					// Skip to next destination inode path if dst filename
 					// isn't also found as a src filename
 					srcPaths := f.InoPaths[srcIno].pMap
