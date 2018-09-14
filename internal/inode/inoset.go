@@ -18,16 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package inode
 
 type Ino = uint64
 
-type InoSet map[Ino]struct{}
+type Set map[Ino]struct{}
 
 var exists = struct{}{}
 
-// Return a non-nil InoSet with the optional inos in it
-func NewInoSet(inos ...Ino) InoSet {
+// Return a non-nil Set with the optional inos in it
+func NewSet(inos ...Ino) Set {
 	set := make(map[Ino]struct{}, len(inos))
 	for _, ino := range inos {
 		set[ino] = exists
@@ -35,24 +35,24 @@ func NewInoSet(inos ...Ino) InoSet {
 	return set
 }
 
-// Add an Ino to the InoSet
-func (s InoSet) Add(ino Ino) {
+// Add an Ino to the Set
+func (s Set) Add(ino Ino) {
 	s[ino] = exists
 }
 
-// Remove an Ino to the InoSet
-func (s InoSet) Remove(ino Ino) {
+// Remove an Ino to the Set
+func (s Set) Remove(ino Ino) {
 	delete(s, ino)
 }
 
-// Return true if given Ino is in the InoSet
-func (s InoSet) Has(ino Ino) bool {
+// Return true if given Ino is in the Set
+func (s Set) Has(ino Ino) bool {
 	_, ok := s[ino]
 	return ok
 }
 
-// Return true if all given Inos are in the InoSet (false if empty)
-func (s InoSet) HasAll(inos ...Ino) bool {
+// Return true if all given Inos are in the Set (false if empty)
+func (s Set) HasAll(inos ...Ino) bool {
 	if len(inos) == 0 || len(s) == 0 {
 		return false
 	}
@@ -64,8 +64,8 @@ func (s InoSet) HasAll(inos ...Ino) bool {
 	return true
 }
 
-// Return a duplicate of the InoSet
-func (s InoSet) Copy() InoSet {
+// Return a duplicate of the Set
+func (s Set) Copy() Set {
 	newSet := make(map[Ino]struct{}, len(s))
 	for k := range s {
 		newSet[k] = exists
@@ -73,10 +73,10 @@ func (s InoSet) Copy() InoSet {
 	return newSet
 }
 
-// Return an intersection of the receiver with an InoSets
-func (s InoSet) Intersection(set2 InoSet) InoSet {
-	resultSet := NewInoSet()
-	var little, big *InoSet
+// Return an intersection of the receiver with a Set
+func (s Set) Intersection(set2 Set) Set {
+	resultSet := NewSet()
+	var little, big *Set
 	// Iterate over smaller set
 	if len(s) <= len(set2) {
 		little, big = &s, &set2
@@ -91,10 +91,10 @@ func (s InoSet) Intersection(set2 InoSet) InoSet {
 	return resultSet
 }
 
-// Return an intersection of multiple InoSets
-func InoSetIntersection(sets ...InoSet) InoSet {
+// Return an intersection of multiple Sets
+func SetIntersection(sets ...Set) Set {
 	if len(sets) == 0 {
-		return NewInoSet()
+		return NewSet()
 	}
 
 	resultSet := sets[0].Copy()
@@ -106,10 +106,10 @@ func InoSetIntersection(sets ...InoSet) InoSet {
 	return resultSet
 }
 
-// Return a difference of the other InoSet from the receiver
-func (s InoSet) Difference(other InoSet) InoSet {
+// Return a difference of the other Set from the receiver
+func (s Set) Difference(other Set) Set {
 	// Iterate over smaller set
-	resultSet := NewInoSet()
+	resultSet := NewSet()
 	for k := range s {
 		if _, ok := other[k]; !ok {
 			resultSet.Add(k)
@@ -118,8 +118,8 @@ func (s InoSet) Difference(other InoSet) InoSet {
 	return resultSet
 }
 
-// Return the content of InoSet as a slice
-func (s InoSet) AsSlice() []Ino {
+// Return the content of Set as a slice
+func (s Set) AsSlice() []Ino {
 	r := make([]Ino, len(s))
 	i := 0
 	for k := range s {
