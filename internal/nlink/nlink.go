@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package nlink
 
 import (
 	"os/exec"
@@ -32,7 +32,7 @@ import (
 // which should always be available as a basic command on both BSDs and Linux,
 // to obtain the value.  Since this only needs to be done once per device (ie.
 // once per Stat_t.Dev), it isn't a performance concern.
-func MaxNlink(pathname string) uint64 {
+func Max(pathname string) uint64 {
 	var returnVal uint64
 	var cmdPath string
 	var err error

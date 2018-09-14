@@ -18,18 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package nlink
 
 import "testing"
 
 func TestMaxNlink(t *testing.T) {
-	if MaxNlink("") != 8 {
+	if Max("") != 8 {
 		t.Errorf("Invalid MaxNlink for empty path")
 	}
-	if MaxNlink("/some/made/up/path") != 8 {
+	if Max("/some/made/up/path") != 8 {
 		t.Errorf("Invalid MaxNlink for invalid path")
 	}
-	if MaxNlink(".") <= 8 {
+	if Max(".") <= 8 {
 		// Assumes max nlinks will be higher than POSIX minimum
 		t.Errorf("Invalid MaxNlink for valid path")
 	}

@@ -21,6 +21,7 @@
 package main
 
 import (
+	"hardlinkable/internal/nlink"
 	"os"
 	"time"
 
@@ -50,7 +51,7 @@ func (ln *Linkable) Dev(dsi DevStatInfo, pathname string) FSDev {
 	if fsdev, ok := ln.FSDevs[dsi.Dev]; ok {
 		return fsdev
 	} else {
-		fsdev = NewFSDev(ln.options, ln.stats, dsi.Dev, MaxNlink(pathname))
+		fsdev = NewFSDev(ln.options, ln.stats, dsi.Dev, nlink.Max(pathname))
 		ln.FSDevs[dsi.Dev] = fsdev
 		return fsdev
 	}
