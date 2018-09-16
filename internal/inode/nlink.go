@@ -18,56 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package inode
 
 import (
-	"bytes"
-
-	"github.com/pkg/xattr"
+	"os/exec"
+	"strconv"
+	"strings"
 )
 
-func equalXAttrs(pathname1, pathname2 string) (bool, error) {
-	var list1, list2 []string
+// MaxNlinkVal returns the maximum number of supported NLinks to pathname.
+// Since the syscall interface to Pathconf isn't supported on all unixes (such
+// as Linux, for some reason), we instead call out to the getconf program,
+// which should always be available as a basic command on both BSDs and Linux,
+// to obtain the value.  Since this only needs to be done once per device (ie.
+// once per Stat_t.Dev), it isn't a performance concern.
+func MaxNlinkVal(pathname string) uint64 {
+	var returnVal uint64
+	var cmdPath string
 	var err error
-	if list1, err = xattr.LList(pathname1); err != nil {
-		return false, err
+
+	returnVal = 8 // Minimum supported MAX_LINK
+	if cmdPath, err = exec.LookPath("/bin/getconf"); err == nil {
+		cmdPath = "/bin/getconf"
+	} else if cmdPath, err = exec.LookPath("/usr/bin/getconf"); err == nil {
+		cmdPath = "/usr/bin/getconf"
+	} else {
+		// Try Pathconf()? on darwin/BSD before giving up?
+		return returnVal
 	}
 
-	if list2, err = xattr.LList(pathname2); err != nil {
-		return false, err
+	cmd := exec.Command(cmdPath, "LINK_MAX", pathname)
+	out, err := cmd.Output()
+	if err != nil {
+		return returnVal
 	}
 
-	if len(list1) != len(list2) {
-		return false, nil
+	outStr := strings.TrimSpace(string(out))
+
+	maxNlinks, err := strconv.ParseUint(outStr, 10, 64)
+	if err != nil {
+		return returnVal
 	}
 
-	// Make list1 the longer list, and make it and it's values into a map
-	if len(list1) < len(list2) {
-		list1, list2 = list2, list1
-		pathname1, pathname2 = pathname2, pathname1
-	}
-
-	d := make(map[string][]byte, len(list1))
-	for _, key := range list1 {
-		d[key], err = xattr.LGet(pathname1, key)
-		if err != nil {
-			return false, err
-		}
-	}
-
-	for _, key := range list2 {
-		v1, ok := d[key]
-		if !ok {
-			return false, nil
-		}
-		v2, err := xattr.LGet(pathname2, key)
-		if err != nil {
-			return false, nil
-		}
-		if bytes.Compare(v1, v2) != 0 {
-			return false, nil
-		}
-	}
-
-	return true, nil
+	return maxNlinks
 }

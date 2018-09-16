@@ -21,56 +21,27 @@
 package inode
 
 import (
-	"errors"
-	"fmt"
-	"os"
-	"syscall"
+	P "hardlinkable/internal/pathpool"
 )
 
-type Infos map[string]Info
-
-// os.FileInfo and syscall.Stat_t fields that we care about
-type Info struct {
-	Size  uint64
-	Ino   uint64
-	Sec   uint64
-	Nsec  uint64
-	Nlink uint32 // 32 bits ought to be enough for anybody
-	Uid   uint32
-	Gid   uint32
-	Mode  os.FileMode
-}
-
-// We need the Dev value returned from stat, but it can be discarded when we
-// separate the Info into a map indexed by the Dev value
-type DevInfo struct {
-	Dev uint64
+type PathInfo struct {
+	P.Pathsplit
 	Info
 }
 
-func LInfo(pathname string) (DevInfo, error) {
-	fi, err := os.Lstat(pathname)
-	if err != nil {
-		return DevInfo{}, err
-	}
-	stat_t, ok := fi.Sys().(*syscall.Stat_t)
-	if !ok {
-		errString := fmt.Sprintf("Couldn't convert Stat_t for pathname: %s", pathname)
-		return DevInfo{}, errors.New(errString)
-	}
-	di := DevInfo{
-		Dev: uint64(stat_t.Dev),
-		Info: Info{
-			Size:  uint64(stat_t.Size),
-			Ino:   uint64(stat_t.Ino),
-			Sec:   uint64(stat_t.Mtimespec.Sec),
-			Nsec:  uint64(stat_t.Mtimespec.Nsec),
-			Nlink: uint32(stat_t.Nlink),
-			Uid:   uint32(stat_t.Uid),
-			Gid:   uint32(stat_t.Gid),
-			Mode:  fi.Mode(),
-		},
-	}
+type PathInfoPair struct {
+	Src PathInfo
+	Dst PathInfo
+}
 
-	return di, nil
+func (p1 PathInfo) EqualTime(p2 PathInfo) bool {
+	return p1.Sec == p2.Sec && p1.Nsec == p2.Nsec
+}
+
+func (p1 PathInfo) EqualMode(p2 PathInfo) bool {
+	return p1.Mode.Perm() == p2.Mode.Perm()
+}
+
+func (p1 PathInfo) EqualOwnership(p2 PathInfo) bool {
+	return p1.Uid == p2.Uid && p1.Gid == p2.Gid
 }

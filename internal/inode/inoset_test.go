@@ -97,7 +97,7 @@ func TestSetIntersection(t *testing.T) {
 	s1 = NewSet(Ino(1))
 	s2 = NewSet(Ino(2))
 	s3 := NewSet(Ino(3))
-	in1 = SetIntersection(s1, s2, s3)
+	in1 = SetIntersections(s1, s2, s3)
 	if !reflect.DeepEqual(in1, NewSet()) {
 		t.Errorf("Set intersection isn't empty: %v", in1)
 	}
@@ -105,7 +105,7 @@ func TestSetIntersection(t *testing.T) {
 	s1 = NewSet(Ino(1))
 	s2 = NewSet(Ino(1))
 	s3 = NewSet(Ino(1))
-	in1 = SetIntersection(s1, s2, s3)
+	in1 = SetIntersections(s1, s2, s3)
 	if !reflect.DeepEqual(in1, NewSet(Ino(1))) {
 		t.Errorf("Set intersection isn't {1}: %v", in1)
 	}
@@ -113,7 +113,7 @@ func TestSetIntersection(t *testing.T) {
 	s1 = NewSet(Ino(1), Ino(2), Ino(4))
 	s2 = NewSet(Ino(2), Ino(3), Ino(4))
 	s3 = NewSet(Ino(1), Ino(3), Ino(4))
-	in1 = SetIntersection(s1, s2, s3)
+	in1 = SetIntersections(s1, s2, s3)
 	if !reflect.DeepEqual(in1, NewSet(Ino(4))) {
 		t.Errorf("Set intersection isn't {4}: %v", in1)
 	}

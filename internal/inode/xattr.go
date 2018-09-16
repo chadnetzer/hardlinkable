@@ -18,19 +18,56 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package nlink
+package inode
 
-import "testing"
+import (
+	"bytes"
 
-func TestMaxNlink(t *testing.T) {
-	if Max("") != 8 {
-		t.Errorf("Invalid MaxNlink for empty path")
+	"github.com/pkg/xattr"
+)
+
+func EqualXAttrs(pathname1, pathname2 string) (bool, error) {
+	var list1, list2 []string
+	var err error
+	if list1, err = xattr.LList(pathname1); err != nil {
+		return false, err
 	}
-	if Max("/some/made/up/path") != 8 {
-		t.Errorf("Invalid MaxNlink for invalid path")
+
+	if list2, err = xattr.LList(pathname2); err != nil {
+		return false, err
 	}
-	if Max(".") <= 8 {
-		// Assumes max nlinks will be higher than POSIX minimum
-		t.Errorf("Invalid MaxNlink for valid path")
+
+	if len(list1) != len(list2) {
+		return false, nil
 	}
+
+	// Make list1 the longer list, and make it and it's values into a map
+	if len(list1) < len(list2) {
+		list1, list2 = list2, list1
+		pathname1, pathname2 = pathname2, pathname1
+	}
+
+	d := make(map[string][]byte, len(list1))
+	for _, key := range list1 {
+		d[key], err = xattr.LGet(pathname1, key)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	for _, key := range list2 {
+		v1, ok := d[key]
+		if !ok {
+			return false, nil
+		}
+		v2, err := xattr.LGet(pathname2, key)
+		if err != nil {
+			return false, nil
+		}
+		if bytes.Compare(v1, v2) != 0 {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }

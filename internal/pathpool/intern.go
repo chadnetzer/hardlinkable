@@ -18,50 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package pathpool
 
-import (
-	"testing"
-)
+// "Strings" are really headers with a backing store, so by storing and reusing
+// strings, we may be able to reuse the underlying backing store.
+type StringPool map[string]string
 
-func TestHumanizedUint64(t *testing.T) {
-	h := map[string]uint64{
-		"0":    0,
-		"0k":   0,
-		"0K":   0,
-		"0p":   0,
-		"1":    1,
-		"1023": 1023,
-		"1k":   1024,
-		"1025": 1025,
-		"2k":   2048,
-		"1m":   1024 * 1024,
-		"2M":   2 * 1024 * 1024,
-		"2g":   2 * 1024 * 1024 * 1024,
-		"3t":   3 * 1024 * 1024 * 1024 * 1024,
-		"4p":   4 * 1024 * 1024 * 1024 * 1024 * 1024,
+func NewPool() StringPool {
+	p := make(StringPool)
+	return p
+}
+
+// Try to find and return a string in the pool map, and add it if it isn't
+// already there.  Not concurrency safe
+func (p StringPool) Intern(s string) string {
+	if r, ok := p[s]; ok {
+		return r
 	}
-	for s, n := range h {
-		v, err := humanizedUint64(s)
-		if err != nil {
-			t.Errorf("humanizedUint64(%s) gives error result: %v", s, err)
-		}
-		if v != n {
-			t.Errorf("humanizedUint64(%s) gives incorrect result: %v instead of %v",
-				s, v, n)
-		}
-	}
-	h = map[string]uint64{
-		"k":  0,
-		"K":  0,
-		"kk": 0,
-		"aK": 0,
-		"bp": 0,
-	}
-	for s, _ := range h {
-		v, err := humanizedUint64(s)
-		if err == nil {
-			t.Errorf("humanizedUint64(%s) should give error result, got: %v", s, v)
-		}
-	}
+	// "Unpin" the memory used in the given s string (by double-copy)
+	s = string([]byte(s))
+
+	p[s] = s
+	return s
 }

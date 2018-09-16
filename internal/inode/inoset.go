@@ -92,7 +92,7 @@ func (s Set) Intersection(set2 Set) Set {
 }
 
 // Return an intersection of multiple Sets
-func SetIntersection(sets ...Set) Set {
+func SetIntersections(sets ...Set) Set {
 	if len(sets) == 0 {
 		return NewSet()
 	}

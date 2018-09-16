@@ -18,12 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package cli
 
 import (
 	"errors"
 	"flag"
 	"fmt"
+	"hardlinkable"
 	"math"
 	"os"
 	"strconv"
@@ -42,7 +43,7 @@ import (
 //
 // Other cliOptions are converted from one type to another in the Options
 // struct
-type cliOptions struct {
+type CLIOptions struct {
 	StatsOutputDisabled    bool
 	ProgressOutputDisabled bool
 	CLIContentOnly         bool
@@ -51,11 +52,11 @@ type cliOptions struct {
 	CLIFileIncludes        RegexArray
 	CLIFileExcludes        RegexArray
 	CLIDirExcludes         RegexArray
-	CLILinearSearchThresh  intN
-	Options
+	CLISearchThresh        intN
+	hardlinkable.Options
 }
 
-func (c cliOptions) toOptions() Options {
+func (c CLIOptions) ToOptions() hardlinkable.Options {
 	o := c.Options
 	o.StatsOutputEnabled = !c.StatsOutputDisabled
 	o.ProgressOutputEnabled = !c.ProgressOutputDisabled
@@ -64,18 +65,12 @@ func (c cliOptions) toOptions() Options {
 	o.FileIncludes = c.CLIFileIncludes.vals
 	o.FileExcludes = c.CLIFileExcludes.vals
 	o.DirExcludes = c.CLIDirExcludes.vals
-	o.LinearSearchThresh = c.CLILinearSearchThresh.n
+	o.SearchThresh = c.CLISearchThresh.n
 	if c.CLIContentOnly {
 		o.IgnoreTime = true
 		o.IgnorePerms = true
 		o.IgnoreOwner = true
 		o.IgnoreXattr = true
-	}
-	if c.Verbosity > 1 {
-		o.newLinkStatsEnabled = true
-	}
-	if c.Verbosity > 2 {
-		o.existingLinkStatsEnabled = true
 	}
 	return o
 }
@@ -182,15 +177,20 @@ func separateArgs(args []string) (argPaths, error) {
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func execute() {
+func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
+func CLIRun(dirs []string, files []string, co CLIOptions) {
+	options := co.ToOptions()
+	hardlinkable.Run(dirs, files, options)
+}
+
 func init() {
-	co := cliOptions{}
+	co := CLIOptions{}
 
 	// rootCmd represents the base command when called without any subcommands
 	rootCmd = &cobra.Command{
@@ -207,7 +207,7 @@ func init() {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(2)
 			}
-			cliRun(argP.dirs, argP.files, co)
+			CLIRun(argP.dirs, argP.files, co)
 		},
 	}
 	cobra.OnInitialize(initConfig)
@@ -229,7 +229,7 @@ func init() {
 	flg.BoolVarP(&co.IgnoreXattr, "ignore-xattr", "x", false, "Xattrs need not match")
 	flg.BoolVarP(&co.CLIContentOnly, "content-only", "c", false, "Only file contents have to match (ie. -potx)")
 
-	co.CLIMinFileSize.n = 1 // default
+	co.CLIMinFileSize.n = hardlinkable.DefaultMinFileSize
 	flg.VarP(&co.CLIMinFileSize, "min-size", "s", "Minimum file size")
 	flg.VarP(&co.CLIMaxFileSize, "max-size", "S", "Maximum file size")
 
@@ -238,8 +238,8 @@ func init() {
 	flg.VarP(&co.CLIDirExcludes, "exclude-dir", "E", "Regex(es) used to exclude dirs")
 	flg.CountVarP(&co.DebugLevel, "debug", "d", "``Increase debugging level")
 
-	co.CLILinearSearchThresh.n = 1 // default
-	flg.VarP(&co.CLILinearSearchThresh, "search-thresh", "", "Ino search length before enabling digests")
+	co.CLISearchThresh.n = hardlinkable.DefaultSearchThresh
+	flg.VarP(&co.CLISearchThresh, "search-thresh", "", "Ino search length before enabling digests")
 	//flg.MarkHidden("search-thresh")
 	flg.SortFlags = false
 }
