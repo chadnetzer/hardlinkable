@@ -80,17 +80,17 @@ func hashIno(i I.Info, opt *Options) hashVal {
 	return value
 }
 
-func (f *fsDev) FindIdenticalFiles(dsi I.DevInfo, pathname string) {
-	panicIf(f.Dev != dsi.Dev, "Mismatched Dev %d for %s\n", f.Dev, pathname)
+func (f *fsDev) FindIdenticalFiles(di I.DevInfo, pathname string) {
+	panicIf(f.Dev != di.Dev, "Mismatched Dev %d for %s\n", f.Dev, pathname)
 	curPath := P.Split(pathname, f.pool)
-	curPathStat := I.PathInfo{Pathsplit: curPath, Info: dsi.Info}
-	ino := dsi.Info.Ino
+	curPathStat := I.PathInfo{Pathsplit: curPath, Info: di.Info}
+	ino := di.Info.Ino
 
 	if _, ok := f.InoStatInfo[ino]; !ok {
-		f.Stats.FoundInode(dsi.Info.Nlink)
+		f.Stats.FoundInode(di.Info.Nlink)
 	}
 
-	H := hashIno(dsi.Info, f.Options)
+	H := hashIno(di.Info, f.Options)
 	if _, ok := f.InoHashes[H]; !ok {
 		// Setup for a newly seen hash value
 		f.Stats.MissedHash()
@@ -136,12 +136,12 @@ func (f *fsDev) FindIdenticalFiles(dsi I.DevInfo, pathname string) {
 				f.Stats.NoHashMatch()
 				inoSet := f.InoHashes[H]
 				inoSet.Add(ino)
-				f.InoStatInfo[ino] = dsi.Info
+				f.InoStatInfo[ino] = di.Info
 			}
 		}
 	}
 	// Remember Inode and filename/path information for each seen file
-	f.InoStatInfo[ino] = dsi.Info
+	f.InoStatInfo[ino] = di.Info
 	f.InoAppendPathname(ino, curPath)
 }
 

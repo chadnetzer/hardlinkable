@@ -52,16 +52,16 @@ func Run(dirs []string, files []string, opts Options) {
 	c := matchedPathnames(ls.status, dirs, files)
 	for pathname := range c {
 		ls.Progress.Show()
-		dsi, err := inode.LInfo(pathname)
+		di, err := inode.LInfo(pathname)
 		if err != nil {
 			continue
 		}
-		if dsi.Size < opts.MinFileSize {
+		if di.Size < opts.MinFileSize {
 			ls.Stats.FoundFileTooSmall()
 			continue
 		}
 		if opts.MaxFileSize > 0 &&
-			dsi.Size > opts.MaxFileSize {
+			di.Size > opts.MaxFileSize {
 			ls.Stats.FoundFileTooLarge()
 			continue
 		}
@@ -69,8 +69,8 @@ func Run(dirs []string, files []string, opts Options) {
 		// point, add it to the found count
 		ls.Stats.FoundFile()
 
-		fsdev := ls.dev(dsi, pathname)
-		fsdev.FindIdenticalFiles(dsi, pathname)
+		fsdev := ls.dev(di, pathname)
+		fsdev.FindIdenticalFiles(di, pathname)
 	}
 
 	ls.Progress.Clear()
@@ -113,12 +113,12 @@ func newLinkableState() *linkableState {
 	return &ls
 }
 
-func (ls *linkableState) dev(dsi inode.DevInfo, pathname string) fsDev {
-	if fsdev, ok := ls.fsDevs[dsi.Dev]; ok {
+func (ls *linkableState) dev(di inode.DevInfo, pathname string) fsDev {
+	if fsdev, ok := ls.fsDevs[di.Dev]; ok {
 		return fsdev
 	} else {
-		fsdev = newFSDev(ls.status, dsi.Dev, inode.MaxNlinkVal(pathname))
-		ls.fsDevs[dsi.Dev] = fsdev
+		fsdev = newFSDev(ls.status, di.Dev, inode.MaxNlinkVal(pathname))
+		ls.fsDevs[di.Dev] = fsdev
 		return fsdev
 	}
 }
