@@ -18,59 +18,60 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package hardlinkable
 
 import (
+	I "hardlinkable/internal/inode"
 	"sort"
 	"testing"
 )
 
-type byIno []Ino
+type byIno []I.Ino
 
 func (s byIno) Len() int           { return len(s) }
 func (s byIno) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s byIno) Less(i, j int) bool { return s[i] < s[j] }
 
-func InoSeqFromSet(set InoSet) []Ino {
-	seq := make([]Ino, 0)
+func InoSeqFromSet(set I.Set) []I.Ino {
+	seq := make([]I.Ino, 0)
 	for ino, _ := range set {
 		seq = append(seq, ino)
 	}
 	return seq
 }
 
-func setupInoStatInfo(fsdev *FSDev, inoSet InoSet) {
-	fsdev.InoStatInfo = make(map[Ino]StatInfo)
+func setupInoStatInfo(fsdev *fsDev, inoSet I.Set) {
+	fsdev.InoStatInfo = make(map[I.Ino]I.Info)
 	for ino, _ := range inoSet {
 		// Using any old StatInfo is fine
-		dsi, _ := LStatInfo(".")
-		si := dsi.StatInfo
+		dsi, _ := I.LInfo(".")
+		si := dsi.Info
 		// Deliberately make it so that if Nlinks are sorted, Inos are
-		// sorted also (for easier testing of []Ino result)
+		// sorted also (for easier testing of []I.Ino result)
 		si.Nlink = uint32(ino)*2 + 100
 		si.Ino = uint64(ino)
-		fsdev.InoStatInfo[Ino(ino)] = si
+		fsdev.InoStatInfo[I.Ino(ino)] = si
 	}
 }
 
 func TestInoSort(t *testing.T) {
-	inoSet := NewInoSet(1, 3, 5, 4, 2, 6, 7, 1, 8, 2, 11, 9, 5)
+	inoSet := I.NewSet(1, 3, 5, 4, 2, 6, 7, 1, 8, 2, 11, 9, 5)
 	inoSeq := InoSeqFromSet(inoSet)
 	if sort.IsSorted(sort.Reverse(byIno(inoSeq))) {
 		t.Errorf("inoSeq was already sorted (should be unsorted)")
 	}
 
-	fsdev := &FSDev{}
+	fsdev := &fsDev{}
 	setupInoStatInfo(fsdev, inoSet)
-	inoSetSorted := fsdev.sortInoSetByNlink(inoSet)
+	inoSetSorted := fsdev.sortSetByNlink(inoSet)
 	if !sort.IsSorted(sort.Reverse(byIno(inoSetSorted))) {
 		t.Errorf("Sorting of InoSet by nLink value failed")
 	}
 }
 
 func TestAppendReversed(t *testing.T) {
-	forward := []Ino{1, 2, 3}
-	reversed := []Ino{5, 4}
+	forward := []I.Ino{1, 2, 3}
+	reversed := []I.Ino{5, 4}
 	forward = appendReversedInos(forward, reversed...)
 	if !sort.IsSorted(byIno(forward)) {
 		t.Errorf("appendReversed failure")

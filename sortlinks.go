@@ -18,9 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package hardlinkable
 
 import (
+	I "hardlinkable/internal/inode"
+	P "hardlinkable/internal/pathpool"
 	"sort"
 )
 
@@ -37,7 +39,7 @@ func (a byNlink) Less(i, j int) bool {
 }
 func (a byNlink) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
-func (f *FSDev) sortInoSetByNlink(inoSet InoSet) []Ino {
+func (f *fsDev) sortSetByNlink(inoSet I.Set) []I.Ino {
 	seq := make(byNlink, len(inoSet))
 	i := 0
 	for ino, _ := range inoSet {
@@ -48,7 +50,7 @@ func (f *FSDev) sortInoSetByNlink(inoSet InoSet) []Ino {
 
 	sort.Sort(sort.Reverse(seq))
 
-	sortedSeq := make([]Ino, len(seq))
+	sortedSeq := make([]I.Ino, len(seq))
 	for i, inoNlink := range seq {
 		sortedSeq[i] = inoNlink.Ino
 	}
@@ -57,29 +59,29 @@ func (f *FSDev) sortInoSetByNlink(inoSet InoSet) []Ino {
 }
 
 // Reverse fromS and append to toS
-func appendReversedInos(toS []Ino, fromS ...Ino) []Ino {
+func appendReversedInos(toS []I.Ino, fromS ...I.Ino) []I.Ino {
 	for i, j := 0, len(fromS)-1; i < j; i, j = i+1, j-1 {
 		fromS[i], fromS[j] = fromS[j], fromS[i]
 	}
 	return append(toS, fromS...)
 }
 
-func (f *FSDev) sortedLinks() <-chan PathStatPair {
-	out := make(chan PathStatPair)
+func (f *fsDev) SortedLinks() <-chan I.PathInfoPair {
+	out := make(chan I.PathInfoPair)
 	go func() {
 		defer close(out)
 		c := f.linkedInoSets()
 		for linkableSet := range c {
 			// Sort links highest nlink to lowest
-			sortedInos := f.sortInoSetByNlink(linkableSet)
+			sortedInos := f.sortSetByNlink(linkableSet)
 			f.sendLinkedPairs(sortedInos, out)
 		}
 	}()
 	return out
 }
 
-func (f *FSDev) sendLinkedPairs(sortedInos []Ino, out chan<- PathStatPair) {
-	remainingInos := make([]Ino, 0)
+func (f *fsDev) sendLinkedPairs(sortedInos []I.Ino, out chan<- I.PathInfoPair) {
+	remainingInos := make([]I.Ino, 0)
 
 	for len(sortedInos) > 0 || len(remainingInos) > 0 {
 		if len(remainingInos) > 0 {
@@ -87,7 +89,7 @@ func (f *FSDev) sendLinkedPairs(sortedInos []Ino, out chan<- PathStatPair) {
 			// of sortedInos.  These were the leftovers
 			// from the end of the list working backwards.
 			sortedInos = appendReversedInos(sortedInos, remainingInos...)
-			remainingInos = make([]Ino, 0)
+			remainingInos = make([]I.Ino, 0)
 		}
 		srcIno := sortedInos[0]
 		sortedInos = sortedInos[1:]
@@ -103,17 +105,17 @@ func (f *FSDev) sendLinkedPairs(sortedInos []Ino, out chan<- PathStatPair) {
 			if sum > f.MaxNLinks {
 				remainingInos = append(remainingInos, dstIno)
 				remainingInos = appendReversedInos(remainingInos, sortedInos...)
-				sortedInos = make([]Ino, 0)
+				sortedInos = make([]I.Ino, 0)
 				break
 			}
 
 			dstPaths := f.allInoPaths(dstIno)
 			for dstPath := range dstPaths {
-				var srcPath Pathsplit
-				if f.options.SameName {
+				var srcPath P.Pathsplit
+				if f.Options.SameName {
 					// Skip to next destination inode path if dst filename
 					// isn't also found as a src filename
-					srcPaths := f.InoPaths[srcIno].pMap
+					srcPaths := f.InoPaths[srcIno].PMap
 					dstFilename := dstPath.Filename
 					if _, ok := srcPaths[dstFilename]; !ok {
 						continue
@@ -122,18 +124,19 @@ func (f *FSDev) sendLinkedPairs(sortedInos []Ino, out chan<- PathStatPair) {
 				} else {
 					srcPath = f.ArbitraryPath(srcIno)
 				}
-				srcPathStat := PathStat{srcPath, srcSI}
-				dstPathStat := PathStat{dstPath, dstSI}
+				srcPathInfo := I.PathInfo{Pathsplit: srcPath, Info: srcSI}
+				dstPathInfo := I.PathInfo{Pathsplit: dstPath, Info: dstSI}
 
-				out <- PathStatPair{srcPathStat, dstPathStat}
+				out <- I.PathInfoPair{Src: srcPathInfo, Dst: dstPathInfo}
 
-				f.stats.foundNewLink(srcPathStat, dstPathStat)
+				f.Stats.FoundNewLink(srcPath, dstPath)
 
 				// Update StatInfo information for inodes
 				srcSI.Nlink += 1
 				dstSI.Nlink -= 1
 				f.InoStatInfo[srcIno] = srcSI
 				if dstSI.Nlink == 0 {
+					f.Stats.FoundRemovedInode(dstSI.Size)
 					delete(f.InoStatInfo, dstIno)
 				} else {
 					f.InoStatInfo[dstIno] = dstSI
@@ -145,7 +148,7 @@ func (f *FSDev) sendLinkedPairs(sortedInos []Ino, out chan<- PathStatPair) {
 			// remainingInos list to allow it to (possibly) be linked with other linked
 			// inodes
 			fp, ok := f.InoPaths[dstIno]
-			if ok && !fp.isEmpty() {
+			if ok && !fp.IsEmpty() {
 				remainingInos = append(remainingInos, dstIno)
 			}
 		}

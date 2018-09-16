@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package hardlinkable
 
 import (
 	"fmt"
@@ -29,7 +29,7 @@ import (
 )
 
 // Return allowed pathnames through the given channel.
-func (ls *LinkingStats) MatchedPathnames(dirs []string, files []string, opts Options) <-chan string {
+func matchedPathnames(s status, dirs []string, files []string) <-chan string {
 	out := make(chan string)
 	go func() {
 		defer close(out)
@@ -37,14 +37,14 @@ func (ls *LinkingStats) MatchedPathnames(dirs []string, files []string, opts Opt
 			err := godirwalk.Walk(dir, &godirwalk.Options{
 				Callback: func(osPathname string, de *godirwalk.Dirent) error {
 					if de.ModeType().IsDir() {
-						dirExcludes := opts.DirExcludes
+						dirExcludes := s.Options.DirExcludes
 						// Do not exclude dirs provided explicitly by the user
 						if dir != osPathname && isMatched(de.Name(), dirExcludes) {
 							return filepath.SkipDir
 						}
-						ls.foundDirectory()
+						s.Stats.FoundDirectory()
 					} else if de.ModeType().IsRegular() {
-						if isFileIncluded(de.Name(), opts) {
+						if isFileIncluded(de.Name(), s.Options) {
 							out <- osPathname
 						}
 					}
@@ -58,7 +58,7 @@ func (ls *LinkingStats) MatchedPathnames(dirs []string, files []string, opts Opt
 		// Also pass back some or all (depending on includes and
 		// excludes) of the passed in file pathnames.
 		for _, pathname := range files {
-			if isFileIncluded(pathname, opts) {
+			if isFileIncluded(pathname, s.Options) {
 				out <- pathname
 			}
 		}
@@ -80,7 +80,7 @@ func isMatched(name string, pattern []string) bool {
 
 // isFileIncluded returns true if the given pathname is not excluded, or is
 // specifically included by the command line options.
-func isFileIncluded(name string, opts Options) bool {
+func isFileIncluded(name string, opts *Options) bool {
 	inc := opts.FileIncludes
 	exc := opts.FileExcludes
 	if len(exc) == 0 && len(inc) == 0 {

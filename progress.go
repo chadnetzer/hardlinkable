@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package hardlinkable
 
 import (
 	"fmt"
@@ -30,13 +30,13 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-type Progress interface {
+type progress interface {
 	Show()
 	Clear()
 }
 
 // A simple progress meter while scanning directories and performing linking
-type TTYProgress struct {
+type ttyProgress struct {
 	lastLineLen    int
 	lastFPSTime    time.Time
 	updateDelay    time.Duration
@@ -46,18 +46,18 @@ type TTYProgress struct {
 
 	timer chan struct{}
 
-	stats   *LinkingStats
+	stats   *linkingStats
 	options *Options
 
 	m runtime.MemStats
 }
 
-type DisabledProgress struct{}
+type disabledProgress struct{}
 
 // Initialize TTYProgress and return pointer to it
-func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
+func newTTYProgress(stats *linkingStats, options *Options) *ttyProgress {
 	now := time.Now()
-	p := TTYProgress{
+	p := ttyProgress{
 		lastFPSTime:    now,
 		updateDelay:    60 * time.Millisecond,
 		updateFPSDelay: 180 * time.Millisecond, // A slower rate for readability
@@ -86,7 +86,7 @@ func NewTTYProgress(stats *LinkingStats, options *Options) *TTYProgress {
 // scanning and inode linking (ie. which inodes have identical content and
 // matching inode parameters).  Call in the main directory walk/link
 // calculation loop.
-func (p *TTYProgress) Show() {
+func (p *ttyProgress) Show() {
 	// Return if our timer hasn't yet fired
 	select {
 	case <-p.timer:
@@ -130,7 +130,7 @@ func (p *TTYProgress) Show() {
 
 // Call to erase the progress loop (before 'normal' program post-processing
 // output)
-func (p *TTYProgress) Clear() {
+func (p *ttyProgress) Clear() {
 	defer close(p.timer)
 	p.line("\r")
 	p.lastLineLen = 1
@@ -139,7 +139,7 @@ func (p *TTYProgress) Clear() {
 
 // line outputs a string that is right-padded with enough space to overwrite
 // the previous line
-func (p *TTYProgress) line(s string) {
+func (p *ttyProgress) line(s string) {
 	thisLen := len(s) - 1 // Ignore the '\r'
 	numSpaces := p.lastLineLen - thisLen
 	if numSpaces > 0 {
@@ -154,5 +154,5 @@ func (p *TTYProgress) line(s string) {
 	p.lastLineLen = thisLen
 }
 
-func (p *DisabledProgress) Show()  {}
-func (p *DisabledProgress) Clear() {}
+func (p *disabledProgress) Show()  {}
+func (p *disabledProgress) Clear() {}

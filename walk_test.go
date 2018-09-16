@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package hardlinkable
 
 import (
 	"io/ioutil"
@@ -73,13 +73,14 @@ func TestWalkFileIncludes(t *testing.T) {
 		testIncludesExcludes{[]string{"f1", "f2", "f3", "f4", "f5", "f6"}, []string{}, "f5", 5},
 	}
 
-	options := Options{}
-	stats := newLinkingStats(&options)
+	s := status{}
+	s.Options = &Options{}
+	s.Stats = newLinkingStats(s.Options)
 	for _, v := range incExSlice {
-		options.FileIncludes = v.in
-		options.FileExcludes = v.ex
+		s.Options.FileIncludes = v.in
+		s.Options.FileExcludes = v.ex
 
-		c := stats.MatchedPathnames(dirs, []string{}, options)
+		c := matchedPathnames(s, dirs, []string{})
 		n := 0
 		var filenames []string
 		foundMatch := false

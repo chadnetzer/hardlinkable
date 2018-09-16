@@ -18,15 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package hardlinkable
 
 import (
 	"encoding/json"
 	"fmt"
+	P "hardlinkable/internal/pathpool"
 	"time"
 )
 
-type JSONStats struct {
+type jsonStats struct {
 	ExistingLinks     map[string][]string `json:"existingLinks"`
 	ExistingLinkSizes map[string]uint64   `json:"existingLinkSizes"`
 	LinkPaths         [][]string          `json:"linkPaths"`
@@ -36,9 +37,9 @@ type JSONStats struct {
 	RunTime   string    `json:"runTime"`
 }
 
-func (ls *LinkingStats) outputJSONResults() {
+func (ls *linkingStats) OutputJSONResults() {
 	duration := ls.EndTime.Sub(ls.StartTime)
-	jstats := JSONStats{
+	jstats := jsonStats{
 		CountingStats: ls.CountingStats,
 		StartTime:     ls.StartTime,
 		EndTime:       ls.EndTime,
@@ -63,7 +64,7 @@ func (ls *LinkingStats) outputJSONResults() {
 
 	var links []string
 	linkPaths := make([][]string, 0)
-	prevPathsplit := Pathsplit{}
+	prevPathsplit := P.Pathsplit{}
 	for _, p := range ls.LinkPairs {
 		if p.Src != prevPathsplit {
 			if len(links) > 0 {

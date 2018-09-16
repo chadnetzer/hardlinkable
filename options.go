@@ -18,10 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package hardlinkable
 
+const DefaultSearchThresh = 1
+const DefaultMinFileSize = 1
+
+// Options is passed to the Run() func, and controls the operation of the
+// hardlinkable algorithm, including what inode parameters much match for files
+// to be compared for equality, what files and directories are included or
+// excluded, and whether linking is actually enabled or not.
 type Options struct {
-	Verbosity             int
 	StatsOutputEnabled    bool
 	ProgressOutputEnabled bool
 	JSONOutputEnabled     bool
@@ -31,8 +37,9 @@ type Options struct {
 	IgnoreOwner           bool
 	IgnoreXattr           bool
 	LinkingEnabled        bool
-	LinearSearchThresh    int
+	Verbosity             int
 	DebugLevel            int
+	SearchThresh          int
 	MinFileSize           uint64
 	MaxFileSize           uint64
 	FileIncludes          []string
@@ -42,4 +49,26 @@ type Options struct {
 	// Indirect options, set based on debug and/or verbosity level
 	existingLinkStatsEnabled bool
 	newLinkStatsEnabled      bool
+}
+
+// DefaultOptions returns an Options struct, with the defaults initialized.
+func DefaultOptions() Options {
+	o := Options{
+		SearchThresh: DefaultSearchThresh,
+		MinFileSize:  DefaultMinFileSize,
+	}
+	return o
+}
+
+// init sets up the unexported Options, and must be called on an Options struct
+// that has had it's exported members set to their desired values, (ie. on the
+// Options provided by the user).
+func (o *Options) init() *Options {
+	if o.Verbosity > 1 {
+		o.newLinkStatsEnabled = true
+	}
+	if o.Verbosity > 2 {
+		o.existingLinkStatsEnabled = true
+	}
+	return o
 }
