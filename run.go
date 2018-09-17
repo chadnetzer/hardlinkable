@@ -33,20 +33,38 @@ import (
 
 // Run performs a scan of the supplied directories and files, with the given
 // Options, and outputs information on which files could be linked to save
+// space.  If stdout is a terminal/tty, a progress line is continually updated
+// as the directories and files are scanned.
+func RunWithProgress(dirs []string, files []string, opts Options) Results {
+	var ls *linkableState = newLinkableState()
+
+	ls.Options = opts.init()
+	ls.Results = newResults(ls.Options)
+
+	if terminal.IsTerminal(int(os.Stdout.Fd())) {
+		ls.Progress = newTTYProgress(ls.Results, ls.Options)
+	} else {
+		ls.Progress = &disabledProgress{}
+	}
+	return runHelper(dirs, files, ls)
+}
+
+// Run performs a scan of the supplied directories and files, with the given
+// Options, and outputs information on which files could be linked to save
 // space.
 func Run(dirs []string, files []string, opts Options) Results {
 	var ls *linkableState = newLinkableState()
 
 	ls.Options = opts.init()
 	ls.Results = newResults(ls.Options)
+	ls.Progress = &disabledProgress{}
 
-	if ls.Options.ProgressOutputEnabled &&
-		terminal.IsTerminal(int(os.Stdout.Fd())) {
-		ls.Progress = newTTYProgress(ls.Results, ls.Options)
-	} else {
-		ls.Progress = &disabledProgress{}
-	}
+	return runHelper(dirs, files, ls)
+}
 
+// runHelper is called by the public Run funcs, with an already initialized
+// options, to complete the scanning and result gathering.
+func runHelper(dirs []string, files []string, ls *linkableState) Results {
 	ls.Results.start()
 	c := matchedPathnames(ls.status, dirs, files)
 	for pathname := range c {

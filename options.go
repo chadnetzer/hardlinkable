@@ -29,7 +29,6 @@ const DefaultMinFileSize = 1
 // excluded, and whether linking is actually enabled or not.
 type Options struct {
 	StatsOutputEnabled    bool
-	ProgressOutputEnabled bool
 	JSONOutputEnabled     bool
 	SameName              bool
 	IgnoreTime            bool

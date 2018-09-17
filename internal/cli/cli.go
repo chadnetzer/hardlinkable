@@ -59,7 +59,6 @@ type CLIOptions struct {
 func (c CLIOptions) ToOptions() hardlinkable.Options {
 	o := c.Options
 	o.StatsOutputEnabled = !c.StatsOutputDisabled
-	o.ProgressOutputEnabled = !c.ProgressOutputDisabled
 	o.MinFileSize = c.CLIMinFileSize.n
 	o.MaxFileSize = c.CLIMaxFileSize.n
 	o.FileIncludes = c.CLIFileIncludes.vals
@@ -185,7 +184,12 @@ func Execute() {
 }
 
 func CLIRun(dirs []string, files []string, co CLIOptions) {
-	results := hardlinkable.Run(dirs, files, co.ToOptions())
+	var results hardlinkable.Results
+	if co.ProgressOutputDisabled {
+		results = hardlinkable.Run(dirs, files, co.ToOptions())
+	} else {
+		results = hardlinkable.RunWithProgress(dirs, files, co.ToOptions())
+	}
 
 	if results.Opts.JSONOutputEnabled {
 		results.OutputJSONResults()
