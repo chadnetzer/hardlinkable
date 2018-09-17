@@ -27,7 +27,6 @@ package hardlinkable
 import (
 	"hardlinkable/internal/inode"
 	"os"
-	"time"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -39,16 +38,16 @@ func Run(dirs []string, files []string, opts Options) {
 	var ls *linkableState = newLinkableState()
 
 	ls.Options = opts.init()
-	ls.Stats = newLinkingStats(ls.Options)
+	ls.Results = newResults(ls.Options)
 
 	if ls.Options.ProgressOutputEnabled &&
 		terminal.IsTerminal(int(os.Stdout.Fd())) {
-		ls.Progress = newTTYProgress(ls.Stats, ls.Options)
+		ls.Progress = newTTYProgress(ls.Results, ls.Options)
 	} else {
 		ls.Progress = &disabledProgress{}
 	}
 
-	ls.Stats.StartTime = time.Now()
+	ls.Results.start()
 	c := matchedPathnames(ls.status, dirs, files)
 	for pathname := range c {
 		ls.Progress.Show()
@@ -57,17 +56,17 @@ func Run(dirs []string, files []string, opts Options) {
 			continue
 		}
 		if di.Size < opts.MinFileSize {
-			ls.Stats.FoundFileTooSmall()
+			ls.Results.foundFileTooSmall()
 			continue
 		}
 		if opts.MaxFileSize > 0 &&
 			di.Size > opts.MaxFileSize {
-			ls.Stats.FoundFileTooLarge()
+			ls.Results.foundFileTooLarge()
 			continue
 		}
 		// If the file hasn't been rejected by this
 		// point, add it to the found count
-		ls.Stats.FoundFile()
+		ls.Results.foundFile()
 
 		fsdev := ls.dev(di, pathname)
 		fsdev.FindIdenticalFiles(di, pathname)
@@ -84,18 +83,18 @@ func Run(dirs []string, files []string, opts Options) {
 		numPaths += p
 		numDirs += d
 	}
-	ls.Stats.FileAndDirectoryCount(numPaths, numDirs)
+	ls.Results.fileAndDirectoryCount(numPaths, numDirs)
 
 	// Iterate over all the inode sorted links.  We discard each link pair
-	// (for now), since the links are stored in the Stats type.
+	// (for now), since the links are stored in the Results type.
 	for _, fsdev := range ls.fsDevs {
 		for pair := range fsdev.SortedLinks() {
 			_ = pair
 		}
 	}
-	ls.Stats.EndTime = time.Now()
+	ls.Results.end()
 	if opts.JSONOutputEnabled {
-		ls.Stats.OutputJSONResults()
+		ls.Results.OutputJSONResults()
 	} else {
 		ls.Stats.OutputResults()
 	}

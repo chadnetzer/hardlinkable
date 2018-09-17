@@ -75,7 +75,7 @@ func TestWalkFileIncludes(t *testing.T) {
 
 	s := status{}
 	s.Options = &Options{}
-	s.Stats = newLinkingStats(s.Options)
+	s.Results = newResults(s.Options)
 	for _, v := range incExSlice {
 		s.Options.FileIncludes = v.in
 		s.Options.FileExcludes = v.ex

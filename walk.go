@@ -42,7 +42,7 @@ func matchedPathnames(s status, dirs []string, files []string) <-chan string {
 						if dir != osPathname && isMatched(de.Name(), dirExcludes) {
 							return filepath.SkipDir
 						}
-						s.Stats.FoundDirectory()
+						s.Results.foundDirectory()
 					} else if de.ModeType().IsRegular() {
 						if isFileIncluded(de.Name(), s.Options) {
 							out <- osPathname

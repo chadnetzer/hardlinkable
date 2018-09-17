@@ -22,6 +22,6 @@ package hardlinkable
 
 type status struct {
 	Options  *Options
-	Stats    *linkingStats
+	Results  *Results
 	Progress progress
 }

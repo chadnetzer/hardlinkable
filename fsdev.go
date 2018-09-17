@@ -87,16 +87,16 @@ func (f *fsDev) FindIdenticalFiles(di I.DevInfo, pathname string) {
 	ino := di.Info.Ino
 
 	if _, ok := f.InoStatInfo[ino]; !ok {
-		f.Stats.FoundInode(di.Info.Nlink)
+		f.Results.foundInode(di.Info.Nlink)
 	}
 
 	H := hashIno(di.Info, f.Options)
 	if _, ok := f.InoHashes[H]; !ok {
 		// Setup for a newly seen hash value
-		f.Stats.MissedHash()
+		f.Results.missedHash()
 		f.InoHashes[H] = I.NewSet(ino)
 	} else {
-		f.Stats.FoundHash()
+		f.Results.foundHash()
 		// See if the new file is an inode we've seen before
 		if _, ok := f.InoStatInfo[ino]; ok {
 			// If it's a path we've seen before, ignore it
@@ -105,8 +105,7 @@ func (f *fsDev) FindIdenticalFiles(di I.DevInfo, pathname string) {
 			}
 			prevPath := f.ArbitraryPath(ino)
 			prevStatinfo := f.InoStatInfo[ino]
-			lp := linkPair{prevPath, curPath}
-			f.Stats.FoundExistingLink(lp, prevStatinfo.Size)
+			f.Results.foundExistingLink(prevPath, curPath, prevStatinfo.Size)
 		}
 		// See if this inode is already one we've determined can be
 		// linked to another one, in which case we can avoid repeating
@@ -120,10 +119,10 @@ func (f *fsDev) FindIdenticalFiles(di I.DevInfo, pathname string) {
 			cachedSeq, useDigest := f.cachedInos(H, curPathStat)
 
 			// Search the list of potential inode, looking for a match
-			f.Stats.SearchedInoSeq()
+			f.Results.searchedInoSeq()
 			foundLinkable := false
 			for _, cachedIno := range cachedSeq {
-				f.Stats.IncInoSeqIterations()
+				f.Results.incInoSeqIterations()
 				cachedPathStat := f.PathInfoFromIno(cachedIno)
 				if f.areFilesLinkable(cachedPathStat, curPathStat, useDigest) {
 					f.addLinkableInos(cachedPathStat.Ino, ino)
@@ -133,7 +132,7 @@ func (f *fsDev) FindIdenticalFiles(di I.DevInfo, pathname string) {
 			}
 			// Add hash to set if no match was found in current set
 			if !foundLinkable {
-				f.Stats.NoHashMatch()
+				f.Results.noHashMatch()
 				inoSet := f.InoHashes[H]
 				inoSet.Add(ino)
 				f.InoStatInfo[ino] = di.Info
@@ -154,7 +153,7 @@ func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
 	thresh := f.Options.SearchThresh
 	useDigest := thresh >= 0 && len(cachedSet) > thresh
 	if useDigest {
-		digest, err := contentDigest(f.Stats, ps.Pathsplit.Join())
+		digest, err := contentDigest(f.Results, ps.Pathsplit.Join())
 		if err == nil {
 			// With digests, we take the (potentially long) set of cached inodes (ie.
 			// those inodes that all have the same InoHash), and remove the inodes that
@@ -342,39 +341,39 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 		f.newPathStatDigest(pi2)
 	}
 
-	f.Stats.DidComparison()
+	f.Results.didComparison()
 	// error handling deferred
 	eq, _ := areFileContentsEqual(f.status, pi1.Join(), pi2.Join())
 	if eq {
-		f.Stats.FoundEqualFiles()
+		f.Results.foundEqualFiles()
 
 		// Add some debugging statistics for files that are found to be
 		// equal, but which have some mismatched inode parameters.
 		addMismatchTotalBytes := false
 		if !(pi1.EqualTime(pi2)) {
-			f.Stats.AddMismatchedMtimeBytes(pi1.Size)
+			f.Results.addMismatchedMtimeBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
 		if pi1.EqualMode(pi2) {
-			f.Stats.AddMismatchedModeBytes(pi1.Size)
+			f.Results.addMismatchedModeBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
 		if pi1.Uid != pi2.Uid {
-			f.Stats.AddMismatchedUidBytes(pi1.Size)
+			f.Results.addMismatchedUidBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
 		if pi1.Gid != pi2.Gid {
-			f.Stats.AddMismatchedGidBytes(pi1.Size)
+			f.Results.addMismatchedGidBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
 		var err error
 		eq, err = I.EqualXAttrs(pi1.Join(), pi2.Join())
 		if err == nil && !eq {
-			f.Stats.AddMismatchedXattrBytes(pi1.Size)
+			f.Results.addMismatchedXattrBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
 		if addMismatchTotalBytes {
-			f.Stats.AddMismatchedTotalBytes(pi1.Size)
+			f.Results.addMismatchedTotalBytes(pi1.Size)
 		}
 	}
 	return eq
@@ -400,7 +399,7 @@ func (f *fsDev) addPathStatDigest(pi I.PathInfo, digest digestVal) {
 func (f *fsDev) newPathStatDigest(pi I.PathInfo) {
 	if !f.InosWithDigest.Has(pi.Ino) {
 		pathname := pi.Pathsplit.Join()
-		digest, err := contentDigest(f.Stats, pathname)
+		digest, err := contentDigest(f.Results, pathname)
 		if err == nil {
 			f.helperPathStatDigest(pi, digest)
 		}

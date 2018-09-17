@@ -28,7 +28,7 @@ import (
 func TestFileContentComparison(t *testing.T) {
 	R := strings.NewReader
 	s := status{}
-	s.Stats = &linkingStats{}
+	s.Results = &Results{}
 	s.Progress = &disabledProgress{}
 
 	eq, err := readerContentsEqual(s, R(""), R(""))
