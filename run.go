@@ -96,28 +96,6 @@ func Run(dirs []string, files []string, opts Options) {
 	if opts.JSONOutputEnabled {
 		ls.Results.OutputJSONResults()
 	} else {
-		ls.Stats.OutputResults()
-	}
-}
-
-type linkableState struct {
-	status
-	fsDevs map[uint64]fsDev
-}
-
-func newLinkableState() *linkableState {
-	var ls linkableState
-	ls.status = status{}
-	ls.fsDevs = make(map[uint64]fsDev)
-	return &ls
-}
-
-func (ls *linkableState) dev(di inode.DevInfo, pathname string) fsDev {
-	if fsdev, ok := ls.fsDevs[di.Dev]; ok {
-		return fsdev
-	} else {
-		fsdev = newFSDev(ls.status, di.Dev, inode.MaxNlinkVal(pathname))
-		ls.fsDevs[di.Dev] = fsdev
-		return fsdev
+		ls.Results.OutputResults()
 	}
 }
