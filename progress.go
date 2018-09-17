@@ -133,7 +133,7 @@ func (p *ttyProgress) Show() {
 func (p *ttyProgress) Clear() {
 	defer close(p.timer)
 	p.line("\r")
-	p.lastLineLen = 1
+	p.lastLineLen = 0
 	p.line("\r")
 }
 
