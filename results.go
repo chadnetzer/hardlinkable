@@ -195,24 +195,24 @@ func (r *Results) end() {
 }
 
 func (r *Results) foundNewLink(srcP, dstP P.Pathsplit) {
-	if r.Opts.newLinkStatsEnabled {
-		src := srcP.Join()
-		dst := dstP.Join()
-		N := len(r.LinkPaths)
-		if N == 0 {
-			r.LinkPaths = [][]string{[]string{src, dst}}
+	r.NewLinkCount += 1
+	if !r.Opts.storeNewLinks {
+		return
+	}
+	src := srcP.Join()
+	dst := dstP.Join()
+	N := len(r.LinkPaths)
+	if N == 0 {
+		r.LinkPaths = [][]string{[]string{src, dst}}
+	} else {
+		prevSrc := r.LinkPaths[N-1][0]
+		if src == prevSrc {
+			r.LinkPaths[N-1] = append(r.LinkPaths[N-1], dst)
 		} else {
-			prevSrc := r.LinkPaths[N-1][0]
-			if src == prevSrc {
-				r.LinkPaths[N-1] = append(r.LinkPaths[N-1], dst)
-			} else {
-				pair := []string{src, dst}
-				r.LinkPaths = append(r.LinkPaths, pair)
-			}
+			pair := []string{src, dst}
+			r.LinkPaths = append(r.LinkPaths, pair)
 		}
 	}
-
-	r.NewLinkCount += 1
 }
 
 func (r *Results) foundRemovedInode(size uint64) {
@@ -255,6 +255,9 @@ func (r *Results) OutputResults() {
 }
 
 func (r *Results) OutputCurrentHardlinks() {
+	if len(r.ExistingLinks) == 0 {
+		return
+	}
 	s := make([]string, 0)
 	s = append(s, "Currently hardlinked files")
 	s = append(s, "--------------------------")
@@ -272,6 +275,9 @@ func (r *Results) OutputCurrentHardlinks() {
 }
 
 func (r *Results) OutputLinkedPaths() {
+	if len(r.LinkPaths) == 0 {
+		return
+	}
 	s := make([]string, 0)
 	if r.Opts.LinkingEnabled {
 		s = append(s, "Files that were hardlinked this run")
