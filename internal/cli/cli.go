@@ -44,6 +44,7 @@ import (
 // Other cliOptions are converted from one type to another in the Options
 // struct
 type CLIOptions struct {
+	JSONOutputEnabled      bool
 	StatsOutputDisabled    bool
 	ProgressOutputDisabled bool
 	CLIContentOnly         bool
@@ -58,7 +59,6 @@ type CLIOptions struct {
 
 func (c CLIOptions) ToOptions() hardlinkable.Options {
 	o := c.Options
-	o.StatsOutputEnabled = !c.StatsOutputDisabled
 	o.MinFileSize = c.CLIMinFileSize.n
 	o.MaxFileSize = c.CLIMaxFileSize.n
 	o.FileIncludes = c.CLIFileIncludes.vals
@@ -191,10 +191,25 @@ func CLIRun(dirs []string, files []string, co CLIOptions) {
 		results = hardlinkable.RunWithProgress(dirs, files, co.ToOptions())
 	}
 
-	if results.Opts.JSONOutputEnabled {
+	if co.JSONOutputEnabled {
 		results.OutputJSONResults()
 	} else {
-		results.OutputResults()
+		// Print the selected results, with proper blank line seperators
+		if len(results.ExistingLinks) > 0 {
+			results.OutputCurrentHardlinks()
+			if !co.StatsOutputDisabled {
+				fmt.Println("")
+			}
+		}
+		if len(results.LinkPaths) > 0 {
+			results.OutputLinkedPaths()
+			if !co.StatsOutputDisabled {
+				fmt.Println("")
+			}
+		}
+		if !co.StatsOutputDisabled {
+			results.OutputLinkingStats()
+		}
 	}
 }
 

@@ -28,22 +28,20 @@ const DefaultMinFileSize = 1
 // to be compared for equality, what files and directories are included or
 // excluded, and whether linking is actually enabled or not.
 type Options struct {
-	StatsOutputEnabled    bool
-	JSONOutputEnabled     bool
-	SameName              bool
-	IgnoreTime            bool
-	IgnorePerms           bool
-	IgnoreOwner           bool
-	IgnoreXattr           bool
-	LinkingEnabled        bool
-	Verbosity             int
-	DebugLevel            int
-	SearchThresh          int
-	MinFileSize           uint64
-	MaxFileSize           uint64
-	FileIncludes          []string
-	FileExcludes          []string
-	DirExcludes           []string
+	SameName       bool
+	IgnoreTime     bool
+	IgnorePerms    bool
+	IgnoreOwner    bool
+	IgnoreXattr    bool
+	LinkingEnabled bool
+	Verbosity      int
+	DebugLevel     int
+	SearchThresh   int
+	MinFileSize    uint64
+	MaxFileSize    uint64
+	FileIncludes   []string
+	FileExcludes   []string
+	DirExcludes    []string
 
 	// Indirect options, set based on debug and/or verbosity level
 	existingLinkStatsEnabled bool

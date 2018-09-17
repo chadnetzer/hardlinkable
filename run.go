@@ -73,12 +73,12 @@ func runHelper(dirs []string, files []string, ls *linkableState) Results {
 		if err != nil {
 			continue
 		}
-		if di.Size < opts.MinFileSize {
+		if di.Size < ls.Options.MinFileSize {
 			ls.Results.foundFileTooSmall()
 			continue
 		}
-		if opts.MaxFileSize > 0 &&
-			di.Size > opts.MaxFileSize {
+		if ls.Options.MaxFileSize > 0 &&
+			di.Size > ls.Options.MaxFileSize {
 			ls.Results.foundFileTooLarge()
 			continue
 		}
