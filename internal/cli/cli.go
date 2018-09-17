@@ -18,12 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package cli
 
 import (
 	"errors"
 	"flag"
 	"fmt"
+	"hardlinkable"
 	"math"
 	"os"
 	"strconv"
@@ -40,7 +41,7 @@ import (
 // true (and thus disable when the option is given), we use a separate flag
 // with the opposite default, and toggle it manually after parsing.
 //
-// Other CLIOptions are converted from one type to another in the Options
+// Other cliOptions are converted from one type to another in the Options
 // struct
 type CLIOptions struct {
 	StatsOutputDisabled    bool
@@ -51,33 +52,27 @@ type CLIOptions struct {
 	CLIFileIncludes        RegexArray
 	CLIFileExcludes        RegexArray
 	CLIDirExcludes         RegexArray
-	CLILinearSearchThresh  intN
-	Options
+	CLISearchThresh        intN
+	hardlinkable.Options
 }
 
-func (c *CLIOptions) NewOptions() Options {
-	options := c.Options
-	options.StatsOutputEnabled = !c.StatsOutputDisabled
-	options.ProgressOutputEnabled = !c.ProgressOutputDisabled
-	options.MinFileSize = c.CLIMinFileSize.n
-	options.MaxFileSize = c.CLIMaxFileSize.n
-	options.FileIncludes = c.CLIFileIncludes.vals
-	options.FileExcludes = c.CLIFileExcludes.vals
-	options.DirExcludes = c.CLIDirExcludes.vals
-	options.LinearSearchThresh = c.CLILinearSearchThresh.n
+func (c CLIOptions) ToOptions() hardlinkable.Options {
+	o := c.Options
+	o.StatsOutputEnabled = !c.StatsOutputDisabled
+	o.ProgressOutputEnabled = !c.ProgressOutputDisabled
+	o.MinFileSize = c.CLIMinFileSize.n
+	o.MaxFileSize = c.CLIMaxFileSize.n
+	o.FileIncludes = c.CLIFileIncludes.vals
+	o.FileExcludes = c.CLIFileExcludes.vals
+	o.DirExcludes = c.CLIDirExcludes.vals
+	o.SearchThresh = c.CLISearchThresh.n
 	if c.CLIContentOnly {
-		options.IgnoreTime = true
-		options.IgnorePerms = true
-		options.IgnoreOwner = true
-		options.IgnoreXattr = true
+		o.IgnoreTime = true
+		o.IgnorePerms = true
+		o.IgnoreOwner = true
+		o.IgnoreXattr = true
 	}
-	if c.Verbosity > 1 {
-		options.newLinkStatsEnabled = true
-	}
-	if c.Verbosity > 2 {
-		options.existingLinkStatsEnabled = true
-	}
-	return options
+	return o
 }
 
 // Custom pflag Value displays "RE" instead of "stringArray" in usage text
@@ -150,27 +145,9 @@ type argPaths struct {
 	files []string
 }
 
-var cfgFile string
-var MyCLIOptions CLIOptions
-
 // rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:     "hardlinkable [OPTIONS] dir1 [dir2 ...] [files...]",
-	Version: "0.9 alpha - 2018-09-05 (Sep 5 2018)",
-	Short:   "A tool to save space by hardlinking identical files",
-	Long: `A tool to scan directories and report on the space that could be saved by hard
-linking identical files.  It can also perform the linking.`,
-	Args: cobra.MinimumNArgs(1),
-	DisableFlagsInUseLine: true,
-	Run: func(cmd *cobra.Command, args []string) {
-		argP, err := separateArgs(args)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(2)
-		}
-		Run(argP.dirs, argP.files)
-	},
-}
+var rootCmd *cobra.Command
+var cfgFile string
 
 // separateArgs will remove duplicate args and separate into dirs and files
 func separateArgs(args []string) (argPaths, error) {
@@ -198,21 +175,6 @@ func separateArgs(args []string) (argPaths, error) {
 	return a, nil
 }
 
-// Return ok if all args are directories, or the index of the first
-// non-directory argument
-func ArgsAreDirs(args []string) (i int, ok bool) {
-	for i, name := range args {
-		fi, err := os.Lstat(name)
-		if err != nil {
-			return i, false
-		}
-		if !fi.IsDir() {
-			return i, false
-		}
-	}
-	return 0, true
-}
-
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
@@ -222,37 +184,62 @@ func Execute() {
 	}
 }
 
+func CLIRun(dirs []string, files []string, co CLIOptions) {
+	options := co.ToOptions()
+	hardlinkable.Run(dirs, files, options)
+}
+
 func init() {
+	co := CLIOptions{}
+
+	// rootCmd represents the base command when called without any subcommands
+	rootCmd = &cobra.Command{
+		Use:     "hardlinkable [OPTIONS] dir1 [dir2 ...] [files...]",
+		Version: "0.9 alpha - 2018-09-05 (Sep 5 2018)",
+		Short:   "A tool to save space by hardlinking identical files",
+		Long: `A tool to scan directories and report on the space that could be saved by hard
+	linking identical files.  It can also perform the linking.`,
+		Args: cobra.MinimumNArgs(1),
+		DisableFlagsInUseLine: true,
+		Run: func(cmd *cobra.Command, args []string) {
+			argP, err := separateArgs(args)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(2)
+			}
+			CLIRun(argP.dirs, argP.files, co)
+		},
+	}
 	cobra.OnInitialize(initConfig)
 
 	//rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.hardlinkable.yaml)")
 
 	// Local flags
 	flg := rootCmd.Flags()
-	var o *CLIOptions = &MyCLIOptions
-	flg.CountVarP(&o.Verbosity, "verbose", "v", "``Increase verbosity level (up to 3 times)")
-	flg.BoolVar(&o.StatsOutputDisabled, "no-stats", false, "Do not print the final stats")
-	flg.BoolVar(&o.ProgressOutputDisabled, "no-progress", false, "Disable progress output while processing")
-	flg.BoolVar(&o.JSONOutputEnabled, "json", false, "Output results as JSON")
 
-	flg.BoolVarP(&o.SameName, "same-name", "f", false, "Filenames need to be identical")
-	flg.BoolVarP(&o.IgnoreTime, "ignore-time", "t", false, "File modification times need not match")
-	flg.BoolVarP(&o.IgnorePerms, "ignore-perms", "p", false, "File permissions need not match")
-	flg.BoolVarP(&o.IgnoreOwner, "ignore-owner", "o", false, "File uid/gid need not match")
-	flg.BoolVarP(&o.IgnoreXattr, "ignore-xattr", "x", false, "Xattrs need not match")
-	flg.BoolVarP(&o.CLIContentOnly, "content-only", "c", false, "Only file contents have to match (ie. -potx)")
+	flg.CountVarP(&co.Verbosity, "verbose", "v", "``Increase verbosity level (up to 3 times)")
+	flg.BoolVar(&co.StatsOutputDisabled, "no-stats", false, "Do not print the final stats")
+	flg.BoolVar(&co.ProgressOutputDisabled, "no-progress", false, "Disable progress output while processing")
+	flg.BoolVar(&co.JSONOutputEnabled, "json", false, "Output results as JSON")
 
-	o.CLIMinFileSize.n = 1 // default
-	flg.VarP(&o.CLIMinFileSize, "min-size", "s", "Minimum file size")
-	flg.VarP(&o.CLIMaxFileSize, "max-size", "S", "Maximum file size")
+	flg.BoolVarP(&co.SameName, "same-name", "f", false, "Filenames need to be identical")
+	flg.BoolVarP(&co.IgnoreTime, "ignore-time", "t", false, "File modification times need not match")
+	flg.BoolVarP(&co.IgnorePerms, "ignore-perms", "p", false, "File permissions need not match")
+	flg.BoolVarP(&co.IgnoreOwner, "ignore-owner", "o", false, "File uid/gid need not match")
+	flg.BoolVarP(&co.IgnoreXattr, "ignore-xattr", "x", false, "Xattrs need not match")
+	flg.BoolVarP(&co.CLIContentOnly, "content-only", "c", false, "Only file contents have to match (ie. -potx)")
 
-	flg.VarP(&o.CLIFileIncludes, "include", "i", "Regex(es) used to include files (overrides excludes)")
-	flg.VarP(&o.CLIFileExcludes, "exclude", "e", "Regex(es) used to exclude files")
-	flg.VarP(&o.CLIDirExcludes, "exclude-dir", "E", "Regex(es) used to exclude dirs")
-	flg.CountVarP(&o.DebugLevel, "debug", "d", "``Increase debugging level")
+	co.CLIMinFileSize.n = hardlinkable.DefaultMinFileSize
+	flg.VarP(&co.CLIMinFileSize, "min-size", "s", "Minimum file size")
+	flg.VarP(&co.CLIMaxFileSize, "max-size", "S", "Maximum file size")
 
-	o.CLILinearSearchThresh.n = 1 // default
-	flg.VarP(&o.CLILinearSearchThresh, "search-thresh", "", "Ino search length before enabling digests")
+	flg.VarP(&co.CLIFileIncludes, "include", "i", "Regex(es) used to include files (overrides excludes)")
+	flg.VarP(&co.CLIFileExcludes, "exclude", "e", "Regex(es) used to exclude files")
+	flg.VarP(&co.CLIDirExcludes, "exclude-dir", "E", "Regex(es) used to exclude dirs")
+	flg.CountVarP(&co.DebugLevel, "debug", "d", "``Increase debugging level")
+
+	co.CLISearchThresh.n = hardlinkable.DefaultSearchThresh
+	flg.VarP(&co.CLISearchThresh, "search-thresh", "", "Ino search length before enabling digests")
 	//flg.MarkHidden("search-thresh")
 	flg.SortFlags = false
 }

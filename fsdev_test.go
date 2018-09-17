@@ -18,14 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package hardlinkable
 
 import (
 	"testing"
 )
 
 func TestLinkedInoSet(t *testing.T) {
-	fs := NewFSDev(10000, 10000) // Arbitrary args
+	options := &Options{}
+	stats := newLinkingStats(options)
+	ws := status{options, stats, nil}
+	fs := newFSDev(ws, 10000, 10000) // Arbitrary args
 
 	// Test when no linkable inos have been added yet
 	s := fs.linkedInoSet(1)

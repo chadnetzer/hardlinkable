@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package pathpool
 
 import "path"
 
@@ -27,16 +27,16 @@ type Pathsplit struct {
 	Filename string
 }
 
-func SplitPathname(pathname string, pool internPool) Pathsplit {
+func Split(pathname string, pool StringPool) Pathsplit {
 	dirname, filename := path.Split(pathname)
 	if pool != nil {
-		dirname = pool.intern(dirname)
-		filename = pool.intern(filename)
+		dirname = pool.Intern(dirname)
+		filename = pool.Intern(filename)
 	}
-	pathSplit := Pathsplit{dirname, filename}
-	return pathSplit
+	p := Pathsplit{dirname, filename}
+	return p
 }
 
-func (ps Pathsplit) Join() string {
-	return path.Join(ps.Dirname, ps.Filename)
+func (p Pathsplit) Join() string {
+	return path.Join(p.Dirname, p.Filename)
 }

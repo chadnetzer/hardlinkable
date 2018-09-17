@@ -18,14 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package hardlinkable
 
 import (
 	"hash/fnv"
 	"os"
 )
 
-type Digest uint32
+type digestVal uint32
 
 // Return a short digest of the first part of the given pathname, to help
 // determine if two files are definitely not equivalent, without doing a full
@@ -33,7 +33,7 @@ type Digest uint32
 // performed anyway (incurring the IO overhead), and saving the digest to help
 // quickly reduce the set of possibly equal inodes later (ie. reducing the
 // length of the repeated linear searches).
-func contentDigest(pathname string) (Digest, error) {
+func contentDigest(ls *linkingStats, pathname string) (digestVal, error) {
 	const bufSize = 8192
 
 	f, err := os.Open(pathname)
@@ -48,9 +48,9 @@ func contentDigest(pathname string) (Digest, error) {
 		return 0, err
 	}
 
-	Stats.computedDigest()
+	ls.ComputedDigest()
 
 	hash := fnv.New32a()
 	hash.Write(buf)
-	return Digest(hash.Sum32()), nil
+	return digestVal(hash.Sum32()), nil
 }

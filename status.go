@@ -20,27 +20,8 @@
 
 package hardlinkable
 
-import (
-	"testing"
-)
-
-func TestHumanize(t *testing.T) {
-	h := map[uint64]string{
-		0:                                    "0 bytes",
-		1:                                    "1 bytes",
-		1023:                                 "1023 bytes",
-		1024:                                 "1 KiB",
-		1025:                                 "1.001 KiB",
-		2048:                                 "2 KiB",
-		1024 * 1024:                          "1 MiB",
-		1024*1024 - 1:                        "1023.999 KiB",
-		2 * 1024 * 1024 * 1024:               "2 GiB",
-		3 * 1024 * 1024 * 1024 * 1024:        "3 TiB",
-		4 * 1024 * 1024 * 1024 * 1024 * 1024: "4 PiB",
-	}
-	for n, s := range h {
-		if humanize(n) != s {
-			t.Errorf("humanize(%d) gives incorrect result: %v instead of %v", n, humanize(n), s)
-		}
-	}
+type status struct {
+	Options  *Options
+	Stats    *linkingStats
+	Progress progress
 }

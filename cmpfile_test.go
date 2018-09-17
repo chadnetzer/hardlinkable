@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package hardlinkable
 
 import (
 	"strings"
@@ -27,26 +27,26 @@ import (
 
 func TestFileContentComparison(t *testing.T) {
 	R := strings.NewReader
-	linkable := NewLinkable()
-	linkable.stats = &LinkingStats{}
-	linkable.progress = &DisabledProgress{}
+	s := status{}
+	s.Stats = &linkingStats{}
+	s.Progress = &disabledProgress{}
 
-	eq, err := linkable.cmpReaderContents(R(""), R(""))
+	eq, err := readerContentsEqual(s, R(""), R(""))
 	if !eq || err != nil {
 		t.Errorf("Zero length cmpContents() compared unequal")
 	}
 
-	eq, err = linkable.cmpReaderContents(R("1"), R("1"))
+	eq, err = readerContentsEqual(s, R("1"), R("1"))
 	if !eq || err != nil {
 		t.Errorf("Equal length 1 cmpContents() compared unequal")
 	}
 
-	eq, err = linkable.cmpReaderContents(R("1234"), R("123"))
+	eq, err = readerContentsEqual(s, R("1234"), R("123"))
 	if eq || err != nil {
 		t.Errorf("Unequal length cmpContents() compared equal")
 	}
 
-	eq, err = linkable.cmpReaderContents(R("A"), R("B"))
+	eq, err = readerContentsEqual(s, R("A"), R("B"))
 	if eq || err != nil {
 		t.Errorf("Unequal length 1 cmpContents() compared equal")
 	}

@@ -18,71 +18,56 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package hardlinkable
 
-import "sort"
+import (
+	I "hardlinkable/internal/inode"
+	P "hardlinkable/internal/pathpool"
+	"sort"
+)
 
-type Hash uint64
+type hashVal uint64
 
-type StatInfos map[string]StatInfo
-
-type PathStat struct {
-	Pathsplit
-	StatInfo
-}
-
-type PathStatPair struct {
-	Src PathStat
-	Dst PathStat
-}
-
-type FSDev struct {
+type fsDev struct {
+	status
 	Dev            uint64
 	MaxNLinks      uint64
-	InoHashes      map[Hash]InoSet
-	InoStatInfo    map[Ino]StatInfo
-	InoPaths       map[Ino]*filenamePaths
-	LinkedInos     map[Ino]InoSet
-	DigestIno      map[Digest]InoSet
-	InosWithDigest InoSet
-	pool           internPool
+	InoHashes      map[hashVal]I.Set
+	InoStatInfo    map[I.Ino]I.Info
+	InoPaths       map[I.Ino]*filenamePaths
+	LinkedInos     map[I.Ino]I.Set
+	DigestIno      map[digestVal]I.Set
+	InosWithDigest I.Set
+	pool           P.StringPool
 
-	// For each directory name, keep track of all the StatInfo structures
-	DirnameStatInfos map[string]StatInfos
+	// For each directory name, keep track of all the Info structures
+	DirnameStatInfos map[string]I.Infos
 }
 
-func (s1 PathStat) EqualTime(s2 PathStat) bool {
-	return s1.Sec == s2.Sec && s1.Nsec == s2.Nsec
-}
-
-func (s1 PathStat) EqualMode(s2 PathStat) bool {
-	return s1.Mode == s2.Mode
-}
-
-func (s1 PathStat) EqualOwnership(s2 PathStat) bool {
-	return s1.Uid == s2.Uid && s1.Gid == s2.Gid
-}
-
-func NewFSDev(dev, maxNLinks uint64) FSDev {
-	var w FSDev
-	w.Dev = dev
-	w.MaxNLinks = maxNLinks
-	w.InoHashes = make(map[Hash]InoSet)
-	w.InoStatInfo = make(map[Ino]StatInfo)
-	w.InoPaths = make(map[Ino]*filenamePaths)
-	w.LinkedInos = make(map[Ino]InoSet)
-	w.DigestIno = make(map[Digest]InoSet)
-	w.InosWithDigest = NewInoSet()
-	w.pool = newInternPool()
+func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
+	var w = fsDev{
+		status:         lstatus,
+		Dev:            dev,
+		MaxNLinks:      maxNLinks,
+		InoHashes:      make(map[hashVal]I.Set),
+		InoStatInfo:    make(map[I.Ino]I.Info),
+		InoPaths:       make(map[I.Ino]*filenamePaths),
+		LinkedInos:     make(map[I.Ino]I.Set),
+		DigestIno:      make(map[digestVal]I.Set),
+		InosWithDigest: I.NewSet(),
+		pool:           P.NewPool(),
+	}
 
 	return w
 }
 
-// Produce an equal hash for potentially equal files, based only on Inode
-// metadata (size, time, etc.)
-func InoHash(stat StatInfo, opt *Options) Hash {
-	var value Hash
-	size := Hash(stat.Size)
+// InoHash produces an equal hash for potentially equal files, based only on
+// Inode metadata (size, time, etc.).  Content still has to be verified for
+// equality (but unequal hashes indicate files that definitely need not be
+// compared)
+func hashIno(i I.Info, opt *Options) hashVal {
+	var value hashVal
+	size := hashVal(i.Size)
 	// The main requirement is that files that could be equal have equal
 	// hashes.  It's less important if unequal files also have the same
 	// hash value, since we will still compare the actual file content
@@ -90,44 +75,43 @@ func InoHash(stat StatInfo, opt *Options) Hash {
 	if opt.IgnoreTime {
 		value = size
 	} else {
-		value = size ^ Hash(stat.Sec) ^ Hash(stat.Nsec)
+		value = size ^ hashVal(i.Sec) ^ hashVal(i.Nsec)
 	}
 	return value
 }
 
-func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
-	PanicIf(f.Dev != devStatInfo.Dev, "Mismatched Dev %d for %s\n", f.Dev, pathname)
-	statInfo := devStatInfo.StatInfo
-	curPath := SplitPathname(pathname, f.pool)
-	curPathStat := PathStat{curPath, statInfo}
+func (f *fsDev) FindIdenticalFiles(di I.DevInfo, pathname string) {
+	panicIf(f.Dev != di.Dev, "Mismatched Dev %d for %s\n", f.Dev, pathname)
+	curPath := P.Split(pathname, f.pool)
+	curPathStat := I.PathInfo{Pathsplit: curPath, Info: di.Info}
+	ino := di.Info.Ino
 
-	if _, ok := f.InoStatInfo[statInfo.Ino]; !ok {
-		Stats.FoundInode(statInfo.Nlink)
+	if _, ok := f.InoStatInfo[ino]; !ok {
+		f.Stats.FoundInode(di.Info.Nlink)
 	}
 
-	H := InoHash(statInfo, MyOptions)
+	H := hashIno(di.Info, f.Options)
 	if _, ok := f.InoHashes[H]; !ok {
 		// Setup for a newly seen hash value
-		Stats.MissedHash()
-		f.InoHashes[H] = NewInoSet(statInfo.Ino)
+		f.Stats.MissedHash()
+		f.InoHashes[H] = I.NewSet(ino)
 	} else {
-		Stats.FoundHash()
+		f.Stats.FoundHash()
 		// See if the new file is an inode we've seen before
-		if _, ok := f.InoStatInfo[statInfo.Ino]; ok {
+		if _, ok := f.InoStatInfo[ino]; ok {
 			// If it's a path we've seen before, ignore it
-			if f.haveSeenPath(statInfo.Ino, curPath) {
+			if f.haveSeenPath(ino, curPath) {
 				return
 			}
-			prevPath := f.ArbitraryPath(statInfo.Ino)
-			prevStatinfo := f.InoStatInfo[statInfo.Ino]
-			linkPair := LinkPair{prevPath, curPath}
-			existingLinkInfo := ExistingLink{linkPair, prevStatinfo}
-			Stats.FoundExistingLink(existingLinkInfo)
+			prevPath := f.ArbitraryPath(ino)
+			prevStatinfo := f.InoStatInfo[ino]
+			lp := linkPair{prevPath, curPath}
+			f.Stats.FoundExistingLink(lp, prevStatinfo.Size)
 		}
 		// See if this inode is already one we've determined can be
 		// linked to another one, in which case we can avoid repeating
 		// the work of linking it again.
-		linkedInos := f.linkedInoSet(statInfo.Ino)
+		linkedInos := f.linkedInoSet(ino)
 		hashedInos := f.InoHashes[H]
 		linkedHashedInos := linkedInos.Intersection(hashedInos)
 		foundLinkedHashedInos := len(linkedHashedInos) > 0
@@ -136,41 +120,41 @@ func (f *FSDev) findIdenticalFiles(devStatInfo DevStatInfo, pathname string) {
 			cachedSeq, useDigest := f.cachedInos(H, curPathStat)
 
 			// Search the list of potential inode, looking for a match
-			Stats.SearchedInoSeq()
+			f.Stats.SearchedInoSeq()
 			foundLinkable := false
 			for _, cachedIno := range cachedSeq {
-				Stats.IncInoSeqIterations()
-				cachedPathStat := f.PathStatFromIno(cachedIno)
+				f.Stats.IncInoSeqIterations()
+				cachedPathStat := f.PathInfoFromIno(cachedIno)
 				if f.areFilesLinkable(cachedPathStat, curPathStat, useDigest) {
-					f.addLinkableInos(cachedPathStat.Ino, curPathStat.Ino)
+					f.addLinkableInos(cachedPathStat.Ino, ino)
 					foundLinkable = true
 					break
 				}
 			}
 			// Add hash to set if no match was found in current set
 			if !foundLinkable {
-				Stats.NoHashMatch()
+				f.Stats.NoHashMatch()
 				inoSet := f.InoHashes[H]
-				inoSet.Add(statInfo.Ino)
-				f.InoStatInfo[statInfo.Ino] = statInfo
+				inoSet.Add(ino)
+				f.InoStatInfo[ino] = di.Info
 			}
 		}
 	}
 	// Remember Inode and filename/path information for each seen file
-	f.InoStatInfo[statInfo.Ino] = statInfo
-	f.InoAppendPathname(statInfo.Ino, curPath)
+	f.InoStatInfo[ino] = di.Info
+	f.InoAppendPathname(ino, curPath)
 }
 
 // possibleInos returns a slice of inos that can be searched for equal contents
-func (f *FSDev) cachedInos(H Hash, ps PathStat) ([]Ino, bool) {
-	var cachedSeq []Ino
+func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
+	var cachedSeq []I.Ino
 	cachedSet := f.InoHashes[H]
 	// If digests are enabled, and cached inode lists are
 	// long enough, then switch on the use of digests.
-	thresh := MyOptions.LinearSearchThresh
+	thresh := f.Options.SearchThresh
 	useDigest := thresh >= 0 && len(cachedSet) > thresh
 	if useDigest {
-		digest, err := contentDigest(ps.Pathsplit.Join())
+		digest, err := contentDigest(f.Stats, ps.Pathsplit.Join())
 		if err == nil {
 			// With digests, we take the (potentially long) set of cached inodes (ie.
 			// those inodes that all have the same InoHash), and remove the inodes that
@@ -183,8 +167,8 @@ func (f *FSDev) cachedInos(H Hash, ps PathStat) ([]Ino, bool) {
 			differentDigests := cachedSet.Difference(sameDigests).Difference(noDigests)
 			cachedSeq = append(sameDigests.AsSlice(), noDigests.AsSlice()...)
 
-			PanicIf(noDigests.Has(ps.StatInfo.Ino), "New Ino found in noDigests\n")
-			PanicIf(len(InoSetIntersection(sameDigests, differentDigests, noDigests)) > 0,
+			panicIf(noDigests.Has(ps.Info.Ino), "New Ino found in noDigests\n")
+			panicIf(len(I.SetIntersections(sameDigests, differentDigests, noDigests)) > 0,
 				"Overlapping digest sets\n")
 		}
 	} else {
@@ -194,9 +178,9 @@ func (f *FSDev) cachedInos(H Hash, ps PathStat) ([]Ino, bool) {
 	return cachedSeq, useDigest
 }
 
-func (f *FSDev) linkedInoSetHelper(ino Ino, seen InoSet) InoSet {
-	results := NewInoSet(ino)
-	pending := NewInoSet(ino)
+func (f *fsDev) linkedInoSetHelper(ino I.Ino, seen I.Set) I.Set {
+	results := I.NewSet(ino)
+	pending := I.NewSet(ino)
 	for len(pending) > 0 {
 		// Pop item from pending set
 		for ino = range pending {
@@ -221,19 +205,19 @@ func (f *FSDev) linkedInoSetHelper(ino Ino, seen InoSet) InoSet {
 	return results
 }
 
-func (f *FSDev) linkedInoSet(ino Ino) InoSet {
+func (f *fsDev) linkedInoSet(ino I.Ino) I.Set {
 	if _, ok := f.LinkedInos[ino]; !ok {
-		return NewInoSet(ino)
+		return I.NewSet(ino)
 	}
-	seen := NewInoSet()
+	seen := I.NewSet()
 	return f.linkedInoSetHelper(ino, seen)
 }
 
 // linkedInoSets sends all the linked InoSets over the returned channel.
 // The InoSets are ordered, by starting with the lowest inode and progressing
 // through the highest (rather than returning InoSets in random order).
-func (f *FSDev) linkedInoSets() <-chan InoSet {
-	out := make(chan InoSet)
+func (f *fsDev) linkedInoSets() <-chan I.Set {
+	out := make(chan I.Set)
 	go func() {
 		defer close(out)
 
@@ -244,14 +228,14 @@ func (f *FSDev) linkedInoSets() <-chan InoSet {
 		// dry-runs).  It's not completely deterministic because there
 		// can still be multiple choices for pre-linked src paths.
 		i := 0
-		sortedInos := make([]Ino, len(f.LinkedInos))
+		sortedInos := make([]I.Ino, len(f.LinkedInos))
 		for ino := range f.LinkedInos {
 			sortedInos[i] = ino
 			i++
 		}
 		sort.Slice(sortedInos, func(i, j int) bool { return sortedInos[i] < sortedInos[j] })
 
-		seen := NewInoSet()
+		seen := I.NewSet()
 		for _, startIno := range sortedInos {
 			if _, ok := seen[startIno]; ok {
 				continue
@@ -262,48 +246,48 @@ func (f *FSDev) linkedInoSets() <-chan InoSet {
 	return out
 }
 
-func (f *FSDev) ArbitraryPath(ino Ino) Pathsplit {
+func (f *fsDev) ArbitraryPath(ino I.Ino) P.Pathsplit {
 	// ino must exist in f.InoPaths.  If it does, there will be at least
 	// one pathname to return
-	filenamePaths := f.InoPaths[ino]
-	return filenamePaths.any()
-}
-
-func (f *FSDev) ArbitraryFilenamePath(ino Ino, filename string) Pathsplit {
-	filenamePaths := f.InoPaths[ino]
-	return filenamePaths.anyWithFilename(filename)
-}
-
-func (f *FSDev) haveSeenPath(ino Ino, path Pathsplit) bool {
 	fp := f.InoPaths[ino]
-	return fp.hasPath(path)
+	return fp.Any()
 }
 
-func (f *FSDev) InoAppendPathname(ino Ino, path Pathsplit) {
-	filenamePaths, ok := f.InoPaths[ino]
+func (f *fsDev) ArbitraryFilenamePath(ino I.Ino, filename string) P.Pathsplit {
+	fp := f.InoPaths[ino]
+	return fp.AnyWithFilename(filename)
+}
+
+func (f *fsDev) haveSeenPath(ino I.Ino, path P.Pathsplit) bool {
+	fp := f.InoPaths[ino]
+	return fp.HasPath(path)
+}
+
+func (f *fsDev) InoAppendPathname(ino I.Ino, path P.Pathsplit) {
+	fp, ok := f.InoPaths[ino]
 	if !ok {
-		filenamePaths = newFilenamePaths()
-		f.InoPaths[ino] = filenamePaths
+		fp = newFilenamePaths()
+		f.InoPaths[ino] = fp
 	}
-	filenamePaths.add(path)
+	fp.Add(path)
 }
 
-func (f *FSDev) PathStatFromIno(ino Ino) PathStat {
+func (f *fsDev) PathInfoFromIno(ino I.Ino) I.PathInfo {
 	path := f.ArbitraryPath(ino)
 	fi := f.InoStatInfo[ino]
-	return PathStat{path, fi}
+	return I.PathInfo{Pathsplit: path, Info: fi}
 }
 
-func (f *FSDev) allInoPaths(ino Ino) <-chan Pathsplit {
+func (f *fsDev) allInoPaths(ino I.Ino) <-chan P.Pathsplit {
 	// Deepcopy the FilenamePaths map so that we can update the original
 	// while iterating over it's contents
-	fpClone := f.InoPaths[ino].clone()
+	fpClone := f.InoPaths[ino].Copy()
 
 	// Iterate over the copy of the FilenamePaths, and return each pathname
-	out := make(chan Pathsplit)
+	out := make(chan P.Pathsplit)
 	go func() {
 		defer close(out)
-		for _, paths := range fpClone.pMap {
+		for _, paths := range fpClone.PMap {
 			for path := range paths {
 				out <- path
 			}
@@ -312,143 +296,143 @@ func (f *FSDev) allInoPaths(ino Ino) <-chan Pathsplit {
 	return out
 }
 
-func (f *FSDev) addLinkableInos(ino1, ino2 Ino) {
+func (f *fsDev) addLinkableInos(ino1, ino2 I.Ino) {
 	// Add both src and destination inos to the linked InoSets
 	inoSet1, ok := f.LinkedInos[ino1]
 	if !ok {
-		f.LinkedInos[ino1] = NewInoSet(ino2)
+		f.LinkedInos[ino1] = I.NewSet(ino2)
 	} else {
 		inoSet1.Add(ino2)
 	}
 
 	inoSet2, ok := f.LinkedInos[ino2]
 	if !ok {
-		f.LinkedInos[ino2] = NewInoSet(ino1)
+		f.LinkedInos[ino2] = I.NewSet(ino1)
 	} else {
 		inoSet2.Add(ino1)
 	}
 }
 
-func (f *FSDev) areFilesLinkable(ps1 PathStat, ps2 PathStat, useDigest bool) bool {
-	// Dev is equal for both PathStats
-	if ps1.Ino == ps2.Ino {
+func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool) bool {
+	// Dev is equal for both PathInfos
+	if pi1.Ino == pi2.Ino {
 		return false
 	}
-	if ps1.Size != ps2.Size {
+	if pi1.Size != pi2.Size {
 		return false
 	}
-	if !MyOptions.IgnoreTime && !ps1.EqualTime(ps2) {
+	if !f.Options.IgnoreTime && !pi1.EqualTime(pi2) {
 		return false
 	}
-	if !MyOptions.IgnorePerms && !ps1.EqualMode(ps2) {
+	if !f.Options.IgnorePerms && !pi1.EqualMode(pi2) {
 		return false
 	}
-	if !MyOptions.IgnoreOwner && !ps1.EqualOwnership(ps2) {
+	if !f.Options.IgnoreOwner && !pi1.EqualOwnership(pi2) {
 		return false
 	}
-	if !MyOptions.IgnoreXattr {
-		if eq, _ := equalXAttrs(ps1.Join(), ps2.Join()); !eq {
+	if !f.Options.IgnoreXattr {
+		if eq, _ := I.EqualXAttrs(pi1.Join(), pi2.Join()); !eq {
 			return false
 		}
 	}
 
 	// assert(st1.Dev == st2.Dev && st1.Ino != st2.Ino && st1.Size == st2.Size)
 	if useDigest {
-		f.newPathStatDigest(ps1)
-		f.newPathStatDigest(ps2)
+		f.newPathStatDigest(pi1)
+		f.newPathStatDigest(pi2)
 	}
 
-	Stats.DidComparison()
+	f.Stats.DidComparison()
 	// error handling deferred
-	eq, _ := MyLinkable.areFileContentsEqual(ps1.Join(), ps2.Join())
+	eq, _ := areFileContentsEqual(f.status, pi1.Join(), pi2.Join())
 	if eq {
-		Stats.FoundEqualFiles()
+		f.Stats.FoundEqualFiles()
 
 		// Add some debugging statistics for files that are found to be
 		// equal, but which have some mismatched inode parameters.
 		addMismatchTotalBytes := false
-		if !(ps1.Sec == ps2.Sec && ps1.Nsec == ps2.Nsec) {
-			Stats.AddMismatchedMtimeBytes(ps1.Size)
+		if !(pi1.EqualTime(pi2)) {
+			f.Stats.AddMismatchedMtimeBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
-		if ps1.Mode.Perm() != ps2.Mode.Perm() {
-			Stats.AddMismatchedModeBytes(ps1.Size)
+		if pi1.EqualMode(pi2) {
+			f.Stats.AddMismatchedModeBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
-		if ps1.Uid != ps2.Uid {
-			Stats.AddMismatchedUidBytes(ps1.Size)
+		if pi1.Uid != pi2.Uid {
+			f.Stats.AddMismatchedUidBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
-		if ps1.Gid != ps2.Gid {
-			Stats.AddMismatchedGidBytes(ps1.Size)
+		if pi1.Gid != pi2.Gid {
+			f.Stats.AddMismatchedGidBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
 		var err error
-		eq, err = equalXAttrs(ps1.Join(), ps2.Join())
+		eq, err = I.EqualXAttrs(pi1.Join(), pi2.Join())
 		if err == nil && !eq {
-			Stats.AddMismatchedXattrBytes(ps1.Size)
+			f.Stats.AddMismatchedXattrBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
 		if addMismatchTotalBytes {
-			Stats.AddMismatchedTotalBytes(ps1.Size)
+			f.Stats.AddMismatchedTotalBytes(pi1.Size)
 		}
 	}
 	return eq
 }
 
-func (f *FSDev) moveLinkedPath(dstPath Pathsplit, srcIno Ino, dstIno Ino) {
+func (f *fsDev) moveLinkedPath(dstPath P.Pathsplit, srcIno I.Ino, dstIno I.Ino) {
 	// Get pathnames slice matching Ino and filename
 	fp := f.InoPaths[dstIno]
-	fp.remove(dstPath)
+	fp.Remove(dstPath)
 
-	if fp.isEmpty() {
+	if fp.IsEmpty() {
 		delete(f.InoPaths, dstIno)
 	}
 	f.InoAppendPathname(srcIno, dstPath)
 }
 
-func (f *FSDev) addPathStatDigest(ps PathStat, digest Digest) {
-	if !f.InosWithDigest.Has(ps.Ino) {
-		f.helperPathStatDigest(ps, digest)
+func (f *fsDev) addPathStatDigest(pi I.PathInfo, digest digestVal) {
+	if !f.InosWithDigest.Has(pi.Ino) {
+		f.helperPathStatDigest(pi, digest)
 	}
 }
 
-func (f *FSDev) newPathStatDigest(ps PathStat) {
-	if !f.InosWithDigest.Has(ps.Ino) {
-		pathname := ps.Pathsplit.Join()
-		digest, err := contentDigest(pathname)
+func (f *fsDev) newPathStatDigest(pi I.PathInfo) {
+	if !f.InosWithDigest.Has(pi.Ino) {
+		pathname := pi.Pathsplit.Join()
+		digest, err := contentDigest(f.Stats, pathname)
 		if err == nil {
-			f.helperPathStatDigest(ps, digest)
+			f.helperPathStatDigest(pi, digest)
 		}
 	}
 }
 
-func (f *FSDev) helperPathStatDigest(ps PathStat, digest Digest) {
+func (f *fsDev) helperPathStatDigest(pi I.PathInfo, digest digestVal) {
 	if _, ok := f.DigestIno[digest]; !ok {
-		f.DigestIno[digest] = NewInoSet(ps.Ino)
+		f.DigestIno[digest] = I.NewSet(pi.Ino)
 	} else {
 		set := f.DigestIno[digest]
-		set.Add(ps.Ino)
+		set.Add(pi.Ino)
 	}
-	f.InosWithDigest.Add(ps.Ino)
+	f.InosWithDigest.Add(pi.Ino)
 }
 
-// pathCount returns the number of unique paths and dirs encountered after the
+// PathCount returns the number of unique paths and dirs encountered after the
 // initial walk is completed.  This can give us an accurate count of the number
 // of inode nlinks we should encounter if all linked paths are included in the
 // walk.  Conversely, if we count the nlinks from all the encountered inodes,
 // and compare to the number of paths this function returns, we should have a
 // count of how many inode paths were not seen by the walk.
-func (f *FSDev) pathCount() (paths int64, dirs int64) {
+func (f *fsDev) PathCount() (paths int64, dirs int64) {
 	var numPaths, numDirs int64
 
 	// Make a set for storing unique dirs
 	dirMap := make(map[string]struct{})
 
-	// loop over all inos, getting filenamePaths
+	// loop over all inos, getting FilenamePaths
 	for _, fp := range f.InoPaths {
 		// loop over all filenames, getting paths
-		for _, paths := range fp.pMap {
+		for _, paths := range fp.PMap {
 			// Loop over all paths
 			for p := range paths {
 				numPaths++

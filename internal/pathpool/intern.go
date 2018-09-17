@@ -18,8 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package pathpool
 
-func main() {
-	Execute()
+// "Strings" are really headers with a backing store, so by storing and reusing
+// strings, we may be able to reuse the underlying backing store.
+type StringPool map[string]string
+
+func NewPool() StringPool {
+	p := make(StringPool)
+	return p
+}
+
+// Try to find and return a string in the pool map, and add it if it isn't
+// already there.  Not concurrency safe
+func (p StringPool) Intern(s string) string {
+	if r, ok := p[s]; ok {
+		return r
+	}
+	// "Unpin" the memory used in the given s string (by double-copy)
+	s = string([]byte(s))
+
+	p[s] = s
+	return s
 }

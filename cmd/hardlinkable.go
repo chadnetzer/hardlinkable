@@ -20,54 +20,8 @@
 
 package main
 
-import (
-	"bytes"
+import "hardlinkable/internal/cli"
 
-	"github.com/pkg/xattr"
-)
-
-func equalXAttrs(pathname1, pathname2 string) (bool, error) {
-	var list1, list2 []string
-	var err error
-	if list1, err = xattr.LList(pathname1); err != nil {
-		return false, err
-	}
-
-	if list2, err = xattr.LList(pathname2); err != nil {
-		return false, err
-	}
-
-	if len(list1) != len(list2) {
-		return false, nil
-	}
-
-	// Make list1 the longer list, and make it and it's values into a map
-	if len(list1) < len(list2) {
-		list1, list2 = list2, list1
-		pathname1, pathname2 = pathname2, pathname1
-	}
-
-	d := make(map[string][]byte, len(list1))
-	for _, key := range list1 {
-		d[key], err = xattr.LGet(pathname1, key)
-		if err != nil {
-			return false, err
-		}
-	}
-
-	for _, key := range list2 {
-		v1, ok := d[key]
-		if !ok {
-			return false, nil
-		}
-		v2, err := xattr.LGet(pathname2, key)
-		if err != nil {
-			return false, nil
-		}
-		if bytes.Compare(v1, v2) != 0 {
-			return false, nil
-		}
-	}
-
-	return true, nil
+func main() {
+	cli.Execute()
 }

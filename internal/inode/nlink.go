@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package inode
 
 import (
 	"os/exec"
@@ -26,13 +26,13 @@ import (
 	"strings"
 )
 
-// Return the maximum number of supported NLinks to pathname.
+// MaxNlinkVal returns the maximum number of supported NLinks to pathname.
 // Since the syscall interface to Pathconf isn't supported on all unixes (such
 // as Linux, for some reason), we instead call out to the getconf program,
 // which should always be available as a basic command on both BSDs and Linux,
 // to obtain the value.  Since this only needs to be done once per device (ie.
 // once per Stat_t.Dev), it isn't a performance concern.
-func MaxNlink(pathname string) uint64 {
+func MaxNlinkVal(pathname string) uint64 {
 	var returnVal uint64
 	var cmdPath string
 	var err error

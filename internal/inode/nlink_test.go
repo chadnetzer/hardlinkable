@@ -18,50 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package inode
 
-import (
-	"testing"
-)
+import "testing"
 
-func TestHumanizedUint64(t *testing.T) {
-	h := map[string]uint64{
-		"0":    0,
-		"0k":   0,
-		"0K":   0,
-		"0p":   0,
-		"1":    1,
-		"1023": 1023,
-		"1k":   1024,
-		"1025": 1025,
-		"2k":   2048,
-		"1m":   1024 * 1024,
-		"2M":   2 * 1024 * 1024,
-		"2g":   2 * 1024 * 1024 * 1024,
-		"3t":   3 * 1024 * 1024 * 1024 * 1024,
-		"4p":   4 * 1024 * 1024 * 1024 * 1024 * 1024,
+func TestMaxNlinkVal(t *testing.T) {
+	if MaxNlinkVal("") != 8 {
+		t.Errorf("Invalid MaxNlinkVal for empty path")
 	}
-	for s, n := range h {
-		v, err := humanizedUint64(s)
-		if err != nil {
-			t.Errorf("humanizedUint64(%s) gives error result: %v", s, err)
-		}
-		if v != n {
-			t.Errorf("humanizedUint64(%s) gives incorrect result: %v instead of %v",
-				s, v, n)
-		}
+	if MaxNlinkVal("/some/made/up/path") != 8 {
+		t.Errorf("Invalid MaxNlinkVal for invalid path")
 	}
-	h = map[string]uint64{
-		"k":  0,
-		"K":  0,
-		"kk": 0,
-		"aK": 0,
-		"bp": 0,
-	}
-	for s, _ := range h {
-		v, err := humanizedUint64(s)
-		if err == nil {
-			t.Errorf("humanizedUint64(%s) should give error result, got: %v", s, v)
-		}
+	if MaxNlinkVal(".") <= 8 {
+		// Assumes max nlinks will be higher than POSIX minimum
+		t.Errorf("Invalid MaxNlinkVal for valid path")
 	}
 }

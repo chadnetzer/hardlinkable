@@ -18,29 +18,59 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package hardlinkable
+package inode
 
 import (
-	"testing"
+	"errors"
+	"fmt"
+	"os"
+	"syscall"
 )
 
-func TestHumanize(t *testing.T) {
-	h := map[uint64]string{
-		0:                                    "0 bytes",
-		1:                                    "1 bytes",
-		1023:                                 "1023 bytes",
-		1024:                                 "1 KiB",
-		1025:                                 "1.001 KiB",
-		2048:                                 "2 KiB",
-		1024 * 1024:                          "1 MiB",
-		1024*1024 - 1:                        "1023.999 KiB",
-		2 * 1024 * 1024 * 1024:               "2 GiB",
-		3 * 1024 * 1024 * 1024 * 1024:        "3 TiB",
-		4 * 1024 * 1024 * 1024 * 1024 * 1024: "4 PiB",
+type Infos map[string]Info
+
+// os.FileInfo and syscall.Stat_t fields that we care about
+type Info struct {
+	Size  uint64
+	Ino   uint64
+	Sec   uint64
+	Nsec  uint64
+	Nlink uint32 // 32 bits ought to be enough for anybody
+	Uid   uint32
+	Gid   uint32
+	Mode  os.FileMode
+}
+
+// We need the Dev value returned from stat, but it can be discarded when we
+// separate the Info into a map indexed by the Dev value
+type DevInfo struct {
+	Dev uint64
+	Info
+}
+
+func LInfo(pathname string) (DevInfo, error) {
+	fi, err := os.Lstat(pathname)
+	if err != nil {
+		return DevInfo{}, err
 	}
-	for n, s := range h {
-		if humanize(n) != s {
-			t.Errorf("humanize(%d) gives incorrect result: %v instead of %v", n, humanize(n), s)
-		}
+	stat_t, ok := fi.Sys().(*syscall.Stat_t)
+	if !ok {
+		errString := fmt.Sprintf("Couldn't convert Stat_t for pathname: %s", pathname)
+		return DevInfo{}, errors.New(errString)
 	}
+	di := DevInfo{
+		Dev: uint64(stat_t.Dev),
+		Info: Info{
+			Size:  uint64(stat_t.Size),
+			Ino:   uint64(stat_t.Ino),
+			Sec:   uint64(stat_t.Mtimespec.Sec),
+			Nsec:  uint64(stat_t.Mtimespec.Nsec),
+			Nlink: uint32(stat_t.Nlink),
+			Uid:   uint32(stat_t.Uid),
+			Gid:   uint32(stat_t.Gid),
+			Mode:  fi.Mode(),
+		},
+	}
+
+	return di, nil
 }
