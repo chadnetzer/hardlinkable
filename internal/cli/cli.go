@@ -185,8 +185,13 @@ func Execute() {
 }
 
 func CLIRun(dirs []string, files []string, co CLIOptions) {
-	options := co.ToOptions()
-	hardlinkable.Run(dirs, files, options)
+	results := hardlinkable.Run(dirs, files, co.ToOptions())
+
+	if results.Opts.JSONOutputEnabled {
+		results.OutputJSONResults()
+	} else {
+		results.OutputResults()
+	}
 }
 
 func init() {

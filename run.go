@@ -34,7 +34,7 @@ import (
 // Run performs a scan of the supplied directories and files, with the given
 // Options, and outputs information on which files could be linked to save
 // space.
-func Run(dirs []string, files []string, opts Options) {
+func Run(dirs []string, files []string, opts Options) Results {
 	var ls *linkableState = newLinkableState()
 
 	ls.Options = opts.init()
@@ -93,9 +93,6 @@ func Run(dirs []string, files []string, opts Options) {
 		}
 	}
 	ls.Results.end()
-	if opts.JSONOutputEnabled {
-		ls.Results.OutputJSONResults()
-	} else {
-		ls.Results.OutputResults()
-	}
+
+	return *ls.Results
 }
