@@ -31,6 +31,9 @@ import (
 	"time"
 )
 
+// RunStats holds information about counts, the number of files found to be
+// linkable, the bytes that linking would save (or did save), and a variety of
+// related, useful, or just interesting information gathered during the Run().
 type RunStats struct {
 	DirCount               int64  `json:"dirCount"`
 	FileCount              int64  `json:"fileCount"`
@@ -72,6 +75,9 @@ type RunStats struct {
 	DigestComputedCount  int64 `json:"digestComputedCount"`
 }
 
+// Results contains the RunStats information, as well as the found existing and
+// new links.  It also includes a measurement of how long the Run() took to
+// execute, and the Options that were used to perform the Run().
 type Results struct {
 	ExistingLinks     map[string][]string `json:"existingLinks"`
 	ExistingLinkSizes map[string]uint64   `json:"existingLinkSizes"`
@@ -242,6 +248,10 @@ func (r *Results) foundExistingLink(srcP P.Pathsplit, dstP P.Pathsplit, size uin
 			src, size, r.ExistingLinkSizes[src]))
 }
 
+// OutputResults prints results in text form, including existing links that
+// were found, new pathnames that were discovered to be linkable, and stats
+// about the run giving information on the amount of data that can be saved (or
+// was saved if linking was enabled).
 func (r *Results) OutputResults() {
 	r.OutputExistingLinks()
 	if len(r.ExistingLinks) > 0 && (len(r.LinkPaths) > 0 || r.Opts.ShowRunStats) {
@@ -256,6 +266,8 @@ func (r *Results) OutputResults() {
 	}
 }
 
+// OutputExistingLinks shows in text form the existing links that were found by
+// Run.
 func (r *Results) OutputExistingLinks() {
 	if len(r.ExistingLinks) == 0 {
 		return
@@ -276,6 +288,8 @@ func (r *Results) OutputExistingLinks() {
 	fmt.Println(strings.Join(s, "\n"))
 }
 
+// OutputNewLinks shows in text form the pathnames that were discovered to be
+// linkable.
 func (r *Results) OutputNewLinks() {
 	if len(r.LinkPaths) == 0 {
 		return
@@ -300,6 +314,11 @@ func (r *Results) OutputNewLinks() {
 	fmt.Println(strings.Join(s, "\n"))
 }
 
+// OutputRunStats show information about how many files could be linked, how
+// much space would be saved, and other information on inodes, comparisons,
+// etc.  If linking was enabled, it displays the information on links that were
+// actually made and space actually saved (which should equal the predicted
+// amounts).
 func (r *Results) OutputRunStats() {
 	s := make([][]string, 0)
 	s = statStr(s, "Hard linking statistics")
@@ -409,6 +428,9 @@ func (r *Results) OutputRunStats() {
 	printSlices(s)
 }
 
+// OutputJSONResults outputs a JSON formatted object with all the information
+// gathered by Run() about existing and new links, and stats on space saved,
+// etc.
 func (r *Results) OutputJSONResults() {
 	b, _ := json.Marshal(r)
 	fmt.Println(string(b))
