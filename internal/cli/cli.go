@@ -86,10 +86,10 @@ func (c CLIOptions) ToOptions() hardlinkable.Options {
 	if c.Verbosity > 0 {
 		o.ShowExtendedRunStats = true
 	}
-	if c.Verbosity > 1 {
+	if c.Verbosity > 1 || c.JSONOutputEnabled {
 		o.StoreNewLinkResults = true
 	}
-	if c.Verbosity > 2 {
+	if c.Verbosity > 2 || c.JSONOutputEnabled {
 		o.StoreExistingLinkResults = true
 	}
 	return o
