@@ -261,7 +261,7 @@ func (r *Results) OutputResults() {
 	if len(r.LinkPaths) > 0 && r.Opts.ShowRunStats {
 		fmt.Println("")
 	}
-	if r.Opts.ShowRunStats {
+	if r.Opts.ShowRunStats || r.Opts.ShowExtendedRunStats {
 		r.OutputRunStats()
 	}
 }
