@@ -31,10 +31,10 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-// Run performs a scan of the supplied directories and files, with the given
-// Options, and outputs information on which files could be linked to save
-// space.  If stdout is a terminal/tty, a progress line is continually updated
-// as the directories and files are scanned.
+// RunWithProgress performs a scan of the supplied directories and files, with
+// the given Options, and outputs information on which files could be linked to
+// save space.  If stdout is a terminal/tty, a progress line is continually
+// updated as the directories and files are scanned.
 func RunWithProgress(dirs []string, files []string, opts Options) Results {
 	var ls *linkableState = newLinkableState(&opts)
 
