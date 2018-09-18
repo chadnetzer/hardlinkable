@@ -328,7 +328,7 @@ func (r *Results) OutputLinkingStats() {
 	s = statStr(s, "Total run time", r.RunTime)
 
 	totalLinks := r.PrevLinkCount + r.NewLinkCount
-	if r.Opts.Verbosity > 0 || r.Opts.DebugLevel > 0 {
+	if r.Opts.ShowExtendedRunStats || r.Opts.DebugLevel > 0 {
 		s = statStr(s, "Comparisons", r.ComparisonCount)
 		s = statStr(s, "Inodes", r.InodeCount)
 		unwalkedNlinks := r.NlinkCount - r.FileCount
