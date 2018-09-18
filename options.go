@@ -28,24 +28,78 @@ const DefaultMinFileSize = 1
 // to be compared for equality, what files and directories are included or
 // excluded, and whether linking is actually enabled or not.
 type Options struct {
-	SameName       bool
-	IgnoreTime     bool
-	IgnorePerms    bool
-	IgnoreOwner    bool
-	IgnoreXattr    bool
-	LinkingEnabled bool
-	Verbosity      int
-	DebugLevel     int
-	SearchThresh   int
-	MinFileSize    uint64
-	MaxFileSize    uint64
-	FileIncludes   []string
-	FileExcludes   []string
-	DirExcludes    []string
+	// SameName enabled ensures only files with matching filenames can be
+	// linked
+	SameName bool
 
-	// Indirect options, set based on debug and/or verbosity level
-	storeExistingLinks bool
-	storeNewLinks      bool
+	// IgnoreTime enabled allows files with different mtime values can be
+	// linked
+	IgnoreTime bool
+
+	// IgnorePerms enabled allows files with different inode mode values
+	// can be linked
+	IgnorePerms bool
+
+	// IgnoreOwner enabled allows files with different uid or gid can be
+	// linked
+	IgnoreOwner bool
+
+	// IgnoreXattr enabled allows files with different xattrs can be linked
+	IgnoreXattr bool
+
+	// LinkingEnabled causes the Run to perform the linking step
+	LinkingEnabled bool
+
+	// Verbosity controls the level of output when calling the output
+	// options.  Verbosity 0 prints a short summary of results (space
+	// saved, etc.). Verbosity 1 outputs additional information on
+	// comparison results and other stats.  Verbosity 2 also outputs the
+	// linking that would be (or was) performed, and Verbosity 3 prints
+	// information on what existing hardlinks were encountered.
+	Verbosity int
+
+	// DebugLevel controls the amount of debug information reported in the
+	// results output, as well as debug logging.
+	DebugLevel int
+
+	// SearchThresh determines the length that the lists of files with
+	// equivalent inode hashes can grow to, before also enabling content
+	// digests (which can drastically reduce the number of compared files
+	// when there are many with the same hash, but differing content at the
+	// start of the file).  Can be disabled with -1.  May save a small
+	// amount of memory, but potentially at greatly increased runtime in
+	// worst case scenarios with many, many files.
+	SearchThresh int
+
+	// MinFileSize controls the minimum size of files that are eligible to
+	// be considered for linking.
+	MinFileSize uint64
+
+	// MaxFileSize controls the maximum size of files that are eligible to
+	// be considered for linking.
+	MaxFileSize uint64
+
+	// FileIncludes is a slice of regex expressions that control what
+	// filenames will be considered for linking.  If given without any
+	// FileExcludes, the walked files must match one of the includes.  If
+	// FileExcludes are provided, the FileIncludes can override them.
+	FileIncludes []string
+
+	// FileExcludes is a slice of regex expressions that control what
+	// filenames will be excluded from consideration for linking.
+	FileExcludes []string
+
+	// DirExcludes is a slice of regex expressions that control what
+	// directories will be excluded from the file discovery walk.
+	DirExcludes []string
+
+	// StoreExistingLinkResults allows controlling whether to store
+	// discovered existing links in Results. Verbosity > 2 can override.
+	StoreExistingLinkResults bool
+
+	// StoreNewLinkResults allows controlling whether to store discovered
+	// new hardlinkable pathnames in Results. Verbosity > 1 can override.
+	StoreNewLinkResults bool
 }
 
 // DefaultOptions returns an Options struct, with the defaults initialized.

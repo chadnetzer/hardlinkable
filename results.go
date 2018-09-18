@@ -376,6 +376,7 @@ func (r *Results) OutputLinkingStats() {
 		remainingInodes := r.InodeCount - r.InodeRemovedCount
 		s = statStr(s, "Total remaining inodes", remainingInodes)
 	}
+
 	if r.Opts.DebugLevel > 0 {
 		// add additional stat output onto the last string
 		s = statStr(s, "Total file hash hits", r.FoundHashCount,
