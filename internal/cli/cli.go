@@ -54,6 +54,15 @@ type CLIOptions struct {
 	CLIFileExcludes        RegexArray
 	CLIDirExcludes         RegexArray
 	CLISearchThresh        intN
+
+	// Verbosity controls the level of output when calling the output
+	// options.  Verbosity 0 prints a short summary of results (space
+	// saved, etc.). Verbosity 1 outputs additional information on
+	// comparison results and other stats.  Verbosity 2 also outputs the
+	// linking that would be (or was) performed, and Verbosity 3 prints
+	// information on what existing hardlinks were encountered.
+	Verbosity int
+
 	hardlinkable.Options
 }
 
@@ -73,13 +82,13 @@ func (c CLIOptions) ToOptions() hardlinkable.Options {
 	}
 	// Verbosity level enables storing new and existing hardlink in
 	// Results, as well as the amount of stats output by Results
-	if o.Verbosity > 0 {
+	if c.Verbosity > 0 {
 		o.ShowExtendedRunStats = true
 	}
-	if o.Verbosity > 1 {
+	if c.Verbosity > 1 {
 		o.StoreNewLinkResults = true
 	}
-	if o.Verbosity > 2 {
+	if c.Verbosity > 2 {
 		o.StoreExistingLinkResults = true
 	}
 	return o

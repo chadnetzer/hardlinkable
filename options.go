@@ -53,14 +53,6 @@ type Options struct {
 	// LinkingEnabled causes the Run to perform the linking step
 	LinkingEnabled bool
 
-	// Verbosity controls the level of output when calling the output
-	// options.  Verbosity 0 prints a short summary of results (space
-	// saved, etc.). Verbosity 1 outputs additional information on
-	// comparison results and other stats.  Verbosity 2 also outputs the
-	// linking that would be (or was) performed, and Verbosity 3 prints
-	// information on what existing hardlinks were encountered.
-	Verbosity int
-
 	// DebugLevel controls the amount of debug information reported in the
 	// results output, as well as debug logging.
 	DebugLevel int
@@ -97,15 +89,17 @@ type Options struct {
 	DirExcludes []string
 
 	// StoreExistingLinkResults allows controlling whether to store
-	// discovered existing links in Results. Verbosity > 2 can override.
+	// discovered existing links in Results. Command line option Verbosity
+	// > 2 can override.
 	StoreExistingLinkResults bool
 
 	// StoreNewLinkResults allows controlling whether to store discovered
-	// new hardlinkable pathnames in Results. Verbosity > 1 can override.
+	// new hardlinkable pathnames in Results. Command line option Verbosity
+	// > 1 can override.
 	StoreNewLinkResults bool
 
 	// ShowExtendedRunStats enabled displays additional Result stats
-	// output.  Verbosity > 0 can override.
+	// output.  Command line option Verbosity > 0 can override.
 	ShowExtendedRunStats bool
 }
 
