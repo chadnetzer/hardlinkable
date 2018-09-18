@@ -46,7 +46,7 @@ type ttyProgress struct {
 
 	timer chan struct{}
 
-	stats   *linkingStats
+	results *Results
 	options *Options
 
 	m runtime.MemStats
@@ -55,14 +55,14 @@ type ttyProgress struct {
 type disabledProgress struct{}
 
 // Initialize TTYProgress and return pointer to it
-func newTTYProgress(stats *linkingStats, options *Options) *ttyProgress {
+func newTTYProgress(results *Results, options *Options) *ttyProgress {
 	now := time.Now()
 	p := ttyProgress{
 		lastFPSTime:    now,
 		updateDelay:    60 * time.Millisecond,
 		updateFPSDelay: 180 * time.Millisecond, // A slower rate for readability
 		timer:          make(chan struct{}),
-		stats:          stats,
+		results:        results,
 		options:        options,
 	}
 
@@ -97,9 +97,9 @@ func (p *ttyProgress) Show() {
 
 	now := time.Now()
 
-	numFiles := p.stats.FileCount
+	numFiles := p.results.FileCount
 
-	duration := now.Sub(p.stats.StartTime)
+	duration := now.Sub(p.results.StartTime)
 	durStr := duration.Round(time.Second).String()
 
 	var fps float64
@@ -109,7 +109,7 @@ func (p *ttyProgress) Show() {
 		p.lastFPS = fps
 		p.lastFPSTime = now
 
-		p.bytesCompared = p.stats.BytesCompared
+		p.bytesCompared = p.results.BytesCompared
 
 		if p.options.DebugLevel > 1 {
 			runtime.ReadMemStats(&p.m)
@@ -133,7 +133,7 @@ func (p *ttyProgress) Show() {
 func (p *ttyProgress) Clear() {
 	defer close(p.timer)
 	p.line("\r")
-	p.lastLineLen = 1
+	p.lastLineLen = 0
 	p.line("\r")
 }
 

@@ -22,53 +22,100 @@ package hardlinkable
 
 const DefaultSearchThresh = 1
 const DefaultMinFileSize = 1
+const DefaultStoreExistingLinkResults = true // Non-cli default
+const DefaultStoreNewLinkResults = true      // Non-cli default
+const DefaultShowExtendedRunStats = false    // Non-cli default
+const DefaultShowRunStats = true             // Non-cli default
 
 // Options is passed to the Run() func, and controls the operation of the
 // hardlinkable algorithm, including what inode parameters much match for files
 // to be compared for equality, what files and directories are included or
 // excluded, and whether linking is actually enabled or not.
 type Options struct {
-	StatsOutputEnabled    bool
-	ProgressOutputEnabled bool
-	JSONOutputEnabled     bool
-	SameName              bool
-	IgnoreTime            bool
-	IgnorePerms           bool
-	IgnoreOwner           bool
-	IgnoreXattr           bool
-	LinkingEnabled        bool
-	Verbosity             int
-	DebugLevel            int
-	SearchThresh          int
-	MinFileSize           uint64
-	MaxFileSize           uint64
-	FileIncludes          []string
-	FileExcludes          []string
-	DirExcludes           []string
+	// SameName enabled ensures only files with matching filenames can be
+	// linked
+	SameName bool
 
-	// Indirect options, set based on debug and/or verbosity level
-	existingLinkStatsEnabled bool
-	newLinkStatsEnabled      bool
+	// IgnoreTime enabled allows files with different mtime values can be
+	// linked
+	IgnoreTime bool
+
+	// IgnorePerms enabled allows files with different inode mode values
+	// can be linked
+	IgnorePerms bool
+
+	// IgnoreOwner enabled allows files with different uid or gid can be
+	// linked
+	IgnoreOwner bool
+
+	// IgnoreXattr enabled allows files with different xattrs can be linked
+	IgnoreXattr bool
+
+	// LinkingEnabled causes the Run to perform the linking step
+	LinkingEnabled bool
+
+	// DebugLevel controls the amount of debug information reported in the
+	// results output, as well as debug logging.
+	DebugLevel int
+
+	// SearchThresh determines the length that the lists of files with
+	// equivalent inode hashes can grow to, before also enabling content
+	// digests (which can drastically reduce the number of compared files
+	// when there are many with the same hash, but differing content at the
+	// start of the file).  Can be disabled with -1.  May save a small
+	// amount of memory, but potentially at greatly increased runtime in
+	// worst case scenarios with many, many files.
+	SearchThresh int
+
+	// MinFileSize controls the minimum size of files that are eligible to
+	// be considered for linking.
+	MinFileSize uint64
+
+	// MaxFileSize controls the maximum size of files that are eligible to
+	// be considered for linking.
+	MaxFileSize uint64
+
+	// FileIncludes is a slice of regex expressions that control what
+	// filenames will be considered for linking.  If given without any
+	// FileExcludes, the walked files must match one of the includes.  If
+	// FileExcludes are provided, the FileIncludes can override them.
+	FileIncludes []string
+
+	// FileExcludes is a slice of regex expressions that control what
+	// filenames will be excluded from consideration for linking.
+	FileExcludes []string
+
+	// DirExcludes is a slice of regex expressions that control what
+	// directories will be excluded from the file discovery walk.
+	DirExcludes []string
+
+	// StoreExistingLinkResults allows controlling whether to store
+	// discovered existing links in Results. Command line option Verbosity
+	// > 2 can override.
+	StoreExistingLinkResults bool
+
+	// StoreNewLinkResults allows controlling whether to store discovered
+	// new hardlinkable pathnames in Results. Command line option Verbosity
+	// > 1 can override.
+	StoreNewLinkResults bool
+
+	// ShowExtendedRunStats enabled displays additional Result stats
+	// output.  Command line option Verbosity > 0 can override.
+	ShowExtendedRunStats bool
+
+	// ShowRunStats enabled displays Result stats output.
+	ShowRunStats bool
 }
 
 // DefaultOptions returns an Options struct, with the defaults initialized.
 func DefaultOptions() Options {
 	o := Options{
-		SearchThresh: DefaultSearchThresh,
-		MinFileSize:  DefaultMinFileSize,
-	}
-	return o
-}
-
-// init sets up the unexported Options, and must be called on an Options struct
-// that has had it's exported members set to their desired values, (ie. on the
-// Options provided by the user).
-func (o *Options) init() *Options {
-	if o.Verbosity > 1 {
-		o.newLinkStatsEnabled = true
-	}
-	if o.Verbosity > 2 {
-		o.existingLinkStatsEnabled = true
+		SearchThresh:             DefaultSearchThresh,
+		MinFileSize:              DefaultMinFileSize,
+		StoreExistingLinkResults: DefaultStoreExistingLinkResults,
+		StoreNewLinkResults:      DefaultStoreNewLinkResults,
+		ShowExtendedRunStats:     DefaultShowExtendedRunStats,
+		ShowRunStats:             DefaultShowRunStats,
 	}
 	return o
 }

@@ -65,7 +65,7 @@ func readerContentsEqual(s status, r1, r2 io.Reader) (bool, error) {
 		if !bytes.Equal(buf1, buf2) {
 			return false, nil
 		}
-		s.Stats.AddBytesCompared(uint64(n1))
+		s.Results.addBytesCompared(uint64(n1))
 		s.Progress.Show()
 	}
 }

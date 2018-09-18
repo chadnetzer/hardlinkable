@@ -20,8 +20,29 @@
 
 package hardlinkable
 
-type status struct {
-	Options  *Options
-	Results  *Results
-	Progress progress
+import (
+	"hardlinkable/internal/inode"
+)
+
+type linkableState struct {
+	status
+	fsDevs map[uint64]fsDev
+}
+
+func newLinkableState(opts *Options) *linkableState {
+	var ls linkableState
+	results := newResults(opts)
+	ls.status = status{Options: opts, Results: results}
+	ls.fsDevs = make(map[uint64]fsDev)
+	return &ls
+}
+
+func (ls *linkableState) dev(di inode.DevInfo, pathname string) fsDev {
+	if fsdev, ok := ls.fsDevs[di.Dev]; ok {
+		return fsdev
+	} else {
+		fsdev = newFSDev(ls.status, di.Dev, inode.MaxNlinkVal(pathname))
+		ls.fsDevs[di.Dev] = fsdev
+		return fsdev
+	}
 }

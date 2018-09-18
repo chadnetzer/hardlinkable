@@ -27,28 +27,40 @@ package hardlinkable
 import (
 	"hardlinkable/internal/inode"
 	"os"
-	"time"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-// Run performs a scan of the supplied directories and files, with the given
-// Options, and outputs information on which files could be linked to save
-// space.
-func Run(dirs []string, files []string, opts Options) {
-	var ls *linkableState = newLinkableState()
+// RunWithProgress performs a scan of the supplied directories and files, with
+// the given Options, and outputs information on which files could be linked to
+// save space.  If stdout is a terminal/tty, a progress line is continually
+// updated as the directories and files are scanned.
+func RunWithProgress(dirs []string, files []string, opts Options) Results {
+	var ls *linkableState = newLinkableState(&opts)
 
-	ls.Options = opts.init()
-	ls.Stats = newLinkingStats(ls.Options)
-
-	if ls.Options.ProgressOutputEnabled &&
-		terminal.IsTerminal(int(os.Stdout.Fd())) {
-		ls.Progress = newTTYProgress(ls.Stats, ls.Options)
+	if terminal.IsTerminal(int(os.Stdout.Fd())) {
+		ls.Progress = newTTYProgress(ls.Results, ls.Options)
 	} else {
 		ls.Progress = &disabledProgress{}
 	}
+	return runHelper(dirs, files, ls)
+}
 
-	ls.Stats.StartTime = time.Now()
+// Run performs a scan of the supplied directories and files, with the given
+// Options, and outputs information on which files could be linked to save
+// space.
+func Run(dirs []string, files []string, opts Options) Results {
+	var ls *linkableState = newLinkableState(&opts)
+
+	ls.Progress = &disabledProgress{}
+
+	return runHelper(dirs, files, ls)
+}
+
+// runHelper is called by the public Run funcs, with an already initialized
+// options, to complete the scanning and result gathering.
+func runHelper(dirs []string, files []string, ls *linkableState) Results {
+	ls.Results.start()
 	c := matchedPathnames(ls.status, dirs, files)
 	for pathname := range c {
 		ls.Progress.Show()
@@ -56,18 +68,18 @@ func Run(dirs []string, files []string, opts Options) {
 		if err != nil {
 			continue
 		}
-		if di.Size < opts.MinFileSize {
-			ls.Stats.FoundFileTooSmall()
+		if di.Size < ls.Options.MinFileSize {
+			ls.Results.foundFileTooSmall()
 			continue
 		}
-		if opts.MaxFileSize > 0 &&
-			di.Size > opts.MaxFileSize {
-			ls.Stats.FoundFileTooLarge()
+		if ls.Options.MaxFileSize > 0 &&
+			di.Size > ls.Options.MaxFileSize {
+			ls.Results.foundFileTooLarge()
 			continue
 		}
 		// If the file hasn't been rejected by this
 		// point, add it to the found count
-		ls.Stats.FoundFile()
+		ls.Results.foundFile()
 
 		fsdev := ls.dev(di, pathname)
 		fsdev.FindIdenticalFiles(di, pathname)
@@ -84,41 +96,16 @@ func Run(dirs []string, files []string, opts Options) {
 		numPaths += p
 		numDirs += d
 	}
-	ls.Stats.FileAndDirectoryCount(numPaths, numDirs)
+	ls.Results.fileAndDirectoryCount(numPaths, numDirs)
 
 	// Iterate over all the inode sorted links.  We discard each link pair
-	// (for now), since the links are stored in the Stats type.
+	// (for now), since the links are stored in the Results type.
 	for _, fsdev := range ls.fsDevs {
 		for pair := range fsdev.SortedLinks() {
 			_ = pair
 		}
 	}
-	ls.Stats.EndTime = time.Now()
-	if opts.JSONOutputEnabled {
-		ls.Stats.OutputJSONResults()
-	} else {
-		ls.Stats.OutputResults()
-	}
-}
+	ls.Results.end()
 
-type linkableState struct {
-	status
-	fsDevs map[uint64]fsDev
-}
-
-func newLinkableState() *linkableState {
-	var ls linkableState
-	ls.status = status{}
-	ls.fsDevs = make(map[uint64]fsDev)
-	return &ls
-}
-
-func (ls *linkableState) dev(di inode.DevInfo, pathname string) fsDev {
-	if fsdev, ok := ls.fsDevs[di.Dev]; ok {
-		return fsdev
-	} else {
-		fsdev = newFSDev(ls.status, di.Dev, inode.MaxNlinkVal(pathname))
-		ls.fsDevs[di.Dev] = fsdev
-		return fsdev
-	}
+	return *ls.Results
 }

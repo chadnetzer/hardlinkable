@@ -44,6 +44,7 @@ import (
 // Other cliOptions are converted from one type to another in the Options
 // struct
 type CLIOptions struct {
+	JSONOutputEnabled      bool
 	StatsOutputDisabled    bool
 	ProgressOutputDisabled bool
 	CLIContentOnly         bool
@@ -53,13 +54,21 @@ type CLIOptions struct {
 	CLIFileExcludes        RegexArray
 	CLIDirExcludes         RegexArray
 	CLISearchThresh        intN
+
+	// Verbosity controls the level of output when calling the output
+	// options.  Verbosity 0 prints a short summary of results (space
+	// saved, etc.). Verbosity 1 outputs additional information on
+	// comparison results and other stats.  Verbosity 2 also outputs the
+	// linking that would be (or was) performed, and Verbosity 3 prints
+	// information on what existing hardlinks were encountered.
+	Verbosity int
+
 	hardlinkable.Options
 }
 
 func (c CLIOptions) ToOptions() hardlinkable.Options {
 	o := c.Options
-	o.StatsOutputEnabled = !c.StatsOutputDisabled
-	o.ProgressOutputEnabled = !c.ProgressOutputDisabled
+	o.ShowRunStats = !c.StatsOutputDisabled
 	o.MinFileSize = c.CLIMinFileSize.n
 	o.MaxFileSize = c.CLIMaxFileSize.n
 	o.FileIncludes = c.CLIFileIncludes.vals
@@ -71,6 +80,17 @@ func (c CLIOptions) ToOptions() hardlinkable.Options {
 		o.IgnorePerms = true
 		o.IgnoreOwner = true
 		o.IgnoreXattr = true
+	}
+	// Verbosity level enables storing new and existing hardlink in
+	// Results, as well as the amount of stats output by Results
+	if c.Verbosity > 0 {
+		o.ShowExtendedRunStats = true
+	}
+	if c.Verbosity > 1 || c.JSONOutputEnabled {
+		o.StoreNewLinkResults = true
+	}
+	if c.Verbosity > 2 || c.JSONOutputEnabled {
+		o.StoreExistingLinkResults = true
 	}
 	return o
 }
@@ -185,8 +205,18 @@ func Execute() {
 }
 
 func CLIRun(dirs []string, files []string, co CLIOptions) {
-	options := co.ToOptions()
-	hardlinkable.Run(dirs, files, options)
+	var results hardlinkable.Results
+	if co.ProgressOutputDisabled {
+		results = hardlinkable.Run(dirs, files, co.ToOptions())
+	} else {
+		results = hardlinkable.RunWithProgress(dirs, files, co.ToOptions())
+	}
+
+	if co.JSONOutputEnabled {
+		results.OutputJSONResults()
+	} else {
+		results.OutputResults()
+	}
 }
 
 func init() {

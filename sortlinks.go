@@ -129,14 +129,14 @@ func (f *fsDev) sendLinkedPairs(sortedInos []I.Ino, out chan<- I.PathInfoPair) {
 
 				out <- I.PathInfoPair{Src: srcPathInfo, Dst: dstPathInfo}
 
-				f.Stats.FoundNewLink(srcPath, dstPath)
+				f.Results.foundNewLink(srcPath, dstPath)
 
 				// Update StatInfo information for inodes
 				srcSI.Nlink += 1
 				dstSI.Nlink -= 1
 				f.InoStatInfo[srcIno] = srcSI
 				if dstSI.Nlink == 0 {
-					f.Stats.FoundRemovedInode(dstSI.Size)
+					f.Results.foundRemovedInode(dstSI.Size)
 					delete(f.InoStatInfo, dstIno)
 				} else {
 					f.InoStatInfo[dstIno] = dstSI
