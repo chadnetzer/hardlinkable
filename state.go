@@ -37,7 +37,7 @@ func newLinkableState(opts *Options) *linkableState {
 	return &ls
 }
 
-func (ls *linkableState) dev(di inode.DevInfo, pathname string) fsDev {
+func (ls *linkableState) dev(di inode.DevStatInfo, pathname string) fsDev {
 	if fsdev, ok := ls.fsDevs[di.Dev]; ok {
 		return fsdev
 	} else {

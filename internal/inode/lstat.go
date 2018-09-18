@@ -27,10 +27,10 @@ import (
 	"syscall"
 )
 
-type Infos map[string]Info
+type StatInfos map[string]StatInfo
 
 // os.FileInfo and syscall.Stat_t fields that we care about
-type Info struct {
+type StatInfo struct {
 	Size  uint64
 	Ino   uint64
 	Sec   uint64
@@ -43,24 +43,24 @@ type Info struct {
 
 // We need the Dev value returned from stat, but it can be discarded when we
 // separate the Info into a map indexed by the Dev value
-type DevInfo struct {
+type DevStatInfo struct {
 	Dev uint64
-	Info
+	StatInfo
 }
 
-func LInfo(pathname string) (DevInfo, error) {
+func LInfo(pathname string) (DevStatInfo, error) {
 	fi, err := os.Lstat(pathname)
 	if err != nil {
-		return DevInfo{}, err
+		return DevStatInfo{}, err
 	}
 	stat_t, ok := fi.Sys().(*syscall.Stat_t)
 	if !ok {
 		errString := fmt.Sprintf("Couldn't convert Stat_t for pathname: %s", pathname)
-		return DevInfo{}, errors.New(errString)
+		return DevStatInfo{}, errors.New(errString)
 	}
-	di := DevInfo{
+	di := DevStatInfo{
 		Dev: uint64(stat_t.Dev),
-		Info: Info{
+		StatInfo: StatInfo{
 			Size:  uint64(stat_t.Size),
 			Ino:   uint64(stat_t.Ino),
 			Sec:   uint64(stat_t.Mtimespec.Sec),

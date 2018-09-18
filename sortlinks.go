@@ -124,8 +124,8 @@ func (f *fsDev) sendLinkedPairs(sortedInos []I.Ino, out chan<- I.PathInfoPair) {
 				} else {
 					srcPath = f.ArbitraryPath(srcIno)
 				}
-				srcPathInfo := I.PathInfo{Pathsplit: srcPath, Info: srcSI}
-				dstPathInfo := I.PathInfo{Pathsplit: dstPath, Info: dstSI}
+				srcPathInfo := I.PathInfo{Pathsplit: srcPath, StatInfo: srcSI}
+				dstPathInfo := I.PathInfo{Pathsplit: dstPath, StatInfo: dstSI}
 
 				out <- I.PathInfoPair{Src: srcPathInfo, Dst: dstPathInfo}
 

@@ -33,15 +33,15 @@ type fsDev struct {
 	Dev            uint64
 	MaxNLinks      uint64
 	InoHashes      map[hashVal]I.Set
-	InoStatInfo    map[I.Ino]I.Info
+	InoStatInfo    map[I.Ino]I.StatInfo
 	InoPaths       map[I.Ino]*filenamePaths
 	LinkedInos     map[I.Ino]I.Set
 	DigestIno      map[digestVal]I.Set
 	InosWithDigest I.Set
 	pool           P.StringPool
 
-	// For each directory name, keep track of all the Info structures
-	DirnameStatInfos map[string]I.Infos
+	// For each directory name, keep track of all the StatInfo structures
+	DirnameStatInfos map[string]I.StatInfos
 }
 
 func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
@@ -50,7 +50,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 		Dev:            dev,
 		MaxNLinks:      maxNLinks,
 		InoHashes:      make(map[hashVal]I.Set),
-		InoStatInfo:    make(map[I.Ino]I.Info),
+		InoStatInfo:    make(map[I.Ino]I.StatInfo),
 		InoPaths:       make(map[I.Ino]*filenamePaths),
 		LinkedInos:     make(map[I.Ino]I.Set),
 		DigestIno:      make(map[digestVal]I.Set),
@@ -65,7 +65,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 // Inode metadata (size, time, etc.).  Content still has to be verified for
 // equality (but unequal hashes indicate files that definitely need not be
 // compared)
-func hashIno(i I.Info, opt *Options) hashVal {
+func hashIno(i I.StatInfo, opt *Options) hashVal {
 	var value hashVal
 	size := hashVal(i.Size)
 	// The main requirement is that files that could be equal have equal
@@ -80,17 +80,17 @@ func hashIno(i I.Info, opt *Options) hashVal {
 	return value
 }
 
-func (f *fsDev) FindIdenticalFiles(di I.DevInfo, pathname string) {
+func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 	panicIf(f.Dev != di.Dev, "Mismatched Dev %d for %s\n", f.Dev, pathname)
 	curPath := P.Split(pathname, f.pool)
-	curPathStat := I.PathInfo{Pathsplit: curPath, Info: di.Info}
-	ino := di.Info.Ino
+	curPathStat := I.PathInfo{Pathsplit: curPath, StatInfo: di.StatInfo}
+	ino := di.StatInfo.Ino
 
 	if _, ok := f.InoStatInfo[ino]; !ok {
-		f.Results.foundInode(di.Info.Nlink)
+		f.Results.foundInode(di.StatInfo.Nlink)
 	}
 
-	H := hashIno(di.Info, f.Options)
+	H := hashIno(di.StatInfo, f.Options)
 	if _, ok := f.InoHashes[H]; !ok {
 		// Setup for a newly seen hash value
 		f.Results.missedHash()
@@ -135,12 +135,12 @@ func (f *fsDev) FindIdenticalFiles(di I.DevInfo, pathname string) {
 				f.Results.noHashMatch()
 				inoSet := f.InoHashes[H]
 				inoSet.Add(ino)
-				f.InoStatInfo[ino] = di.Info
+				f.InoStatInfo[ino] = di.StatInfo
 			}
 		}
 	}
 	// Remember Inode and filename/path information for each seen file
-	f.InoStatInfo[ino] = di.Info
+	f.InoStatInfo[ino] = di.StatInfo
 	f.InoAppendPathname(ino, curPath)
 }
 
@@ -166,7 +166,7 @@ func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
 			differentDigests := cachedSet.Difference(sameDigests).Difference(noDigests)
 			cachedSeq = append(sameDigests.AsSlice(), noDigests.AsSlice()...)
 
-			panicIf(noDigests.Has(ps.Info.Ino), "New Ino found in noDigests\n")
+			panicIf(noDigests.Has(ps.StatInfo.Ino), "New Ino found in noDigests\n")
 			panicIf(len(I.SetIntersections(sameDigests, differentDigests, noDigests)) > 0,
 				"Overlapping digest sets\n")
 		}
@@ -274,7 +274,7 @@ func (f *fsDev) InoAppendPathname(ino I.Ino, path P.Pathsplit) {
 func (f *fsDev) PathInfoFromIno(ino I.Ino) I.PathInfo {
 	path := f.ArbitraryPath(ino)
 	fi := f.InoStatInfo[ino]
-	return I.PathInfo{Pathsplit: path, Info: fi}
+	return I.PathInfo{Pathsplit: path, StatInfo: fi}
 }
 
 func (f *fsDev) allInoPaths(ino I.Ino) <-chan P.Pathsplit {

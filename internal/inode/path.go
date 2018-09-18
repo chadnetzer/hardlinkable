@@ -26,7 +26,7 @@ import (
 
 type PathInfo struct {
 	P.Pathsplit
-	Info
+	StatInfo
 }
 
 type PathInfoPair struct {
