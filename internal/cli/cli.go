@@ -68,6 +68,7 @@ type CLIOptions struct {
 
 func (c CLIOptions) ToOptions() hardlinkable.Options {
 	o := c.Options
+	o.ShowRunStats = !c.StatsOutputDisabled
 	o.MinFileSize = c.CLIMinFileSize.n
 	o.MaxFileSize = c.CLIMaxFileSize.n
 	o.FileIncludes = c.CLIFileIncludes.vals
@@ -214,18 +215,7 @@ func CLIRun(dirs []string, files []string, co CLIOptions) {
 	if co.JSONOutputEnabled {
 		results.OutputJSONResults()
 	} else {
-		// Print the selected results, with proper blank line seperators
-		results.OutputExistingLinks()
-		if len(results.ExistingLinks) > 0 && !co.StatsOutputDisabled {
-			fmt.Println("")
-		}
-		results.OutputNewLinks()
-		if len(results.LinkPaths) > 0 && !co.StatsOutputDisabled {
-			fmt.Println("")
-		}
-		if !co.StatsOutputDisabled {
-			results.OutputRunStats()
-		}
+		results.OutputResults()
 	}
 }
 

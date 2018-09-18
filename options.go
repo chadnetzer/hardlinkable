@@ -25,6 +25,7 @@ const DefaultMinFileSize = 1
 const DefaultStoreExistingLinkResults = true // Non-cli default
 const DefaultStoreNewLinkResults = true      // Non-cli default
 const DefaultShowExtendedRunStats = false    // Non-cli default
+const DefaultShowRunStats = true             // Non-cli default
 
 // Options is passed to the Run() func, and controls the operation of the
 // hardlinkable algorithm, including what inode parameters much match for files
@@ -101,6 +102,9 @@ type Options struct {
 	// ShowExtendedRunStats enabled displays additional Result stats
 	// output.  Command line option Verbosity > 0 can override.
 	ShowExtendedRunStats bool
+
+	// ShowRunStats enabled displays Result stats output.
+	ShowRunStats bool
 }
 
 // DefaultOptions returns an Options struct, with the defaults initialized.
@@ -111,6 +115,7 @@ func DefaultOptions() Options {
 		StoreExistingLinkResults: DefaultStoreExistingLinkResults,
 		StoreNewLinkResults:      DefaultStoreNewLinkResults,
 		ShowExtendedRunStats:     DefaultShowExtendedRunStats,
+		ShowRunStats:             DefaultShowRunStats,
 	}
 	return o
 }

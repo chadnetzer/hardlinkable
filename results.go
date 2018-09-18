@@ -243,15 +243,17 @@ func (r *Results) foundExistingLink(srcP P.Pathsplit, dstP P.Pathsplit, size uin
 }
 
 func (r *Results) OutputResults() {
-	if len(r.ExistingLinks) > 0 {
-		r.OutputExistingLinks()
+	r.OutputExistingLinks()
+	if len(r.ExistingLinks) > 0 && (len(r.LinkPaths) > 0 || r.Opts.ShowRunStats) {
 		fmt.Println("")
 	}
-	if len(r.LinkPaths) > 0 {
-		r.OutputNewLinks()
+	r.OutputNewLinks()
+	if len(r.LinkPaths) > 0 && r.Opts.ShowRunStats {
 		fmt.Println("")
 	}
-	r.OutputRunStats()
+	if r.Opts.ShowRunStats {
+		r.OutputRunStats()
+	}
 }
 
 func (r *Results) OutputExistingLinks() {
