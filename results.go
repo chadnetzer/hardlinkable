@@ -223,7 +223,7 @@ func (r *Results) foundRemovedInode(size uint64) {
 func (r *Results) foundExistingLink(srcP P.Pathsplit, dstP P.Pathsplit, size uint64) {
 	r.PrevLinkCount += 1
 	r.PrevLinkedByteAmount += size
-	if !r.Opts.existingLinkStatsEnabled {
+	if !r.Opts.storeExistingLinks {
 		return
 	}
 	src := srcP.Join()

@@ -44,8 +44,8 @@ type Options struct {
 	DirExcludes    []string
 
 	// Indirect options, set based on debug and/or verbosity level
-	existingLinkStatsEnabled bool
-	newLinkStatsEnabled      bool
+	storeExistingLinks bool
+	storeNewLinks      bool
 }
 
 // DefaultOptions returns an Options struct, with the defaults initialized.
@@ -62,10 +62,10 @@ func DefaultOptions() Options {
 // Options provided by the user).
 func (o *Options) init() *Options {
 	if o.Verbosity > 1 {
-		o.newLinkStatsEnabled = true
+		o.storeNewLinks = true
 	}
 	if o.Verbosity > 2 {
-		o.existingLinkStatsEnabled = true
+		o.storeExistingLinks = true
 	}
 	return o
 }
