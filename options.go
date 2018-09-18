@@ -22,6 +22,8 @@ package hardlinkable
 
 const DefaultSearchThresh = 1
 const DefaultMinFileSize = 1
+const DefaultStoreExistingLinkResults = true // Non-cli default
+const DefaultStoreNewLinkResults = true      // Non-cli default
 
 // Options is passed to the Run() func, and controls the operation of the
 // hardlinkable algorithm, including what inode parameters much match for files
@@ -105,21 +107,10 @@ type Options struct {
 // DefaultOptions returns an Options struct, with the defaults initialized.
 func DefaultOptions() Options {
 	o := Options{
-		SearchThresh: DefaultSearchThresh,
-		MinFileSize:  DefaultMinFileSize,
-	}
-	return o
-}
-
-// init sets up the unexported Options, and must be called on an Options struct
-// that has had it's exported members set to their desired values, (ie. on the
-// Options provided by the user).
-func (o *Options) init() *Options {
-	if o.Verbosity > 1 {
-		o.storeNewLinks = true
-	}
-	if o.Verbosity > 2 {
-		o.storeExistingLinks = true
+		SearchThresh:             DefaultSearchThresh,
+		MinFileSize:              DefaultMinFileSize,
+		StoreExistingLinkResults: DefaultStoreExistingLinkResults,
+		StoreNewLinkResults:      DefaultStoreNewLinkResults,
 	}
 	return o
 }

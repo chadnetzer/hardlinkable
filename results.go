@@ -196,7 +196,7 @@ func (r *Results) end() {
 
 func (r *Results) foundNewLink(srcP, dstP P.Pathsplit) {
 	r.NewLinkCount += 1
-	if !r.Opts.storeNewLinks {
+	if !r.Opts.StoreNewLinkResults {
 		return
 	}
 	src := srcP.Join()
@@ -223,7 +223,7 @@ func (r *Results) foundRemovedInode(size uint64) {
 func (r *Results) foundExistingLink(srcP P.Pathsplit, dstP P.Pathsplit, size uint64) {
 	r.PrevLinkCount += 1
 	r.PrevLinkedByteAmount += size
-	if !r.Opts.storeExistingLinks {
+	if !r.Opts.StoreExistingLinkResults {
 		return
 	}
 	src := srcP.Join()

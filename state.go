@@ -31,7 +31,6 @@ type linkableState struct {
 
 func newLinkableState(opts *Options) *linkableState {
 	var ls linkableState
-	opts.init()
 	results := newResults(opts)
 	ls.status = status{Options: opts, Results: results}
 	ls.fsDevs = make(map[uint64]fsDev)

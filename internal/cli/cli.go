@@ -71,6 +71,13 @@ func (c CLIOptions) ToOptions() hardlinkable.Options {
 		o.IgnoreOwner = true
 		o.IgnoreXattr = true
 	}
+	// Verbosity level enables storing new and existing hardlink in Results
+	if o.Verbosity > 1 {
+		o.StoreNewLinkResults = true
+	}
+	if o.Verbosity > 2 {
+		o.StoreExistingLinkResults = true
+	}
 	return o
 }
 
