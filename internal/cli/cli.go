@@ -215,16 +215,16 @@ func CLIRun(dirs []string, files []string, co CLIOptions) {
 		results.OutputJSONResults()
 	} else {
 		// Print the selected results, with proper blank line seperators
-		results.OutputCurrentHardlinks()
+		results.OutputExistingLinks()
 		if len(results.ExistingLinks) > 0 && !co.StatsOutputDisabled {
 			fmt.Println("")
 		}
-		results.OutputLinkedPaths()
+		results.OutputNewLinks()
 		if len(results.LinkPaths) > 0 && !co.StatsOutputDisabled {
 			fmt.Println("")
 		}
 		if !co.StatsOutputDisabled {
-			results.OutputLinkingStats()
+			results.OutputRunStats()
 		}
 	}
 }

@@ -244,17 +244,17 @@ func (r *Results) foundExistingLink(srcP P.Pathsplit, dstP P.Pathsplit, size uin
 
 func (r *Results) OutputResults() {
 	if len(r.ExistingLinks) > 0 {
-		r.OutputCurrentHardlinks()
+		r.OutputExistingLinks()
 		fmt.Println("")
 	}
 	if len(r.LinkPaths) > 0 {
-		r.OutputLinkedPaths()
+		r.OutputNewLinks()
 		fmt.Println("")
 	}
-	r.OutputLinkingStats()
+	r.OutputRunStats()
 }
 
-func (r *Results) OutputCurrentHardlinks() {
+func (r *Results) OutputExistingLinks() {
 	if len(r.ExistingLinks) == 0 {
 		return
 	}
@@ -274,7 +274,7 @@ func (r *Results) OutputCurrentHardlinks() {
 	fmt.Println(strings.Join(s, "\n"))
 }
 
-func (r *Results) OutputLinkedPaths() {
+func (r *Results) OutputNewLinks() {
 	if len(r.LinkPaths) == 0 {
 		return
 	}
@@ -298,7 +298,7 @@ func (r *Results) OutputLinkedPaths() {
 	fmt.Println(strings.Join(s, "\n"))
 }
 
-func (r *Results) OutputLinkingStats() {
+func (r *Results) OutputRunStats() {
 	s := make([][]string, 0)
 	s = statStr(s, "Hard linking statistics")
 	s = statStr(s, "-----------------------")
