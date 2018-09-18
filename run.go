@@ -36,10 +36,7 @@ import (
 // space.  If stdout is a terminal/tty, a progress line is continually updated
 // as the directories and files are scanned.
 func RunWithProgress(dirs []string, files []string, opts Options) Results {
-	var ls *linkableState = newLinkableState()
-
-	ls.Options = opts.init()
-	ls.Results = newResults(ls.Options)
+	var ls *linkableState = newLinkableState(&opts)
 
 	if terminal.IsTerminal(int(os.Stdout.Fd())) {
 		ls.Progress = newTTYProgress(ls.Results, ls.Options)
@@ -53,10 +50,8 @@ func RunWithProgress(dirs []string, files []string, opts Options) Results {
 // Options, and outputs information on which files could be linked to save
 // space.
 func Run(dirs []string, files []string, opts Options) Results {
-	var ls *linkableState = newLinkableState()
+	var ls *linkableState = newLinkableState(&opts)
 
-	ls.Options = opts.init()
-	ls.Results = newResults(ls.Options)
 	ls.Progress = &disabledProgress{}
 
 	return runHelper(dirs, files, ls)
