@@ -33,6 +33,7 @@ import (
 type progress interface {
 	Show()
 	Clear()
+	Done()
 }
 
 // A simple progress meter while scanning directories and performing linking
@@ -44,7 +45,9 @@ type ttyProgress struct {
 	lastFPS        float64
 	bytesCompared  uint64
 
-	timer chan struct{}
+	timer     chan struct{}
+	done      chan struct{}
+	showsOver bool
 
 	results *Results
 	options *Options
@@ -62,6 +65,7 @@ func newTTYProgress(results *Results, options *Options) *ttyProgress {
 		updateDelay:    60 * time.Millisecond,
 		updateFPSDelay: 180 * time.Millisecond, // A slower rate for readability
 		timer:          make(chan struct{}),
+		done:           make(chan struct{}),
 		results:        results,
 		options:        options,
 	}
@@ -69,9 +73,10 @@ func newTTYProgress(results *Results, options *Options) *ttyProgress {
 	// Send a message after delaying, controlling progress update rate
 	go func() {
 		for {
+			defer close(p.timer)
 			time.Sleep(p.updateDelay)
 			select {
-			case <-p.timer:
+			case <-p.done:
 				return
 			default:
 				p.timer <- struct{}{}
@@ -90,8 +95,13 @@ func (p *ttyProgress) Show() {
 	// Return if our timer hasn't yet fired
 	select {
 	case <-p.timer:
-		// Do nothing
+		// updateDelay elapsed.  Continue func...
 	default:
+		return
+	}
+
+	// No more timer heartbeats will be coming
+	if p.showsOver {
 		return
 	}
 
@@ -131,10 +141,16 @@ func (p *ttyProgress) Show() {
 // Call to erase the progress loop (before 'normal' program post-processing
 // output)
 func (p *ttyProgress) Clear() {
-	defer close(p.timer)
 	p.line("\r")
 	p.lastLineLen = 0
 	p.line("\r")
+}
+
+// Done indicates that the use of the progress interface is over
+func (p *ttyProgress) Done() {
+	p.showsOver = true
+	close(p.done) // done
+	p.Clear()
 }
 
 // line outputs a string that is right-padded with enough space to overwrite
@@ -156,3 +172,4 @@ func (p *ttyProgress) line(s string) {
 
 func (p *disabledProgress) Show()  {}
 func (p *disabledProgress) Clear() {}
+func (p *disabledProgress) Done()  {}

@@ -21,7 +21,7 @@
 package hardlinkable
 
 import (
-	"fmt"
+	"log"
 	"path/filepath"
 	"regexp"
 
@@ -52,7 +52,7 @@ func matchedPathnames(s status, dirs []string, files []string) <-chan string {
 				},
 			})
 			if err != nil {
-				fmt.Println(err)
+				log.Printf("Couldn't walk \"%v\" dir: %v. Skipping...", dir, err)
 			}
 		}
 		// Also pass back some or all (depending on includes and

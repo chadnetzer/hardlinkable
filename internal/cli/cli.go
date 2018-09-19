@@ -25,6 +25,7 @@ import (
 	"flag"
 	"fmt"
 	"hardlinkable"
+	"log"
 	"math"
 	"os"
 	"strconv"
@@ -199,17 +200,24 @@ func separateArgs(args []string) (argPaths, error) {
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
 func CLIRun(dirs []string, files []string, co CLIOptions) {
 	var results hardlinkable.Results
+	var err error
 	if co.ProgressOutputDisabled {
-		results = hardlinkable.Run(dirs, files, co.ToOptions())
+		results, err = hardlinkable.Run(dirs, files, co.ToOptions())
 	} else {
-		results = hardlinkable.RunWithProgress(dirs, files, co.ToOptions())
+		results, err = hardlinkable.RunWithProgress(dirs, files, co.ToOptions())
+	}
+	if err != nil {
+		log.Printf("%v", err)
+	}
+	if err != nil || !results.RunSuccessful {
+		fmt.Println("Directory walk was stopped early.  Result output may be incomplete...")
 	}
 
 	if co.JSONOutputEnabled {
