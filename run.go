@@ -36,7 +36,7 @@ import (
 // the given Options, and outputs information on which files could be linked to
 // save space.  If stdout is a terminal/tty, a progress line is continually
 // updated as the directories and files are scanned.
-func RunWithProgress(dirs []string, files []string, opts Options) Results {
+func RunWithProgress(dirs []string, files []string, opts Options) (Results, error) {
 	var ls *linkableState = newLinkableState(&opts)
 
 	if terminal.IsTerminal(int(os.Stdout.Fd())) {
@@ -44,23 +44,26 @@ func RunWithProgress(dirs []string, files []string, opts Options) Results {
 	} else {
 		ls.Progress = &disabledProgress{}
 	}
-	return runHelper(dirs, files, ls)
+
+	err := runHelper(dirs, files, ls)
+	return *ls.Results, err
 }
 
 // Run performs a scan of the supplied directories and files, with the given
 // Options, and outputs information on which files could be linked to save
 // space.
-func Run(dirs []string, files []string, opts Options) Results {
+func Run(dirs []string, files []string, opts Options) (Results, error) {
 	var ls *linkableState = newLinkableState(&opts)
 
 	ls.Progress = &disabledProgress{}
 
-	return runHelper(dirs, files, ls)
+	err := runHelper(dirs, files, ls)
+	return *ls.Results, err
 }
 
 // runHelper is called by the public Run funcs, with an already initialized
 // options, to complete the scanning and result gathering.
-func runHelper(dirs []string, files []string, ls *linkableState) Results {
+func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	ls.Results.start()
 	defer ls.Results.end()
 	defer ls.Progress.Done()
@@ -112,5 +115,5 @@ func runHelper(dirs []string, files []string, ls *linkableState) Results {
 	}
 	ls.Results.runCompletedSuccessfully()
 
-	return *ls.Results
+	return nil
 }

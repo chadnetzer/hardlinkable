@@ -206,10 +206,11 @@ func Execute() {
 
 func CLIRun(dirs []string, files []string, co CLIOptions) {
 	var results hardlinkable.Results
+	var err error
 	if co.ProgressOutputDisabled {
-		results = hardlinkable.Run(dirs, files, co.ToOptions())
+		results, err = hardlinkable.Run(dirs, files, co.ToOptions())
 	} else {
-		results = hardlinkable.RunWithProgress(dirs, files, co.ToOptions())
+		results, err = hardlinkable.RunWithProgress(dirs, files, co.ToOptions())
 	}
 
 	if co.JSONOutputEnabled {
