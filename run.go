@@ -120,11 +120,13 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	}
 	ls.Results.fileAndDirectoryCount(numPaths, numDirs)
 
-	// Iterate over all the inode sorted links.  We discard each link pair
-	// (for now), since the links are stored in the Results type.
+	// Iterate over all the inode sorted links, to gather accurate linking
+	// statistics, and optionally link them if requested.
 	for _, fsdev := range ls.fsDevs {
 		for pair := range fsdev.SortedLinks() {
-			_ = pair
+			if ls.Options.LinkingEnabled {
+				fsdev.hardlinkFiles(pair.Src, pair.Dst)
+			}
 		}
 	}
 	ls.Results.runCompletedSuccessfully()
