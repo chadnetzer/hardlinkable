@@ -25,6 +25,7 @@ import (
 	"flag"
 	"fmt"
 	"hardlinkable"
+	"log"
 	"math"
 	"os"
 	"strconv"
@@ -211,6 +212,12 @@ func CLIRun(dirs []string, files []string, co CLIOptions) {
 		results, err = hardlinkable.Run(dirs, files, co.ToOptions())
 	} else {
 		results, err = hardlinkable.RunWithProgress(dirs, files, co.ToOptions())
+	}
+	if err != nil {
+		log.Printf("%v", err)
+	}
+	if err != nil || !results.RunSuccessful {
+		fmt.Println("Directory walk was stopped early.  Result output may be incomplete...")
 	}
 
 	if co.JSONOutputEnabled {
