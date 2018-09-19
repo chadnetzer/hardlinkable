@@ -50,15 +50,20 @@ func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
 	if dstTime.After(src.MTime()) {
 		err := os.Chtimes(src.Pathsplit.Join(), dstTime, dstTime)
 		if err != nil {
-			// Ignore failure if we can't chown the inode
-			os.Chown(src.Pathsplit.Join(), int(src.Uid), int(src.Gid))
-
-			// Keep our cached inode.Info time updated
-			si := fs.InoStatInfo[src.Ino]
-			si.Sec = dst.Sec
-			si.Nsec = dst.Nsec
-			fs.InoStatInfo[src.Ino] = si
+			// Ignore this error, and just return early, as we
+			// don't want to abort the Run().  Any error returned
+			// from this function is considered fatal.
+			return nil
 		}
+
+		// Ignore failure if we can't chown the inode
+		os.Chown(src.Pathsplit.Join(), int(src.Uid), int(src.Gid))
+
+		// Keep our cached inode.Info time updated
+		si := fs.InoStatInfo[src.Ino]
+		si.Sec = dst.Sec
+		si.Nsec = dst.Nsec
+		fs.InoStatInfo[src.Ino] = si
 	}
 	return nil
 }
