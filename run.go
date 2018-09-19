@@ -61,6 +61,9 @@ func Run(dirs []string, files []string, opts Options) Results {
 // options, to complete the scanning and result gathering.
 func runHelper(dirs []string, files []string, ls *linkableState) Results {
 	ls.Results.start()
+	defer ls.Results.end()
+	defer ls.Progress.Done()
+
 	c := matchedPathnames(ls.status, dirs, files)
 	for pathname := range c {
 		ls.Progress.Show()
@@ -105,7 +108,6 @@ func runHelper(dirs []string, files []string, ls *linkableState) Results {
 			_ = pair
 		}
 	}
-	ls.Results.end()
 
 	return *ls.Results
 }
