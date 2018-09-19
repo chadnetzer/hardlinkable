@@ -108,6 +108,7 @@ func runHelper(dirs []string, files []string, ls *linkableState) Results {
 			_ = pair
 		}
 	}
+	ls.Results.runCompletedSuccessfully()
 
 	return *ls.Results
 }
