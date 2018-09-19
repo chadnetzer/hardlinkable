@@ -25,6 +25,7 @@
 package hardlinkable
 
 import (
+	"fmt"
 	"hardlinkable/internal/inode"
 	"log"
 	"os"
@@ -65,6 +66,11 @@ func Run(dirs []string, files []string, opts Options) (Results, error) {
 // options, to complete the scanning and result gathering.
 func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	ls.Results.start()
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("Run stopped early: %v ", r)
+		}
+	}()
 	defer ls.Results.end()
 	defer ls.Progress.Done()
 
