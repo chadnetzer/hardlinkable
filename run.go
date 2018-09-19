@@ -26,6 +26,7 @@ package hardlinkable
 
 import (
 	"hardlinkable/internal/inode"
+	"log"
 	"os"
 
 	"golang.org/x/crypto/ssh/terminal"
@@ -69,6 +70,7 @@ func runHelper(dirs []string, files []string, ls *linkableState) Results {
 		ls.Progress.Show()
 		di, err := inode.LInfo(pathname)
 		if err != nil {
+			log.Printf("Couldn't stat(\"%v\"). Skipping...", pathname)
 			continue
 		}
 		if di.Size < ls.Options.MinFileSize {
