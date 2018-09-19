@@ -40,6 +40,10 @@ import (
 func RunWithProgress(dirs []string, files []string, opts Options) (Results, error) {
 	var ls *linkableState = newLinkableState(&opts)
 
+	if err := validateOptions(opts); err != nil {
+		return *ls.Results, err
+	}
+
 	if terminal.IsTerminal(int(os.Stdout.Fd())) {
 		ls.Progress = newTTYProgress(ls.Results, ls.Options)
 	} else {
@@ -55,6 +59,10 @@ func RunWithProgress(dirs []string, files []string, opts Options) (Results, erro
 // space.
 func Run(dirs []string, files []string, opts Options) (Results, error) {
 	var ls *linkableState = newLinkableState(&opts)
+
+	if err := validateOptions(opts); err != nil {
+		return *ls.Results, err
+	}
 
 	ls.Progress = &disabledProgress{}
 
@@ -121,5 +129,13 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	}
 	ls.Results.runCompletedSuccessfully()
 
+	return nil
+}
+
+func validateOptions(opts Options) error {
+	if opts.MaxFileSize > 0 && opts.MaxFileSize < opts.MinFileSize {
+		return fmt.Errorf("minFileSize (%v) cannot be larger than maxFileSize (%v)",
+			opts.MinFileSize, opts.MaxFileSize)
+	}
 	return nil
 }

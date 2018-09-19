@@ -245,6 +245,12 @@ func init() {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(2)
 			}
+			if co.CLIMaxFileSize.n > 0 && co.CLIMaxFileSize.n < co.CLIMinFileSize.n {
+				fmt.Fprintf(os.Stderr,
+					"min-size (%v) cannot be larger than max-size (%v)\n",
+					co.CLIMinFileSize.n, co.CLIMaxFileSize.n)
+				os.Exit(2)
+			}
 			CLIRun(argP.dirs, argP.files, co)
 		},
 	}
