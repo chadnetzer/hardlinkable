@@ -47,7 +47,6 @@ type RunStats struct {
 	NewLinkCount           int64  `json:"newLinkCount"`
 	PrevLinkedByteAmount   uint64 `json:"prevLinkedByteAmount"`
 	InodeRemovedByteAmount uint64 `json:"inodeRemovedByteAmount"`
-	RunSuccessful          bool   `json:"runSuccessful"`
 
 	// Some stats on files that compared equal, but which had some
 	// mismatching inode parameters.  This can be helpful for tuning the
@@ -88,6 +87,9 @@ type Results struct {
 	EndTime   time.Time `json:"endTime"`
 	RunTime   string    `json:"runTime"`
 	Opts      Options   `json:"options"`
+
+	// Set to true when Run() has completed successfully
+	RunSuccessful bool `json:"runSuccessful"`
 }
 
 func newResults(o *Options) *Results {
