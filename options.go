@@ -154,6 +154,11 @@ func LinkingEnabled(o *Options) {
 	o.LinkingEnabled = true
 }
 
+// LinkingDisabled forbids Run() from actually linking the files
+func LinkingDisabled(o *Options) {
+	o.LinkingEnabled = false
+}
+
 // MinFileSize sets the minimum size of files that can be linked
 func MinFileSize(size uint64) func(*Options) {
 	return func(o *Options) {
