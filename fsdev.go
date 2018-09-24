@@ -366,9 +366,8 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 			f.Results.addMismatchedGidBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
-		var err error
-		eq, err = I.EqualXAttrs(pi1.Join(), pi2.Join())
-		if err == nil && !eq {
+		eqX, err := I.EqualXAttrs(pi1.Join(), pi2.Join())
+		if err == nil && !eqX {
 			f.Results.addMismatchedXattrBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
