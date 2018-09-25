@@ -262,6 +262,9 @@ func simpleRun(name string, t *testing.T, opts Options, numLinkPaths int, dirs .
 	if err != nil {
 		t.Errorf("%v: Run() returned error: %v\n", name, err)
 	}
+	if !result.RunSuccessful {
+		t.Errorf("%v: Run() was not successful (aborted early)", name)
+	}
 	if len(result.LinkPaths) != numLinkPaths {
 		t.Errorf("%v: len(LinkPaths) expected %v:  got: %v\n", name, numLinkPaths, len(result.LinkPaths))
 	}
