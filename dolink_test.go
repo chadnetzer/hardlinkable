@@ -111,3 +111,79 @@ func TestDoLink(t *testing.T) {
 		t.Errorf("Linking ps1 and ps3 was expected to fail: %+v %+v", dsi11, dsi3)
 	}
 }
+
+func TestHasBeenModified(t *testing.T) {
+	topdir, err := ioutil.TempDir("", "hardlinkable")
+	if err != nil {
+		t.Fatalf("Couldn't create temp dir for %v tests: %v", topdir, err)
+	}
+	defer os.RemoveAll(topdir)
+
+	if os.Chdir(topdir) != nil {
+		t.Fatalf("Couldn't chdir to temp dir for %v tests", topdir)
+	}
+
+	// Create single byte file
+	filename := "f1"
+	if err := ioutil.WriteFile(filename, []byte{'X'}, 0644); err != nil {
+		t.Fatalf("Couldn't create test file '%v'", filename)
+	}
+
+	// Make PathInfo for created file
+	dsi, err := I.LInfo(filename)
+	if err != nil {
+		t.Fatalf("Couldn't stat test file '%v'", filename)
+	}
+	p := P.Pathsplit{".", filename}
+	pi := I.PathInfo{p, dsi.StatInfo}
+
+	// Change Dev so that hasBeenModified() returns true
+	if !hasBeenModified(pi, dsi.Dev+1) {
+		t.Errorf("Failed to detect Dev modification to file: '%v'", filename)
+	}
+
+	// Change Ino on the PathInfo, so that hasBeenModified() returns true
+	newPI := pi
+	newPI.Ino += 1
+	if !hasBeenModified(newPI, dsi.Dev) {
+		t.Errorf("Failed to detect Ino modification to file: '%v'", filename)
+	}
+
+	// Change PathInfo time, so that hasBeenModified() returns true
+	newPI = pi
+	newPI.Sec -= 86400
+	if !hasBeenModified(newPI, dsi.Dev) {
+		t.Errorf("Failed to detect Sec time modification to file: '%v'", filename)
+	}
+	newPI = pi
+	newPI.Nsec = pi.Nsec*2 + 1
+	if !hasBeenModified(newPI, dsi.Dev) {
+		t.Errorf("Failed to detect Nsec time modification to file: '%v'", filename)
+	}
+
+	// Change PathInfo ownership, so that hasBeenModified() returns true
+	newPI = pi
+	newPI.Uid += 1
+	if !hasBeenModified(newPI, dsi.Dev) {
+		t.Errorf("Failed to detect UID modification to file: '%v'", filename)
+	}
+	newPI = pi
+	newPI.Gid += 1
+	if !hasBeenModified(newPI, dsi.Dev) {
+		t.Errorf("Failed to detect GID modification to file: '%v'", filename)
+	}
+
+	// Change PathInfo ownership, so that hasBeenModified() returns true
+	newPI = pi
+	newPI.Mode ^= 1
+	if !hasBeenModified(newPI, dsi.Dev) {
+		t.Errorf("Failed to detect Mode modification to file: '%v'", filename)
+	}
+
+	// Change PathInfo Size, so that hasBeenModified() returns true
+	newPI = pi
+	newPI.Size *= 2
+	if !hasBeenModified(newPI, dsi.Dev) {
+		t.Errorf("Failed to detect Size modification to file: '%v'", filename)
+	}
+}
