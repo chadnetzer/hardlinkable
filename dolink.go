@@ -80,6 +80,7 @@ func hasBeenModified(pi I.PathInfo, dev uint64) bool {
 
 	if newDSI.Dev != dev ||
 		newDSI.Ino != pi.Ino ||
+		newDSI.Nlink != pi.Nlink ||
 		newDSI.Size != pi.Size ||
 		newDSI.Sec != pi.Sec ||
 		newDSI.Nsec != pi.Nsec ||

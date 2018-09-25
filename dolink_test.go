@@ -149,6 +149,13 @@ func TestHasBeenModified(t *testing.T) {
 		t.Errorf("Failed to detect Ino modification to file: '%v'", filename)
 	}
 
+	// Change Nlink on the PathInfo, so that hasBeenModified() returns true
+	newPI = pi
+	newPI.Nlink += 1
+	if !hasBeenModified(newPI, dsi.Dev) {
+		t.Errorf("Failed to detect Nlink modification to file: '%v'", filename)
+	}
+
 	// Change PathInfo time, so that hasBeenModified() returns true
 	newPI = pi
 	newPI.Sec -= 86400
