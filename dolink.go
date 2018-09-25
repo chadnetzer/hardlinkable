@@ -23,7 +23,9 @@ package hardlinkable
 import (
 	"fmt"
 	I "hardlinkable/internal/inode"
+	"math/rand"
 	"os"
+	"strconv"
 )
 
 func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
@@ -36,7 +38,9 @@ func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
 		return fmt.Errorf("Detected modified file before linking: %v", dst.Pathsplit.Join())
 	}
 
-	tmpName := dst.Pathsplit.Join() + ".tmp_while_linking"
+	// Add some randomness to the tmpName to minimize chances of collisions
+	// with deliberately targeted matching names
+	tmpName := dst.Pathsplit.Join() + ".tmp" + strconv.FormatUint(rand.Uint64(), 36)
 	if err := os.Link(src.Pathsplit.Join(), tmpName); err != nil {
 		return err
 	}
