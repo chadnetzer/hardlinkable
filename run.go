@@ -124,12 +124,6 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	// statistics, and optionally link them if requested.
 	for _, fsdev := range ls.fsDevs {
 		for pair := range fsdev.SortedLinks() {
-			if ls.Options.LinkingEnabled {
-				err := fsdev.hardlinkFiles(pair.Src, pair.Dst)
-				if err != nil {
-					return err
-				}
-			}
 		}
 	}
 	ls.Results.runCompletedSuccessfully()

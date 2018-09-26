@@ -80,7 +80,7 @@ func (f *fsDev) SortedLinks() <-chan I.PathInfoPair {
 	return out
 }
 
-func (f *fsDev) sendLinkedPairs(sortedInos []I.Ino, out chan<- I.PathInfoPair) {
+func (f *fsDev) sendLinkedPairs(sortedInos []I.Ino, out chan<- I.PathInfoPair) error {
 	remainingInos := make([]I.Ino, 0)
 
 	for len(sortedInos) > 0 || len(remainingInos) > 0 {
@@ -131,6 +131,13 @@ func (f *fsDev) sendLinkedPairs(sortedInos []I.Ino, out chan<- I.PathInfoPair) {
 
 				f.Results.foundNewLink(srcPath, dstPath)
 
+				if f.Options.LinkingEnabled {
+					linkingErr := f.hardlinkFiles(srcPathInfo, dstPathInfo)
+					if linkingErr != nil {
+						return linkingErr
+					}
+				}
+
 				// Update StatInfo information for inodes
 				srcSI.Nlink += 1
 				dstSI.Nlink -= 1
@@ -150,4 +157,5 @@ func (f *fsDev) sendLinkedPairs(sortedInos []I.Ino, out chan<- I.PathInfoPair) {
 			}
 		}
 	}
+	return nil
 }
