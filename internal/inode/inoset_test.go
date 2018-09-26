@@ -183,7 +183,7 @@ func TestSetAsSlice(t *testing.T) {
 	}
 }
 
-func TestLinkedInoSet(t *testing.T) {
+func TestLinkedInoSets(t *testing.T) {
 	l := make(LinkedInoSets)
 
 	// Test when no linkable inos have been added yet
@@ -228,6 +228,48 @@ func TestLinkedInoSet(t *testing.T) {
 		}
 		if !s.HasAll(v.has...) {
 			t.Errorf("Expected InoSet to be : %v, got: %v", v.has, s.AsSlice())
+		}
+	}
+
+	// Simple test (for now) of All() iteration over final sets
+	i := 0
+	for v := range l.All() {
+		if len(v) != 9 {
+			t.Errorf("Expected InoSet %v len to be: %v, got: %v", v, 9, len(v))
+		}
+		i++
+	}
+	if i != 1 {
+		t.Errorf("Expected %v InoSets for All(), got: %v", 1, i)
+	}
+
+	// Table test for number of sets returned by All()
+	var tests2 = []struct {
+		pairs   [2]uint64
+		numSets int
+	}{
+		// A pair of linked inos
+		{[2]uint64{1, 2}, 1},
+
+		// Another group of linked inos
+		{[2]uint64{3, 4}, 2},
+		{[2]uint64{3, 5}, 2},
+
+		// Link the two separate groups
+		{[2]uint64{2, 3}, 1},
+	}
+
+	// Simple test that All() returns correct number of sets (ignoring contents)
+	// (Content tests for Contains() above should be sufficient)
+	l = make(LinkedInoSets)
+	for _, v := range tests2 {
+		l.Add(v.pairs[0], v.pairs[1])
+		i := 0
+		for range l.All() {
+			i++
+		}
+		if i != v.numSets {
+			t.Errorf("Expected %v InoSets for All(), got: %v", v.numSets, i)
 		}
 	}
 }
