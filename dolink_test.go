@@ -70,8 +70,8 @@ func TestDoLink(t *testing.T) {
 	}
 
 	fs.Dev = dsi1.Dev
-	fs.InoStatInfo[dsi1.Ino] = dsi1.StatInfo
-	fs.InoStatInfo[dsi2.Ino] = dsi2.StatInfo
+	fs.InoStatInfo[dsi1.Ino] = &dsi1.StatInfo
+	fs.InoStatInfo[dsi2.Ino] = &dsi2.StatInfo
 
 	ps1 := I.PathInfo{P.Split(f1.Name(), nil), dsi1.StatInfo}
 	ps2 := I.PathInfo{P.Split(f2.Name(), nil), dsi2.StatInfo}
@@ -103,7 +103,7 @@ func TestDoLink(t *testing.T) {
 	// Deliberately create a mismatch between the file's stat info, and the
 	// stored stat info
 	dsi3.StatInfo.Sec -= 999
-	fs.InoStatInfo[dsi3.Ino] = dsi3.StatInfo
+	fs.InoStatInfo[dsi3.Ino] = &dsi3.StatInfo
 	ps3 := I.PathInfo{P.Split(f3.Name(), nil), dsi3.StatInfo}
 
 	err = fs.hardlinkFiles(ps1, ps3)

@@ -67,7 +67,6 @@ func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
 		si := fs.InoStatInfo[src.Ino]
 		si.Sec = dst.Sec
 		si.Nsec = dst.Nsec
-		fs.InoStatInfo[src.Ino] = si
 	}
 	return nil
 }

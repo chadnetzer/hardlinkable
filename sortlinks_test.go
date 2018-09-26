@@ -41,7 +41,7 @@ func InoSeqFromSet(set I.Set) []I.Ino {
 }
 
 func setupInoStatInfo(fsdev *fsDev, inoSet I.Set) {
-	fsdev.InoStatInfo = make(map[I.Ino]I.StatInfo)
+	fsdev.InoStatInfo = make(map[I.Ino]*I.StatInfo)
 	for ino, _ := range inoSet {
 		// Using any old StatInfo is fine
 		di, _ := I.LInfo(".")
@@ -49,7 +49,7 @@ func setupInoStatInfo(fsdev *fsDev, inoSet I.Set) {
 		// sorted also (for easier testing of []I.Ino result)
 		di.Nlink = uint32(ino)*2 + 100
 		di.Ino = uint64(ino)
-		fsdev.InoStatInfo[I.Ino(ino)] = di.StatInfo
+		fsdev.InoStatInfo[I.Ino(ino)] = &di.StatInfo
 	}
 }
 

@@ -124,8 +124,8 @@ func (f *fsDev) sendLinkedPairs(sortedInos []I.Ino, out chan<- I.PathInfoPair) {
 				} else {
 					srcPath = f.ArbitraryPath(srcIno)
 				}
-				srcPathInfo := I.PathInfo{Pathsplit: srcPath, StatInfo: srcSI}
-				dstPathInfo := I.PathInfo{Pathsplit: dstPath, StatInfo: dstSI}
+				srcPathInfo := I.PathInfo{Pathsplit: srcPath, StatInfo: *srcSI}
+				dstPathInfo := I.PathInfo{Pathsplit: dstPath, StatInfo: *dstSI}
 
 				out <- I.PathInfoPair{Src: srcPathInfo, Dst: dstPathInfo}
 
@@ -134,12 +134,9 @@ func (f *fsDev) sendLinkedPairs(sortedInos []I.Ino, out chan<- I.PathInfoPair) {
 				// Update StatInfo information for inodes
 				srcSI.Nlink += 1
 				dstSI.Nlink -= 1
-				f.InoStatInfo[srcIno] = srcSI
 				if dstSI.Nlink == 0 {
 					f.Results.foundRemovedInode(dstSI.Size)
 					delete(f.InoStatInfo, dstIno)
-				} else {
-					f.InoStatInfo[dstIno] = dstSI
 				}
 				f.moveLinkedPath(dstPath, srcIno, dstIno)
 			}

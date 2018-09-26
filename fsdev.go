@@ -33,7 +33,7 @@ type fsDev struct {
 	Dev            uint64
 	MaxNLinks      uint64
 	InoHashes      map[hashVal]I.Set
-	InoStatInfo    map[I.Ino]I.StatInfo
+	InoStatInfo    map[I.Ino]*I.StatInfo
 	InoPaths       map[I.Ino]*filenamePaths
 	LinkedInos     map[I.Ino]I.Set
 	DigestIno      map[digestVal]I.Set
@@ -50,7 +50,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 		Dev:            dev,
 		MaxNLinks:      maxNLinks,
 		InoHashes:      make(map[hashVal]I.Set),
-		InoStatInfo:    make(map[I.Ino]I.StatInfo),
+		InoStatInfo:    make(map[I.Ino]*I.StatInfo),
 		InoPaths:       make(map[I.Ino]*filenamePaths),
 		LinkedInos:     make(map[I.Ino]I.Set),
 		DigestIno:      make(map[digestVal]I.Set),
@@ -135,12 +135,12 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 				f.Results.noHashMatch()
 				inoSet := f.InoHashes[H]
 				inoSet.Add(ino)
-				f.InoStatInfo[ino] = di.StatInfo
+				f.InoStatInfo[ino] = &di.StatInfo
 			}
 		}
 	}
 	// Remember Inode and filename/path information for each seen file
-	f.InoStatInfo[ino] = di.StatInfo
+	f.InoStatInfo[ino] = &di.StatInfo
 	f.InoAppendPathname(ino, curPath)
 }
 
@@ -274,7 +274,7 @@ func (f *fsDev) InoAppendPathname(ino I.Ino, path P.Pathsplit) {
 func (f *fsDev) PathInfoFromIno(ino I.Ino) I.PathInfo {
 	path := f.ArbitraryPath(ino)
 	fi := f.InoStatInfo[ino]
-	return I.PathInfo{Pathsplit: path, StatInfo: fi}
+	return I.PathInfo{Pathsplit: path, StatInfo: *fi}
 }
 
 func (f *fsDev) allInoPaths(ino I.Ino) <-chan P.Pathsplit {
