@@ -123,7 +123,8 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	// Iterate over all the inode sorted links, to gather accurate linking
 	// statistics, and optionally link them if requested.
 	for _, fsdev := range ls.fsDevs {
-		for pair := range fsdev.SortedLinks() {
+		if err := fsdev.generateLinks(); err != nil {
+			return err
 		}
 	}
 	ls.Results.runCompletedSuccessfully()

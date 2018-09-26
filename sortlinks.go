@@ -66,21 +66,19 @@ func appendReversedInos(toS []I.Ino, fromS ...I.Ino) []I.Ino {
 	return append(toS, fromS...)
 }
 
-func (f *fsDev) SortedLinks() <-chan I.PathInfoPair {
-	out := make(chan I.PathInfoPair)
-	go func() {
-		defer close(out)
-		c := f.linkedInoSets()
-		for linkableSet := range c {
-			// Sort links highest nlink to lowest
-			sortedInos := f.sortSetByNlink(linkableSet)
-			f.sendLinkedPairs(sortedInos, out)
+func (f *fsDev) generateLinks() error {
+	c := f.linkedInoSets()
+	for linkableSet := range c {
+		// Sort links highest nlink to lowest
+		sortedInos := f.sortSetByNlink(linkableSet)
+		if err := f.genLinksHelper(sortedInos); err != nil {
+			return err
 		}
-	}()
-	return out
+	}
+	return nil
 }
 
-func (f *fsDev) sendLinkedPairs(sortedInos []I.Ino, out chan<- I.PathInfoPair) error {
+func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 	remainingInos := make([]I.Ino, 0)
 
 	for len(sortedInos) > 0 || len(remainingInos) > 0 {
@@ -126,8 +124,6 @@ func (f *fsDev) sendLinkedPairs(sortedInos []I.Ino, out chan<- I.PathInfoPair) e
 				}
 				srcPathInfo := I.PathInfo{Pathsplit: srcPath, StatInfo: *srcSI}
 				dstPathInfo := I.PathInfo{Pathsplit: dstPath, StatInfo: *dstSI}
-
-				out <- I.PathInfoPair{Src: srcPathInfo, Dst: dstPathInfo}
 
 				f.Results.foundNewLink(srcPath, dstPath)
 
