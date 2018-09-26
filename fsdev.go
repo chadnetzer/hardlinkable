@@ -34,7 +34,7 @@ type fsDev struct {
 	InoHashes      map[hashVal]I.Set
 	InoStatInfo    map[I.Ino]*I.StatInfo
 	InoPaths       map[I.Ino]*filenamePaths
-	LinkedInos     map[I.Ino]I.Set
+	LinkedInos     I.LinkedInoSets
 	DigestIno      map[digestVal]I.Set
 	InosWithDigest I.Set
 	pool           P.StringPool
@@ -51,7 +51,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 		InoHashes:      make(map[hashVal]I.Set),
 		InoStatInfo:    make(map[I.Ino]*I.StatInfo),
 		InoPaths:       make(map[I.Ino]*filenamePaths),
-		LinkedInos:     make(map[I.Ino]I.Set),
+		LinkedInos:     make(I.LinkedInoSets),
 		DigestIno:      make(map[digestVal]I.Set),
 		InosWithDigest: I.NewSet(),
 		pool:           P.NewPool(),
@@ -109,9 +109,9 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 		// See if this inode is already one we've determined can be
 		// linked to another one, in which case we can avoid repeating
 		// the work of linking it again.
-		linkedInos := f.linkedInoSet(ino)
-		hashedInos := f.InoHashes[H]
-		linkedHashedInos := linkedInos.Intersection(hashedInos)
+		li := f.LinkedInos.Containing(ino)
+		hi := f.InoHashes[H]
+		linkedHashedInos := li.Intersection(hi)
 		foundLinkedHashedInos := len(linkedHashedInos) > 0
 		if !foundLinkedHashedInos {
 			// Get a list of previously seen inodes that may be linkable
@@ -124,7 +124,7 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 				f.Results.incInoSeqIterations()
 				cachedPathStat := f.PathInfoFromIno(cachedIno)
 				if f.areFilesLinkable(cachedPathStat, curPathStat, useDigest) {
-					f.addLinkableInos(cachedPathStat.Ino, ino)
+					f.LinkedInos.Add(cachedPathStat.Ino, ino)
 					foundLinkable = true
 					break
 				}
