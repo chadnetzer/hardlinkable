@@ -60,13 +60,17 @@ func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
 			return nil
 		}
 
-		// Ignore failure if we can't chown the inode
-		os.Chown(src.Pathsplit.Join(), int(src.Uid), int(src.Gid))
-
-		// Keep our cached inode.Info time updated
+		// Keep cached inode.StatInfo time updated
 		si := fs.InoStatInfo[src.Ino]
 		si.Sec = dst.Sec
 		si.Nsec = dst.Nsec
+
+		err = os.Lchown(src.Pathsplit.Join(), int(src.Uid), int(src.Gid))
+		if err == nil {
+			// Chown succeeded, so update the cached stat structures
+			si.Uid = dst.Uid
+			si.Gid = dst.Gid
+		}
 	}
 	return nil
 }
