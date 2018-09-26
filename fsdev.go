@@ -135,7 +135,6 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 				f.Results.noHashMatch()
 				inoSet := f.InoHashes[H]
 				inoSet.Add(ino)
-				f.InoStatInfo[ino] = &di.StatInfo
 			}
 		}
 	}
