@@ -118,7 +118,7 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 			// Get a list of previously seen inodes that may be linkable
 			cachedSeq, useDigest := f.cachedInos(H, curPathStat)
 
-			// Search the list of potential inode, looking for a match
+			// Search the list of potential inodes, looking for a match
 			f.Results.searchedInoSeq()
 			foundLinkable := false
 			for _, cachedIno := range cachedSeq {
@@ -177,6 +177,9 @@ func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
 	return cachedSeq, useDigest
 }
 
+// linkedInoSetHelper is used by linkedInoSet and linkedInoSets to iterate over
+// the LinkedInos map to return a connected set of inodes (ie. inodes that the
+// hardlinkable algorithm has determined can all be linked together.
 func (f *fsDev) linkedInoSetHelper(ino I.Ino, seen I.Set) I.Set {
 	results := I.NewSet(ino)
 	pending := I.NewSet(ino)
@@ -204,6 +207,10 @@ func (f *fsDev) linkedInoSetHelper(ino I.Ino, seen I.Set) I.Set {
 	return results
 }
 
+// linkedInoSet calls linkedInoSetHelper to return a single set of linked
+// inodes containing the given 'ino'.  Linked inodes are those determined by
+// the algorithm to have been able to be hard linked together (ie. have
+// identical contents, and compatible inode parameters)
 func (f *fsDev) linkedInoSet(ino I.Ino) I.Set {
 	if _, ok := f.LinkedInos[ino]; !ok {
 		return I.NewSet(ino)
