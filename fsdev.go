@@ -103,9 +103,9 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 			if f.haveSeenPath(ino, curPath) {
 				return
 			}
-			prevPath := f.ArbitraryPath(ino)
-			prevStatinfo := f.InoStatInfo[ino]
-			f.Results.foundExistingLink(prevPath, curPath, prevStatinfo.Size)
+			seenPath := f.ArbitraryPath(ino)
+			seenSize := f.InoStatInfo[ino].Size
+			f.Results.foundExistingLink(seenPath, curPath, seenSize)
 		}
 		// See if this inode is already one we've determined can be
 		// linked to another one, in which case we can avoid repeating
