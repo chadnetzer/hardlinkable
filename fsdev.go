@@ -156,10 +156,10 @@ func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
 			// are definitely not a match because their digests do not match with the
 			// current inode.  We also put the inodes with equal digests before those
 			// that have no digest yet, in hopes of more quickly finding an identical file.
-			f.addPathStatDigest(ps, digest)
 			f.Results.computedDigest()
+			f.inoDigests.add(ps, digest)
 			noDigests := cachedSet.Difference(f.InosWithDigest)
-			sameDigests := cachedSet.Intersection(f.DigestIno[digest])
+			sameDigests := cachedSet.Intersection(f.inoDigests.getInos(digest))
 			differentDigests := cachedSet.Difference(sameDigests).Difference(noDigests)
 			cachedSeq = append(sameDigests.AsSlice(), noDigests.AsSlice()...)
 
