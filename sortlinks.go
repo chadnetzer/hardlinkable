@@ -43,7 +43,7 @@ func (f *fsDev) sortSetByNlink(inoSet I.Set) []I.Ino {
 	seq := make(byNlink, len(inoSet))
 	i := 0
 	for ino, _ := range inoSet {
-		nlink := f.InoStatInfo[ino].Nlink
+		nlink := f.inoStatInfo[ino].Nlink
 		seq[i] = inoNlink{Ino: ino, Nlink: nlink}
 		i++
 	}
@@ -93,8 +93,8 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 		for len(sortedInos) > 0 {
 			dstIno := sortedInos[len(sortedInos)-1]
 			sortedInos = sortedInos[:len(sortedInos)-1]
-			srcSI := f.InoStatInfo[srcIno]
-			dstSI := f.InoStatInfo[dstIno]
+			srcSI := f.inoStatInfo[srcIno]
+			dstSI := f.inoStatInfo[dstIno]
 
 			// Check if max NLinks would be exceeded if
 			// these two inodes are fully linked
@@ -138,7 +138,7 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 				dstSI.Nlink -= 1
 				if dstSI.Nlink == 0 {
 					f.Results.foundRemovedInode(dstSI.Size)
-					delete(f.InoStatInfo, dstIno)
+					delete(f.inoStatInfo, dstIno)
 				}
 				f.InoPaths.MovePath(dstPath, srcIno, dstIno)
 			}

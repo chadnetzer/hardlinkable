@@ -61,7 +61,7 @@ func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
 		}
 
 		// Keep cached inode.StatInfo time updated
-		si := fs.InoStatInfo[src.Ino]
+		si := fs.inoStatInfo[src.Ino]
 		si.Sec = dst.Sec
 		si.Nsec = dst.Nsec
 
