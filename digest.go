@@ -21,11 +21,56 @@
 package hardlinkable
 
 import (
+	I "hardlinkable/internal/inode"
 	"hash/fnv"
 	"os"
 )
 
 type digestVal uint32
+
+type inoDigests struct {
+	InoSets        map[digestVal]I.Set
+	InosWithDigest I.Set
+}
+
+func newInoDigests() inoDigests {
+	return inoDigests{
+		InoSets:        make(map[digestVal]I.Set),
+		InosWithDigest: I.NewSet(),
+	}
+}
+
+func (id *inoDigests) getInos(d digestVal) I.Set {
+	return id.InoSets[d]
+}
+
+func (id *inoDigests) add(pi I.PathInfo, digest digestVal) {
+	if !id.InosWithDigest.Has(pi.Ino) {
+		digestHelper(id, pi, digest)
+	}
+}
+
+func (id *inoDigests) newDigest(pi I.PathInfo) error {
+	var err error
+	if !id.InosWithDigest.Has(pi.Ino) {
+		pathname := pi.Pathsplit.Join()
+		digest, err := contentDigest(pathname)
+		if err == nil {
+			digestHelper(id, pi, digest)
+		}
+	}
+	return err
+}
+
+func digestHelper(id *inoDigests, pi I.PathInfo, digest digestVal) {
+	if _, ok := id.InoSets[digest]; !ok {
+		id.InoSets[digest] = I.NewSet(pi.Ino)
+	} else {
+		set := id.InoSets[digest]
+		set.Add(pi.Ino)
+	}
+	id.InosWithDigest.Add(pi.Ino)
+}
 
 // Return a short digest of the first part of the given pathname, to help
 // determine if two files are definitely not equivalent, without doing a full

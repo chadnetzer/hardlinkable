@@ -35,8 +35,7 @@ type fsDev struct {
 	InoStatInfo    map[I.Ino]*I.StatInfo
 	InoPaths       I.PathsMap
 	LinkedInos     I.LinkedInoSets
-	DigestIno      map[digestVal]I.Set
-	InosWithDigest I.Set
+	inoDigests
 	pool           P.StringPool
 
 	// For each directory name, keep track of all the StatInfo structures
@@ -52,8 +51,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 		InoStatInfo:    make(map[I.Ino]*I.StatInfo),
 		InoPaths:       make(I.PathsMap),
 		LinkedInos:     make(I.LinkedInoSets),
-		DigestIno:      make(map[digestVal]I.Set),
-		InosWithDigest: I.NewSet(),
+		inoDigests:     newInoDigests(),
 		pool:           P.NewPool(),
 	}
 
@@ -245,30 +243,4 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 		}
 	}
 	return eq
-}
-
-func (f *fsDev) addPathStatDigest(pi I.PathInfo, digest digestVal) {
-	if !f.InosWithDigest.Has(pi.Ino) {
-		f.helperPathStatDigest(pi, digest)
-	}
-}
-
-func (f *fsDev) newPathStatDigest(pi I.PathInfo) {
-	if !f.InosWithDigest.Has(pi.Ino) {
-		pathname := pi.Pathsplit.Join()
-		digest, err := contentDigest(f.Results, pathname)
-		if err == nil {
-			f.helperPathStatDigest(pi, digest)
-		}
-	}
-}
-
-func (f *fsDev) helperPathStatDigest(pi I.PathInfo, digest digestVal) {
-	if _, ok := f.DigestIno[digest]; !ok {
-		f.DigestIno[digest] = I.NewSet(pi.Ino)
-	} else {
-		set := f.DigestIno[digest]
-		set.Add(pi.Ino)
-	}
-	f.InosWithDigest.Add(pi.Ino)
 }
