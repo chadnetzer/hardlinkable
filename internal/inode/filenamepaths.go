@@ -60,7 +60,7 @@ func (p pathsplitSet) clone() pathsplitSet {
 // different paths to an inode), and also holds an arbitrary pathname that can
 // be used for consistency (rather than a fully random one from the map)
 type FilenamePaths struct {
-	FPMap   map[string]pathsplitSet
+	FPMap   map[string]pathsplitSet // key = filename
 	arbPath P.Pathsplit
 }
 

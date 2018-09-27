@@ -104,7 +104,7 @@ func (ip PathsMap) MovePath(dstPath P.Pathsplit, srcIno Ino, dstIno Ino) {
 func (ip PathsMap) PathCount() (paths int64, dirs int64) {
 	var numPaths, numDirs int64
 
-	// Make a set for storing unique dirs
+	// Make a set for storing unique dirs (key = dirname)
 	dirMap := make(map[string]struct{})
 
 	// loop over all inos, getting FilenamePaths
