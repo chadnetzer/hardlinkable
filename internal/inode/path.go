@@ -66,16 +66,27 @@ func (ip PathsMap) AppendPath(ino Ino, path P.Pathsplit) {
 	fp.Add(path)
 }
 
+// AllPaths returns a channel that can be iterated over to sequentially access
+// all the paths for a given inode.
+//
+// Note - it does *not* make a copy of the maps being iterated over, so if a
+// not yet visited path is removed from the map it won't be sent over the
+// channel, and new paths added to the map may or may not be sent over the
+// channel. (ie. standard Go map semantics)
+//
+// Note that this method is used with MovePath, which does remove and add paths
+// to the same inner map.  But, this is okay since we are iterating over
+// destination paths, and it'll remove an already seen path from the
+// destination inode inner map (which won't affect the remaining destination
+// paths being sent over the channel), and add it to the src inode (which is a
+// different inode map entry).  So no clone of the filenamepaths maps are
+// needed.
 func (ip PathsMap) AllPaths(ino Ino) <-chan P.Pathsplit {
-	// Deepcopy the FilenamePaths map so that we can update the original
-	// while iterating over it's contents
-	fpClone := ip[ino].Copy()
-
 	// Iterate over the copy of the FilenamePaths, and return each pathname
 	out := make(chan P.Pathsplit)
 	go func() {
 		defer close(out)
-		for _, paths := range fpClone.PMap {
+		for _, paths := range ip[ino].PMap {
 			for path := range paths {
 				out <- path
 			}
