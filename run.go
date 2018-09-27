@@ -85,7 +85,7 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	c := matchedPathnames(ls.status, dirs, files)
 	for pathname := range c {
 		ls.Progress.Show()
-		di, err := inode.LInfo(pathname)
+		di, err := inode.LStatInfo(pathname)
 		if err != nil {
 			log.Printf("Couldn't stat(\"%v\"). Skipping...", pathname)
 			continue
