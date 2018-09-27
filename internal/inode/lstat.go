@@ -28,6 +28,7 @@ import (
 	"time"
 )
 
+type InoStatInfo map[Ino]*StatInfo
 type StatInfos map[string]StatInfo
 
 // os.FileInfo and syscall.Stat_t fields that we care about
@@ -53,7 +54,7 @@ func (s StatInfo) MTime() time.Time {
 	return time.Unix(int64(s.Sec), int64(s.Nsec))
 }
 
-func LInfo(pathname string) (DevStatInfo, error) {
+func LStatInfo(pathname string) (DevStatInfo, error) {
 	fi, err := os.Lstat(pathname)
 	if err != nil {
 		return DevStatInfo{}, err

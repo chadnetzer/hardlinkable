@@ -61,7 +61,7 @@ func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
 		}
 
 		// Keep cached inode.StatInfo time updated
-		si := fs.InoStatInfo[src.Ino]
+		si := fs.inoStatInfo[src.Ino]
 		si.Sec = dst.Sec
 		si.Nsec = dst.Nsec
 
@@ -76,7 +76,7 @@ func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
 }
 
 func hasBeenModified(pi I.PathInfo, dev uint64) bool {
-	newDSI, err := I.LInfo(pi.Pathsplit.Join())
+	newDSI, err := I.LStatInfo(pi.Pathsplit.Join())
 	if err != nil {
 		return true
 	}

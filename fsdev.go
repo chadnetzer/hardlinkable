@@ -30,7 +30,7 @@ type fsDev struct {
 	Dev         uint64
 	MaxNLinks   uint64
 	inoHashes   I.InoHashes
-	InoStatInfo map[I.Ino]*I.StatInfo
+	inoStatInfo I.InoStatInfo
 	InoPaths    I.PathsMap
 	LinkedInos  I.LinkedInoSets
 	I.InoDigests
@@ -46,7 +46,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 		Dev:         dev,
 		MaxNLinks:   maxNLinks,
 		inoHashes:   make(I.InoHashes),
-		InoStatInfo: make(map[I.Ino]*I.StatInfo),
+		inoStatInfo: make(I.InoStatInfo),
 		InoPaths:    make(I.PathsMap),
 		LinkedInos:  make(I.LinkedInoSets),
 		InoDigests:  I.NewInoDigests(),
@@ -62,7 +62,7 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 	curPathStat := I.PathInfo{Pathsplit: curPath, StatInfo: di.StatInfo}
 	ino := di.StatInfo.Ino
 
-	if _, ok := f.InoStatInfo[ino]; !ok {
+	if _, ok := f.inoStatInfo[ino]; !ok {
 		f.Results.foundInode(di.StatInfo.Nlink)
 	}
 
@@ -74,13 +74,13 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 	} else {
 		f.Results.foundHash()
 		// See if the new file is an inode we've seen before
-		if _, ok := f.InoStatInfo[ino]; ok {
+		if _, ok := f.inoStatInfo[ino]; ok {
 			// If it's a path we've seen before, ignore it
 			if f.InoPaths.HasPath(ino, curPath) {
 				return
 			}
 			seenPath := f.InoPaths.ArbitraryPath(ino)
-			seenSize := f.InoStatInfo[ino].Size
+			seenSize := f.inoStatInfo[ino].Size
 			f.Results.foundExistingLink(seenPath, curPath, seenSize)
 		}
 		// See if this inode is already one we've determined can be
@@ -115,7 +115,7 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 		}
 	}
 	// Remember Inode and filename/path information for each seen file
-	f.InoStatInfo[ino] = &di.StatInfo
+	f.inoStatInfo[ino] = &di.StatInfo
 	f.InoPaths.AppendPath(ino, curPath)
 }
 
@@ -155,7 +155,7 @@ func (f *fsDev) cachedInos(H I.Hash, ps I.PathInfo) ([]I.Ino, bool) {
 
 func (f *fsDev) PathInfoFromIno(ino I.Ino) I.PathInfo {
 	path := f.InoPaths.ArbitraryPath(ino)
-	fi := f.InoStatInfo[ino]
+	fi := f.inoStatInfo[ino]
 	return I.PathInfo{Pathsplit: path, StatInfo: *fi}
 }
 

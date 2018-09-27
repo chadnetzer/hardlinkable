@@ -55,14 +55,14 @@ func TestDoLink(t *testing.T) {
 	}
 	defer os.Remove(f2.Name())
 
-	dsi1, err := I.LInfo(f1.Name())
+	dsi1, err := I.LStatInfo(f1.Name())
 	if err != nil {
-		t.Fatalf("Couldn't run LInfo(f1.Name()): %v", err)
+		t.Fatalf("Couldn't run LStatInfo(f1.Name()): %v", err)
 	}
 
-	dsi2, err := I.LInfo(f2.Name())
+	dsi2, err := I.LStatInfo(f2.Name())
 	if err != nil {
-		t.Fatalf("Couldn't run LInfo(f2.Name()): %v", err)
+		t.Fatalf("Couldn't run LStatInfo(f2.Name()): %v", err)
 	}
 
 	if dsi1.Dev != dsi2.Dev {
@@ -70,8 +70,8 @@ func TestDoLink(t *testing.T) {
 	}
 
 	fs.Dev = dsi1.Dev
-	fs.InoStatInfo[dsi1.Ino] = &dsi1.StatInfo
-	fs.InoStatInfo[dsi2.Ino] = &dsi2.StatInfo
+	fs.inoStatInfo[dsi1.Ino] = &dsi1.StatInfo
+	fs.inoStatInfo[dsi2.Ino] = &dsi2.StatInfo
 
 	ps1 := I.PathInfo{P.Split(f1.Name(), nil), dsi1.StatInfo}
 	ps2 := I.PathInfo{P.Split(f2.Name(), nil), dsi2.StatInfo}
@@ -80,8 +80,8 @@ func TestDoLink(t *testing.T) {
 		t.Errorf("Linking ps1 and ps2 failed: %v %v", dsi1, dsi2)
 	}
 
-	dsi11, err := I.LInfo(f1.Name())
-	dsi12, err := I.LInfo(f1.Name())
+	dsi11, err := I.LStatInfo(f1.Name())
+	dsi12, err := I.LStatInfo(f1.Name())
 
 	if dsi11 != dsi12 {
 		t.Errorf("Linked path inodes are unequal: %+v %+v", dsi11, dsi12)
@@ -96,14 +96,14 @@ func TestDoLink(t *testing.T) {
 	}
 	defer os.Remove(f3.Name())
 
-	dsi3, err := I.LInfo(f3.Name())
+	dsi3, err := I.LStatInfo(f3.Name())
 	if err != nil {
-		t.Fatalf("Couldn't run LInfo(f3.Name()): %v", err)
+		t.Fatalf("Couldn't run LStatInfo(f3.Name()): %v", err)
 	}
 	// Deliberately create a mismatch between the file's stat info, and the
 	// stored stat info
 	dsi3.StatInfo.Sec -= 999
-	fs.InoStatInfo[dsi3.Ino] = &dsi3.StatInfo
+	fs.inoStatInfo[dsi3.Ino] = &dsi3.StatInfo
 	ps3 := I.PathInfo{P.Split(f3.Name(), nil), dsi3.StatInfo}
 
 	err = fs.hardlinkFiles(ps1, ps3)
@@ -130,7 +130,7 @@ func TestHasBeenModified(t *testing.T) {
 	}
 
 	// Make PathInfo for created file
-	dsi, err := I.LInfo(filename)
+	dsi, err := I.LStatInfo(filename)
 	if err != nil {
 		t.Fatalf("Couldn't stat test file '%v'", filename)
 	}
