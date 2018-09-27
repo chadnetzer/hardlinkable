@@ -30,7 +30,7 @@ type fsDev struct {
 	Dev         uint64
 	MaxNLinks   uint64
 	inoHashes   I.InoHashes
-	InoStatInfo map[I.Ino]*I.StatInfo
+	inoStatInfo I.InoStatInfo
 	InoPaths    I.PathsMap
 	LinkedInos  I.LinkedInoSets
 	I.InoDigests
@@ -46,7 +46,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 		Dev:         dev,
 		MaxNLinks:   maxNLinks,
 		inoHashes:   make(I.InoHashes),
-		InoStatInfo: make(map[I.Ino]*I.StatInfo),
+		inoStatInfo: make(I.InoStatInfo),
 		InoPaths:    make(I.PathsMap),
 		LinkedInos:  make(I.LinkedInoSets),
 		InoDigests:  I.NewInoDigests(),

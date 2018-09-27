@@ -28,6 +28,7 @@ import (
 	"time"
 )
 
+type InoStatInfo map[Ino]*StatInfo
 type StatInfos map[string]StatInfo
 
 // os.FileInfo and syscall.Stat_t fields that we care about
