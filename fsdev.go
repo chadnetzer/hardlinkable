@@ -33,7 +33,7 @@ type fsDev struct {
 	MaxNLinks      uint64
 	InoHashes      map[hashVal]I.Set
 	InoStatInfo    map[I.Ino]*I.StatInfo
-	InoPaths       map[I.Ino]*filenamePaths
+	InoPaths       I.PathsMap
 	LinkedInos     I.LinkedInoSets
 	DigestIno      map[digestVal]I.Set
 	InosWithDigest I.Set
@@ -50,7 +50,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 		MaxNLinks:      maxNLinks,
 		InoHashes:      make(map[hashVal]I.Set),
 		InoStatInfo:    make(map[I.Ino]*I.StatInfo),
-		InoPaths:       make(map[I.Ino]*filenamePaths),
+		InoPaths:       make(I.PathsMap),
 		LinkedInos:     make(I.LinkedInoSets),
 		DigestIno:      make(map[digestVal]I.Set),
 		InosWithDigest: I.NewSet(),
@@ -99,10 +99,10 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 		// See if the new file is an inode we've seen before
 		if _, ok := f.InoStatInfo[ino]; ok {
 			// If it's a path we've seen before, ignore it
-			if f.haveSeenPath(ino, curPath) {
+			if f.InoPaths.HasPath(ino, curPath) {
 				return
 			}
-			seenPath := f.ArbitraryPath(ino)
+			seenPath := f.InoPaths.ArbitraryPath(ino)
 			seenSize := f.InoStatInfo[ino].Size
 			f.Results.foundExistingLink(seenPath, curPath, seenSize)
 		}
@@ -139,7 +139,7 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 	}
 	// Remember Inode and filename/path information for each seen file
 	f.InoStatInfo[ino] = &di.StatInfo
-	f.InoAppendPathname(ino, curPath)
+	f.InoPaths.AppendPath(ino, curPath)
 }
 
 // possibleInos returns a slice of inos that can be searched for equal contents
@@ -175,54 +175,10 @@ func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
 	return cachedSeq, useDigest
 }
 
-func (f *fsDev) ArbitraryPath(ino I.Ino) P.Pathsplit {
-	// ino must exist in f.InoPaths.  If it does, there will be at least
-	// one pathname to return
-	fp := f.InoPaths[ino]
-	return fp.Any()
-}
-
-func (f *fsDev) ArbitraryFilenamePath(ino I.Ino, filename string) P.Pathsplit {
-	fp := f.InoPaths[ino]
-	return fp.AnyWithFilename(filename)
-}
-
-func (f *fsDev) haveSeenPath(ino I.Ino, path P.Pathsplit) bool {
-	fp := f.InoPaths[ino]
-	return fp.HasPath(path)
-}
-
-func (f *fsDev) InoAppendPathname(ino I.Ino, path P.Pathsplit) {
-	fp, ok := f.InoPaths[ino]
-	if !ok {
-		fp = newFilenamePaths()
-		f.InoPaths[ino] = fp
-	}
-	fp.Add(path)
-}
-
 func (f *fsDev) PathInfoFromIno(ino I.Ino) I.PathInfo {
-	path := f.ArbitraryPath(ino)
+	path := f.InoPaths.ArbitraryPath(ino)
 	fi := f.InoStatInfo[ino]
 	return I.PathInfo{Pathsplit: path, StatInfo: *fi}
-}
-
-func (f *fsDev) allInoPaths(ino I.Ino) <-chan P.Pathsplit {
-	// Deepcopy the FilenamePaths map so that we can update the original
-	// while iterating over it's contents
-	fpClone := f.InoPaths[ino].Copy()
-
-	// Iterate over the copy of the FilenamePaths, and return each pathname
-	out := make(chan P.Pathsplit)
-	go func() {
-		defer close(out)
-		for _, paths := range fpClone.PMap {
-			for path := range paths {
-				out <- path
-			}
-		}
-	}()
-	return out
 }
 
 func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool) bool {
@@ -291,17 +247,6 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 	return eq
 }
 
-func (f *fsDev) moveLinkedPath(dstPath P.Pathsplit, srcIno I.Ino, dstIno I.Ino) {
-	// Get pathnames slice matching Ino and filename
-	fp := f.InoPaths[dstIno]
-	fp.Remove(dstPath)
-
-	if fp.IsEmpty() {
-		delete(f.InoPaths, dstIno)
-	}
-	f.InoAppendPathname(srcIno, dstPath)
-}
-
 func (f *fsDev) addPathStatDigest(pi I.PathInfo, digest digestVal) {
 	if !f.InosWithDigest.Has(pi.Ino) {
 		f.helperPathStatDigest(pi, digest)
@@ -326,33 +271,4 @@ func (f *fsDev) helperPathStatDigest(pi I.PathInfo, digest digestVal) {
 		set.Add(pi.Ino)
 	}
 	f.InosWithDigest.Add(pi.Ino)
-}
-
-// PathCount returns the number of unique paths and dirs encountered after the
-// initial walk is completed.  This can give us an accurate count of the number
-// of inode nlinks we should encounter if all linked paths are included in the
-// walk.  Conversely, if we count the nlinks from all the encountered inodes,
-// and compare to the number of paths this function returns, we should have a
-// count of how many inode paths were not seen by the walk.
-func (f *fsDev) PathCount() (paths int64, dirs int64) {
-	var numPaths, numDirs int64
-
-	// Make a set for storing unique dirs
-	dirMap := make(map[string]struct{})
-
-	// loop over all inos, getting FilenamePaths
-	for _, fp := range f.InoPaths {
-		// loop over all filenames, getting paths
-		for _, paths := range fp.PMap {
-			// Loop over all paths
-			for p := range paths {
-				numPaths++
-				dirMap[p.Dirname] = struct{}{}
-			}
-		}
-		// Count the number of unique dirs and increment
-	}
-	numDirs = int64(len(dirMap))
-
-	return numPaths, numDirs
 }

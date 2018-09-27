@@ -106,7 +106,7 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 				break
 			}
 
-			dstPaths := f.allInoPaths(dstIno)
+			dstPaths := f.InoPaths.AllPaths(dstIno)
 			for dstPath := range dstPaths {
 				var srcPath P.Pathsplit
 				if f.Options.SameName {
@@ -117,9 +117,9 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 					if _, ok := srcPaths[dstFilename]; !ok {
 						continue
 					}
-					srcPath = f.ArbitraryFilenamePath(srcIno, dstFilename)
+					srcPath = f.InoPaths.ArbitraryFilenamePath(srcIno, dstFilename)
 				} else {
-					srcPath = f.ArbitraryPath(srcIno)
+					srcPath = f.InoPaths.ArbitraryPath(srcIno)
 				}
 				srcPathInfo := I.PathInfo{Pathsplit: srcPath, StatInfo: *srcSI}
 				dstPathInfo := I.PathInfo{Pathsplit: dstPath, StatInfo: *dstSI}
@@ -140,7 +140,7 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 					f.Results.foundRemovedInode(dstSI.Size)
 					delete(f.InoStatInfo, dstIno)
 				}
-				f.moveLinkedPath(dstPath, srcIno, dstIno)
+				f.InoPaths.MovePath(dstPath, srcIno, dstIno)
 			}
 			// With SameName option, it's possible that the dstIno nLinks will not go
 			// to zero (if not all links have a matching filename), so place on the
