@@ -53,6 +53,15 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 	return w
 }
 
+// For a given pathname, determine which inode it is linked to, and how that
+// inode relates to other walked inodes (ie. what are the existing inode links,
+// and whether the inode and file contents allow it to be linked to another
+// inode).
+//
+// This function is mainly concerned with how the inodes (and their contents)
+// relate to each other.  Determining which pathnames to move from inode to
+// inode (including those with the "same name" restriction), is done at a later
+// stage, after all the inode relationships are discovered.
 func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 	panicIf(f.Dev != di.Dev, "Mismatched Dev %d for %s\n", f.Dev, pathname)
 	curPath := P.Split(pathname, f.pool)
@@ -63,6 +72,9 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 		f.Results.foundInode(di.StatInfo.Nlink)
 	}
 
+	// Compute a "hash" from inode stat info, and store it if new.  If it's
+	// a previously seen inode hash, check to see if one of the previously
+	// seen inodes with that hash also has identical file contents.
 	H := I.HashIno(di.StatInfo, f.Options.IgnoreTime)
 	if _, ok := f.inoHashes[H]; !ok {
 		// Setup for a newly seen hash value
@@ -116,7 +128,9 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 	f.InoPaths.AppendPath(ino, curPath)
 }
 
-// possibleInos returns a slice of inos that can be searched for equal contents
+// cachedInos returns a slice of inos that can be searched for equal contents.
+// Also return true if searching by file content digests was enabled (triggered
+// by the length of the search list for the given hash exceeding a threshold).
 func (f *fsDev) cachedInos(H I.Hash, ps I.PathInfo) ([]I.Ino, bool) {
 	var cachedSeq []I.Ino
 	cachedSet := f.inoHashes[H]
@@ -150,12 +164,14 @@ func (f *fsDev) cachedInos(H I.Hash, ps I.PathInfo) ([]I.Ino, bool) {
 	return cachedSeq, useDigest
 }
 
+// Return a PathInfo for the given Ino, chosen from our stored path/stat data
 func (f *fsDev) PathInfoFromIno(ino I.Ino) I.PathInfo {
 	path := f.InoPaths.ArbitraryPath(ino)
 	fi := f.inoStatInfo[ino]
 	return I.PathInfo{Pathsplit: path, StatInfo: *fi}
 }
 
+// Return true if the files have compatible inode params and equal file content
 func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool) bool {
 	// Dev is equal for both PathInfos
 	if pi1.Ino == pi2.Ino {
@@ -190,6 +206,10 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 
 	f.Results.didComparison()
 	eq, _ := areFileContentsEqual(f.status, pi1.Join(), pi2.Join())
+
+	// If two equal files are found, determine if any of the ignored inode
+	// parameters would have precluded returning a true value, had they not
+	// been ignored (and record in the Results).
 	if eq {
 		f.Results.foundEqualFiles()
 
