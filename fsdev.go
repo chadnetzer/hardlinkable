@@ -33,7 +33,7 @@ type fsDev struct {
 	Dev            uint64
 	MaxNLinks      uint64
 	InoHashes      map[hashVal]I.Set
-	InoStatInfo    map[I.Ino]I.StatInfo
+	InoStatInfo    map[I.Ino]*I.StatInfo
 	InoPaths       map[I.Ino]*filenamePaths
 	LinkedInos     map[I.Ino]I.Set
 	DigestIno      map[digestVal]I.Set
@@ -50,7 +50,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 		Dev:            dev,
 		MaxNLinks:      maxNLinks,
 		InoHashes:      make(map[hashVal]I.Set),
-		InoStatInfo:    make(map[I.Ino]I.StatInfo),
+		InoStatInfo:    make(map[I.Ino]*I.StatInfo),
 		InoPaths:       make(map[I.Ino]*filenamePaths),
 		LinkedInos:     make(map[I.Ino]I.Set),
 		DigestIno:      make(map[digestVal]I.Set),
@@ -103,9 +103,9 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 			if f.haveSeenPath(ino, curPath) {
 				return
 			}
-			prevPath := f.ArbitraryPath(ino)
-			prevStatinfo := f.InoStatInfo[ino]
-			f.Results.foundExistingLink(prevPath, curPath, prevStatinfo.Size)
+			seenPath := f.ArbitraryPath(ino)
+			seenSize := f.InoStatInfo[ino].Size
+			f.Results.foundExistingLink(seenPath, curPath, seenSize)
 		}
 		// See if this inode is already one we've determined can be
 		// linked to another one, in which case we can avoid repeating
@@ -118,7 +118,7 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 			// Get a list of previously seen inodes that may be linkable
 			cachedSeq, useDigest := f.cachedInos(H, curPathStat)
 
-			// Search the list of potential inode, looking for a match
+			// Search the list of potential inodes, looking for a match
 			f.Results.searchedInoSeq()
 			foundLinkable := false
 			for _, cachedIno := range cachedSeq {
@@ -135,12 +135,11 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 				f.Results.noHashMatch()
 				inoSet := f.InoHashes[H]
 				inoSet.Add(ino)
-				f.InoStatInfo[ino] = di.StatInfo
 			}
 		}
 	}
 	// Remember Inode and filename/path information for each seen file
-	f.InoStatInfo[ino] = di.StatInfo
+	f.InoStatInfo[ino] = &di.StatInfo
 	f.InoAppendPathname(ino, curPath)
 }
 
@@ -177,6 +176,9 @@ func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
 	return cachedSeq, useDigest
 }
 
+// linkedInoSetHelper is used by linkedInoSet and linkedInoSets to iterate over
+// the LinkedInos map to return a connected set of inodes (ie. inodes that the
+// hardlinkable algorithm has determined can all be linked together.
 func (f *fsDev) linkedInoSetHelper(ino I.Ino, seen I.Set) I.Set {
 	results := I.NewSet(ino)
 	pending := I.NewSet(ino)
@@ -204,6 +206,10 @@ func (f *fsDev) linkedInoSetHelper(ino I.Ino, seen I.Set) I.Set {
 	return results
 }
 
+// linkedInoSet calls linkedInoSetHelper to return a single set of linked
+// inodes containing the given 'ino'.  Linked inodes are those determined by
+// the algorithm to have been able to be hard linked together (ie. have
+// identical contents, and compatible inode parameters)
 func (f *fsDev) linkedInoSet(ino I.Ino) I.Set {
 	if _, ok := f.LinkedInos[ino]; !ok {
 		return I.NewSet(ino)
@@ -274,7 +280,7 @@ func (f *fsDev) InoAppendPathname(ino I.Ino, path P.Pathsplit) {
 func (f *fsDev) PathInfoFromIno(ino I.Ino) I.PathInfo {
 	path := f.ArbitraryPath(ino)
 	fi := f.InoStatInfo[ino]
-	return I.PathInfo{Pathsplit: path, StatInfo: fi}
+	return I.PathInfo{Pathsplit: path, StatInfo: *fi}
 }
 
 func (f *fsDev) allInoPaths(ino I.Ino) <-chan P.Pathsplit {
@@ -366,9 +372,8 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 			f.Results.addMismatchedGidBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
-		var err error
-		eq, err = I.EqualXAttrs(pi1.Join(), pi2.Join())
-		if err == nil && !eq {
+		eqX, err := I.EqualXAttrs(pi1.Join(), pi2.Join())
+		if err == nil && !eqX {
 			f.Results.addMismatchedXattrBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}

@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"os"
 	"syscall"
+	"time"
 )
 
 type StatInfos map[string]StatInfo
@@ -46,6 +47,10 @@ type StatInfo struct {
 type DevStatInfo struct {
 	Dev uint64
 	StatInfo
+}
+
+func (s StatInfo) MTime() time.Time {
+	return time.Unix(int64(s.Sec), int64(s.Nsec))
 }
 
 func LInfo(pathname string) (DevStatInfo, error) {

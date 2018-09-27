@@ -29,11 +29,6 @@ type PathInfo struct {
 	StatInfo
 }
 
-type PathInfoPair struct {
-	Src PathInfo
-	Dst PathInfo
-}
-
 func (p1 PathInfo) EqualTime(p2 PathInfo) bool {
 	return p1.Sec == p2.Sec && p1.Nsec == p2.Nsec
 }

@@ -107,8 +107,9 @@ type Options struct {
 	ShowRunStats bool
 }
 
-// DefaultOptions returns an Options struct, with the defaults initialized.
-func DefaultOptions() Options {
+// SetupOptions returns a Options struct with the defaults initialized and the
+// given setup functions also applied.
+func SetupOptions(args ...func(*Options)) Options {
 	o := Options{
 		SearchThresh:             DefaultSearchThresh,
 		MinFileSize:              DefaultMinFileSize,
@@ -117,5 +118,57 @@ func DefaultOptions() Options {
 		ShowExtendedRunStats:     DefaultShowExtendedRunStats,
 		ShowRunStats:             DefaultShowRunStats,
 	}
+	for _, fn := range args {
+		fn(&o)
+	}
 	return o
+}
+
+// SameName requires linked files to have equal filenames
+func SameName(o *Options) {
+	o.SameName = true
+}
+
+// IgnoreTime allows linked files to have unequal modification times
+func IgnoreTime(o *Options) {
+	o.IgnoreTime = true
+}
+
+// IgnorePerms allows linked files to have unequal mode bits
+func IgnorePerms(o *Options) {
+	o.IgnorePerms = true
+}
+
+// IgnorePerms allows linked files to have unequal uid or gid
+func IgnoreOwner(o *Options) {
+	o.IgnoreOwner = true
+}
+
+// IgnorePerms allows linked files to have unequal xattrs
+func IgnoreXattr(o *Options) {
+	o.IgnoreXattr = true
+}
+
+// LinkingEnabled allows Run() to actually perform linking of files
+func LinkingEnabled(o *Options) {
+	o.LinkingEnabled = true
+}
+
+// LinkingDisabled forbids Run() from actually linking the files
+func LinkingDisabled(o *Options) {
+	o.LinkingEnabled = false
+}
+
+// MinFileSize sets the minimum size of files that can be linked
+func MinFileSize(size uint64) func(*Options) {
+	return func(o *Options) {
+		o.MinFileSize = size
+	}
+}
+
+// MinFileSize sets the maximum size of files that can be linked
+func MaxFileSize(size uint64) func(*Options) {
+	return func(o *Options) {
+		o.MaxFileSize = size
+	}
 }

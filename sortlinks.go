@@ -66,21 +66,19 @@ func appendReversedInos(toS []I.Ino, fromS ...I.Ino) []I.Ino {
 	return append(toS, fromS...)
 }
 
-func (f *fsDev) SortedLinks() <-chan I.PathInfoPair {
-	out := make(chan I.PathInfoPair)
-	go func() {
-		defer close(out)
-		c := f.linkedInoSets()
-		for linkableSet := range c {
-			// Sort links highest nlink to lowest
-			sortedInos := f.sortSetByNlink(linkableSet)
-			f.sendLinkedPairs(sortedInos, out)
+func (f *fsDev) generateLinks() error {
+	c := f.linkedInoSets()
+	for linkableSet := range c {
+		// Sort links highest nlink to lowest
+		sortedInos := f.sortSetByNlink(linkableSet)
+		if err := f.genLinksHelper(sortedInos); err != nil {
+			return err
 		}
-	}()
-	return out
+	}
+	return nil
 }
 
-func (f *fsDev) sendLinkedPairs(sortedInos []I.Ino, out chan<- I.PathInfoPair) {
+func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 	remainingInos := make([]I.Ino, 0)
 
 	for len(sortedInos) > 0 || len(remainingInos) > 0 {
@@ -124,22 +122,24 @@ func (f *fsDev) sendLinkedPairs(sortedInos []I.Ino, out chan<- I.PathInfoPair) {
 				} else {
 					srcPath = f.ArbitraryPath(srcIno)
 				}
-				srcPathInfo := I.PathInfo{Pathsplit: srcPath, StatInfo: srcSI}
-				dstPathInfo := I.PathInfo{Pathsplit: dstPath, StatInfo: dstSI}
-
-				out <- I.PathInfoPair{Src: srcPathInfo, Dst: dstPathInfo}
+				srcPathInfo := I.PathInfo{Pathsplit: srcPath, StatInfo: *srcSI}
+				dstPathInfo := I.PathInfo{Pathsplit: dstPath, StatInfo: *dstSI}
 
 				f.Results.foundNewLink(srcPath, dstPath)
+
+				if f.Options.LinkingEnabled {
+					linkingErr := f.hardlinkFiles(srcPathInfo, dstPathInfo)
+					if linkingErr != nil {
+						return linkingErr
+					}
+				}
 
 				// Update StatInfo information for inodes
 				srcSI.Nlink += 1
 				dstSI.Nlink -= 1
-				f.InoStatInfo[srcIno] = srcSI
 				if dstSI.Nlink == 0 {
 					f.Results.foundRemovedInode(dstSI.Size)
 					delete(f.InoStatInfo, dstIno)
-				} else {
-					f.InoStatInfo[dstIno] = dstSI
 				}
 				f.moveLinkedPath(dstPath, srcIno, dstIno)
 			}
@@ -153,4 +153,5 @@ func (f *fsDev) sendLinkedPairs(sortedInos []I.Ino, out chan<- I.PathInfoPair) {
 			}
 		}
 	}
+	return nil
 }
