@@ -29,14 +29,14 @@ type hashVal uint64
 
 type fsDev struct {
 	status
-	Dev            uint64
-	MaxNLinks      uint64
-	InoHashes      map[hashVal]I.Set
-	InoStatInfo    map[I.Ino]*I.StatInfo
-	InoPaths       I.PathsMap
-	LinkedInos     I.LinkedInoSets
+	Dev         uint64
+	MaxNLinks   uint64
+	InoHashes   map[hashVal]I.Set
+	InoStatInfo map[I.Ino]*I.StatInfo
+	InoPaths    I.PathsMap
+	LinkedInos  I.LinkedInoSets
 	inoDigests
-	pool           P.StringPool
+	pool P.StringPool
 
 	// For each directory name, keep track of all the StatInfo structures
 	DirnameStatInfos map[string]I.StatInfos
@@ -44,15 +44,15 @@ type fsDev struct {
 
 func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 	var w = fsDev{
-		status:         lstatus,
-		Dev:            dev,
-		MaxNLinks:      maxNLinks,
-		InoHashes:      make(map[hashVal]I.Set),
-		InoStatInfo:    make(map[I.Ino]*I.StatInfo),
-		InoPaths:       make(I.PathsMap),
-		LinkedInos:     make(I.LinkedInoSets),
-		inoDigests:     newInoDigests(),
-		pool:           P.NewPool(),
+		status:      lstatus,
+		Dev:         dev,
+		MaxNLinks:   maxNLinks,
+		InoHashes:   make(map[hashVal]I.Set),
+		InoStatInfo: make(map[I.Ino]*I.StatInfo),
+		InoPaths:    make(I.PathsMap),
+		LinkedInos:  make(I.LinkedInoSets),
+		inoDigests:  newInoDigests(),
+		pool:        P.NewPool(),
 	}
 
 	return w
