@@ -179,7 +179,6 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 		}
 	}
 
-	// assert(st1.Dev == st2.Dev && st1.Ino != st2.Ino && st1.Size == st2.Size)
 	if useDigest {
 		if wasComputed := f.InoDigests.NewDigest(pi1); wasComputed {
 			f.Results.computedDigest()
@@ -190,7 +189,6 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 	}
 
 	f.Results.didComparison()
-	// error handling deferred
 	eq, _ := areFileContentsEqual(f.status, pi1.Join(), pi2.Join())
 	if eq {
 		f.Results.foundEqualFiles()
