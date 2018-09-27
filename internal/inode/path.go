@@ -41,7 +41,7 @@ func (p1 PathInfo) EqualOwnership(p2 PathInfo) bool {
 	return p1.Uid == p2.Uid && p1.Gid == p2.Gid
 }
 
-type PathsMap map[Ino]*filenamePaths
+type PathsMap map[Ino]*FilenamePaths
 
 func (ip PathsMap) ArbitraryPath(ino Ino) P.Pathsplit {
 	// ino must exist in f.InoPaths.  If it does, there will be at least

@@ -70,7 +70,7 @@ func TestPathsplitSet(t *testing.T) {
 }
 
 func TestFilenamePaths(t *testing.T) {
-	var f *filenamePaths
+	var f *FilenamePaths
 	f = newFilenamePaths()
 	if len(f.PMap) != 0 {
 		t.Errorf("Empty FilenamePaths length isn't 0: %v", f)

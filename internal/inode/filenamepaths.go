@@ -56,23 +56,23 @@ func (p pathsplitSet) clone() pathsplitSet {
 	return c
 }
 
-// filenamePaths holds a map of filenames to their full pathnames (ie. the
+// FilenamePaths holds a map of filenames to their full pathnames (ie. the
 // different paths to an inode), and also holds an arbitrary pathname that can
 // be used for consistency (rather than a fully random one from the map)
-type filenamePaths struct {
+type FilenamePaths struct {
 	PMap    map[string]pathsplitSet
 	arbPath P.Pathsplit
 }
 
-func newFilenamePaths() *filenamePaths {
+func newFilenamePaths() *FilenamePaths {
 	p := make(map[string]pathsplitSet)
-	return &filenamePaths{p, P.Pathsplit{}}
+	return &FilenamePaths{p, P.Pathsplit{}}
 }
 
 // When choosing an arbitrary pathname, remember what was chosen and return it
 // consistently.  This prevents the source link paths from changing
 // unnecessarily, and basically makes the output a bit more friendly.
-func (f *filenamePaths) Any() P.Pathsplit {
+func (f *FilenamePaths) Any() P.Pathsplit {
 	if f.arbPath == (P.Pathsplit{}) {
 		for _, pathnames := range f.PMap {
 			f.arbPath = pathnames.any()
@@ -83,12 +83,12 @@ func (f *filenamePaths) Any() P.Pathsplit {
 }
 
 // AnyWithFilename will return an arbitrary path with the given filename
-func (f *filenamePaths) AnyWithFilename(filename string) P.Pathsplit {
+func (f *FilenamePaths) AnyWithFilename(filename string) P.Pathsplit {
 	f.arbPath = f.PMap[filename].any()
 	return f.arbPath
 }
 
-func (f *filenamePaths) Add(ps P.Pathsplit) {
+func (f *FilenamePaths) Add(ps P.Pathsplit) {
 	p, ok := f.PMap[ps.Filename]
 	if !ok {
 		p = newPathsplitSet()
@@ -97,7 +97,7 @@ func (f *filenamePaths) Add(ps P.Pathsplit) {
 	f.PMap[ps.Filename] = p
 }
 
-func (f *filenamePaths) Remove(ps P.Pathsplit) {
+func (f *FilenamePaths) Remove(ps P.Pathsplit) {
 	// Find and remove given Pathsplit from PMap
 	f.PMap[ps.Filename].remove(ps)
 	if len(f.PMap[ps.Filename]) == 0 {
@@ -108,11 +108,11 @@ func (f *filenamePaths) Remove(ps P.Pathsplit) {
 	}
 }
 
-func (f *filenamePaths) IsEmpty() bool {
+func (f *FilenamePaths) IsEmpty() bool {
 	return len(f.PMap) == 0
 }
 
-func (f *filenamePaths) HasPath(ps P.Pathsplit) bool {
+func (f *FilenamePaths) HasPath(ps P.Pathsplit) bool {
 	paths, ok := f.PMap[ps.Filename]
 	if !ok {
 		return false
@@ -123,11 +123,11 @@ func (f *filenamePaths) HasPath(ps P.Pathsplit) bool {
 	return true
 }
 
-// Return a copy of the given filenamePaths
-func (f *filenamePaths) Copy() *filenamePaths {
+// Return a copy of the given FilenamePaths
+func (f *FilenamePaths) Copy() *FilenamePaths {
 	c := make(map[string]pathsplitSet, len(f.PMap))
 	for k, v := range f.PMap {
 		c[k] = v.clone()
 	}
-	return &filenamePaths{c, f.arbPath}
+	return &FilenamePaths{c, f.arbPath}
 }
