@@ -182,3 +182,94 @@ func TestSetAsSlice(t *testing.T) {
 		t.Errorf("Length of appended Set.AsSlice() was expected to be 2")
 	}
 }
+
+func TestLinkedInoSets(t *testing.T) {
+	l := make(LinkedInoSets)
+
+	// Test when no linkable inos have been added yet
+	s := l.Containing(1)
+	if len(s) != 1 && !s.Has(1) {
+		t.Errorf("Linked InoSet was expected to contain just {1}: %v", s)
+	}
+
+	// Create a list of cumulative linkable ino tests
+	var tests = []struct {
+		pairs [2]uint64
+		get   uint64
+		has   []uint64
+	}{
+		// A pair of linked inos
+		{[2]uint64{1, 2}, 1, []uint64{1, 2}},
+		{[2]uint64{2, 1}, 2, []uint64{1, 2}},
+
+		// Another group of linked inos
+		{[2]uint64{3, 4}, 3, []uint64{4, 3}},
+		{[2]uint64{4, 3}, 4, []uint64{3, 4}},
+		{[2]uint64{3, 5}, 5, []uint64{3, 4, 5}},
+		{[2]uint64{4, 5}, 4, []uint64{3, 4, 5}},
+		{[2]uint64{5, 4}, 3, []uint64{3, 4, 5}},
+		{[2]uint64{5, 3}, 3, []uint64{3, 4, 5}},
+
+		// Link the two separate groups
+		{[2]uint64{2, 3}, 1, []uint64{1, 2, 3, 4, 5}},
+
+		// Make 3 overlapping pairs, then link all groups
+		{[2]uint64{6, 7}, 6, []uint64{6, 7}},
+		{[2]uint64{7, 8}, 7, []uint64{6, 7, 8}},
+		{[2]uint64{8, 9}, 8, []uint64{6, 7, 8, 9}},
+		{[2]uint64{5, 6}, 6, []uint64{1, 2, 3, 4, 5, 6, 7, 8, 9}},
+	}
+
+	for _, v := range tests {
+		l.Add(v.pairs[0], v.pairs[1])
+		s = l.Containing(v.get)
+		if len(s) != len(v.has) {
+			t.Errorf("Expected InoSet len to be : %v, got: %v", len(v.has), len(s))
+		}
+		if !s.HasAll(v.has...) {
+			t.Errorf("Expected InoSet to be : %v, got: %v", v.has, s.AsSlice())
+		}
+	}
+
+	// Simple test (for now) of All() iteration over final sets
+	i := 0
+	for v := range l.All() {
+		if len(v) != 9 {
+			t.Errorf("Expected InoSet %v len to be: %v, got: %v", v, 9, len(v))
+		}
+		i++
+	}
+	if i != 1 {
+		t.Errorf("Expected %v InoSets for All(), got: %v", 1, i)
+	}
+
+	// Table test for number of sets returned by All()
+	var tests2 = []struct {
+		pairs   [2]uint64
+		numSets int
+	}{
+		// A pair of linked inos
+		{[2]uint64{1, 2}, 1},
+
+		// Another group of linked inos
+		{[2]uint64{3, 4}, 2},
+		{[2]uint64{3, 5}, 2},
+
+		// Link the two separate groups
+		{[2]uint64{2, 3}, 1},
+	}
+
+	// Simple test that All() returns correct number of sets (ignoring contents)
+	// (Content tests for Contains() above should be sufficient)
+	l = make(LinkedInoSets)
+	for _, v := range tests2 {
+		l.Add(v.pairs[0], v.pairs[1])
+		i := 0
+		for range l.All() {
+			i++
+		}
+		if i != v.numSets {
+			t.Errorf("Expected %v InoSets for All(), got: %v", v.numSets, i)
+		}
+	}
+}

@@ -67,8 +67,7 @@ func appendReversedInos(toS []I.Ino, fromS ...I.Ino) []I.Ino {
 }
 
 func (f *fsDev) generateLinks() error {
-	c := f.linkedInoSets()
-	for linkableSet := range c {
+	for linkableSet := range f.LinkedInos.All() {
 		// Sort links highest nlink to lowest
 		sortedInos := f.sortSetByNlink(linkableSet)
 		if err := f.genLinksHelper(sortedInos); err != nil {

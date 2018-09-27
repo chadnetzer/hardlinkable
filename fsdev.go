@@ -23,7 +23,6 @@ package hardlinkable
 import (
 	I "hardlinkable/internal/inode"
 	P "hardlinkable/internal/pathpool"
-	"sort"
 )
 
 type hashVal uint64
@@ -35,7 +34,7 @@ type fsDev struct {
 	InoHashes      map[hashVal]I.Set
 	InoStatInfo    map[I.Ino]*I.StatInfo
 	InoPaths       map[I.Ino]*filenamePaths
-	LinkedInos     map[I.Ino]I.Set
+	LinkedInos     I.LinkedInoSets
 	DigestIno      map[digestVal]I.Set
 	InosWithDigest I.Set
 	pool           P.StringPool
@@ -52,7 +51,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 		InoHashes:      make(map[hashVal]I.Set),
 		InoStatInfo:    make(map[I.Ino]*I.StatInfo),
 		InoPaths:       make(map[I.Ino]*filenamePaths),
-		LinkedInos:     make(map[I.Ino]I.Set),
+		LinkedInos:     make(I.LinkedInoSets),
 		DigestIno:      make(map[digestVal]I.Set),
 		InosWithDigest: I.NewSet(),
 		pool:           P.NewPool(),
@@ -110,9 +109,9 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 		// See if this inode is already one we've determined can be
 		// linked to another one, in which case we can avoid repeating
 		// the work of linking it again.
-		linkedInos := f.linkedInoSet(ino)
-		hashedInos := f.InoHashes[H]
-		linkedHashedInos := linkedInos.Intersection(hashedInos)
+		li := f.LinkedInos.Containing(ino)
+		hi := f.InoHashes[H]
+		linkedHashedInos := li.Intersection(hi)
 		foundLinkedHashedInos := len(linkedHashedInos) > 0
 		if !foundLinkedHashedInos {
 			// Get a list of previously seen inodes that may be linkable
@@ -125,7 +124,7 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 				f.Results.incInoSeqIterations()
 				cachedPathStat := f.PathInfoFromIno(cachedIno)
 				if f.areFilesLinkable(cachedPathStat, curPathStat, useDigest) {
-					f.addLinkableInos(cachedPathStat.Ino, ino)
+					f.LinkedInos.Add(cachedPathStat.Ino, ino)
 					foundLinkable = true
 					break
 				}
@@ -176,81 +175,6 @@ func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
 	return cachedSeq, useDigest
 }
 
-// linkedInoSetHelper is used by linkedInoSet and linkedInoSets to iterate over
-// the LinkedInos map to return a connected set of inodes (ie. inodes that the
-// hardlinkable algorithm has determined can all be linked together.
-func (f *fsDev) linkedInoSetHelper(ino I.Ino, seen I.Set) I.Set {
-	results := I.NewSet(ino)
-	pending := I.NewSet(ino)
-	for len(pending) > 0 {
-		// Pop item from pending set
-		for ino = range pending {
-			break
-		}
-		pending.Remove(ino)
-		results.Add(ino)
-
-		// Don't check for linked inos that we've seen already
-		if seen.Has(ino) {
-			continue
-		}
-		seen.Add(ino)
-
-		// Add connected inos to pending
-		if linked, ok := f.LinkedInos[ino]; ok {
-			for k := range linked {
-				pending.Add(k)
-			}
-		}
-	}
-	return results
-}
-
-// linkedInoSet calls linkedInoSetHelper to return a single set of linked
-// inodes containing the given 'ino'.  Linked inodes are those determined by
-// the algorithm to have been able to be hard linked together (ie. have
-// identical contents, and compatible inode parameters)
-func (f *fsDev) linkedInoSet(ino I.Ino) I.Set {
-	if _, ok := f.LinkedInos[ino]; !ok {
-		return I.NewSet(ino)
-	}
-	seen := I.NewSet()
-	return f.linkedInoSetHelper(ino, seen)
-}
-
-// linkedInoSets sends all the linked InoSets over the returned channel.
-// The InoSets are ordered, by starting with the lowest inode and progressing
-// through the highest (rather than returning InoSets in random order).
-func (f *fsDev) linkedInoSets() <-chan I.Set {
-	out := make(chan I.Set)
-	go func() {
-		defer close(out)
-
-		// Make a slice of the Ino keys in f.LinkedInos, so that we can
-		// sort them.  This allows us to output the full number of
-		// linkedInoSets in a deterministic order (leading to
-		// more repeatable ordering of link pairs across multiple
-		// dry-runs).  It's not completely deterministic because there
-		// can still be multiple choices for pre-linked src paths.
-		i := 0
-		sortedInos := make([]I.Ino, len(f.LinkedInos))
-		for ino := range f.LinkedInos {
-			sortedInos[i] = ino
-			i++
-		}
-		sort.Slice(sortedInos, func(i, j int) bool { return sortedInos[i] < sortedInos[j] })
-
-		seen := I.NewSet()
-		for _, startIno := range sortedInos {
-			if _, ok := seen[startIno]; ok {
-				continue
-			}
-			out <- f.linkedInoSetHelper(startIno, seen)
-		}
-	}()
-	return out
-}
-
 func (f *fsDev) ArbitraryPath(ino I.Ino) P.Pathsplit {
 	// ino must exist in f.InoPaths.  If it does, there will be at least
 	// one pathname to return
@@ -299,23 +223,6 @@ func (f *fsDev) allInoPaths(ino I.Ino) <-chan P.Pathsplit {
 		}
 	}()
 	return out
-}
-
-func (f *fsDev) addLinkableInos(ino1, ino2 I.Ino) {
-	// Add both src and destination inos to the linked InoSets
-	inoSet1, ok := f.LinkedInos[ino1]
-	if !ok {
-		f.LinkedInos[ino1] = I.NewSet(ino2)
-	} else {
-		inoSet1.Add(ino2)
-	}
-
-	inoSet2, ok := f.LinkedInos[ino2]
-	if !ok {
-		f.LinkedInos[ino2] = I.NewSet(ino1)
-	} else {
-		inoSet2.Add(ino1)
-	}
 }
 
 func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool) bool {
