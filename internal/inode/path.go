@@ -84,6 +84,8 @@ func (pm PathsMap) AllPaths(ino Ino) <-chan P.Pathsplit {
 	return out
 }
 
+// MovePath moves the given destination path, from the given destination inode,
+// to the source inode.
 func (pm PathsMap) MovePath(dstPath P.Pathsplit, srcIno Ino, dstIno Ino) {
 	// Get pathnames slice matching Ino and filename
 	fp := pm[dstIno]
