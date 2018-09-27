@@ -35,7 +35,7 @@ type fsDev struct {
 	InoStatInfo map[I.Ino]*I.StatInfo
 	InoPaths    I.PathsMap
 	LinkedInos  I.LinkedInoSets
-	inoDigests
+	I.InoDigests
 	pool P.StringPool
 
 	// For each directory name, keep track of all the StatInfo structures
@@ -51,7 +51,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 		InoStatInfo: make(map[I.Ino]*I.StatInfo),
 		InoPaths:    make(I.PathsMap),
 		LinkedInos:  make(I.LinkedInoSets),
-		inoDigests:  newInoDigests(),
+		InoDigests:  I.NewInoDigests(),
 		pool:        P.NewPool(),
 	}
 
@@ -149,7 +149,7 @@ func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
 	thresh := f.Options.SearchThresh
 	useDigest := thresh >= 0 && len(cachedSet) > thresh
 	if useDigest {
-		digest, err := contentDigest(ps.Pathsplit.Join())
+		digest, err := I.ContentDigest(ps.Pathsplit.Join())
 		if err == nil {
 			// With digests, we take the (potentially long) set of cached inodes (ie.
 			// those inodes that all have the same InoHash), and remove the inodes that
@@ -157,9 +157,9 @@ func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
 			// current inode.  We also put the inodes with equal digests before those
 			// that have no digest yet, in hopes of more quickly finding an identical file.
 			f.Results.computedDigest()
-			f.inoDigests.add(ps, digest)
+			f.InoDigests.Add(ps, digest)
 			noDigests := cachedSet.Difference(f.InosWithDigest)
-			sameDigests := cachedSet.Intersection(f.inoDigests.getInos(digest))
+			sameDigests := cachedSet.Intersection(f.InoDigests.GetInos(digest))
 			differentDigests := cachedSet.Difference(sameDigests).Difference(noDigests)
 			cachedSeq = append(sameDigests.AsSlice(), noDigests.AsSlice()...)
 
@@ -205,10 +205,10 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 
 	// assert(st1.Dev == st2.Dev && st1.Ino != st2.Ino && st1.Size == st2.Size)
 	if useDigest {
-		if wasComputed := f.inoDigests.newDigest(pi1); wasComputed {
+		if wasComputed := f.InoDigests.NewDigest(pi1); wasComputed {
 			f.Results.computedDigest()
 		}
-		if wasComputed := f.inoDigests.newDigest(pi2); wasComputed {
+		if wasComputed := f.InoDigests.NewDigest(pi2); wasComputed {
 			f.Results.computedDigest()
 		}
 	}

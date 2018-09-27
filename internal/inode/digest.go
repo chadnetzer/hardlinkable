@@ -18,43 +18,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package hardlinkable
+package inode
 
 import (
-	I "hardlinkable/internal/inode"
 	"hash/fnv"
 	"os"
 )
 
-type digestVal uint32
+type Digest uint32
 
-type inoDigests struct {
-	InoSets        map[digestVal]I.Set
-	InosWithDigest I.Set
+type InoDigests struct {
+	InoSets        map[Digest]Set
+	InosWithDigest Set
 }
 
-func newInoDigests() inoDigests {
-	return inoDigests{
-		InoSets:        make(map[digestVal]I.Set),
-		InosWithDigest: I.NewSet(),
+func NewInoDigests() InoDigests {
+	return InoDigests{
+		InoSets:        make(map[Digest]Set),
+		InosWithDigest: NewSet(),
 	}
 }
 
-func (id *inoDigests) getInos(d digestVal) I.Set {
+func (id *InoDigests) GetInos(d Digest) Set {
 	return id.InoSets[d]
 }
 
-func (id *inoDigests) add(pi I.PathInfo, digest digestVal) {
+func (id *InoDigests) Add(pi PathInfo, digest Digest) {
 	if !id.InosWithDigest.Has(pi.Ino) {
 		digestHelper(id, pi, digest)
 	}
 }
 
-func (id *inoDigests) newDigest(pi I.PathInfo) bool {
+func (id *InoDigests) NewDigest(pi PathInfo) bool {
 	var computed bool
 	if !id.InosWithDigest.Has(pi.Ino) {
 		pathname := pi.Pathsplit.Join()
-		digest, err := contentDigest(pathname)
+		digest, err := ContentDigest(pathname)
 		if err == nil {
 			digestHelper(id, pi, digest)
 			computed = true
@@ -63,9 +62,9 @@ func (id *inoDigests) newDigest(pi I.PathInfo) bool {
 	return computed
 }
 
-func digestHelper(id *inoDigests, pi I.PathInfo, digest digestVal) {
+func digestHelper(id *InoDigests, pi PathInfo, digest Digest) {
 	if _, ok := id.InoSets[digest]; !ok {
-		id.InoSets[digest] = I.NewSet(pi.Ino)
+		id.InoSets[digest] = NewSet(pi.Ino)
 	} else {
 		set := id.InoSets[digest]
 		set.Add(pi.Ino)
@@ -73,13 +72,13 @@ func digestHelper(id *inoDigests, pi I.PathInfo, digest digestVal) {
 	id.InosWithDigest.Add(pi.Ino)
 }
 
-// Return a short digest of the first part of the given pathname, to help
-// determine if two files are definitely not equivalent, without doing a full
-// comparison.  Typically this will be used when a full file comparison will be
-// performed anyway (incurring the IO overhead), and saving the digest to help
-// quickly reduce the set of possibly equal inodes later (ie. reducing the
-// length of the repeated linear searches).
-func contentDigest(pathname string) (digestVal, error) {
+// ContentDigest returns a short digest of the first part of the given
+// pathname, to help determine if two files are definitely not equivalent,
+// without doing a full comparison.  Typically this will be used when a full
+// file comparison will be performed anyway (incurring the IO overhead), and
+// saving the digest to help quickly reduce the set of possibly equal inodes
+// later (ie. reducing the length of the repeated linear searches).
+func ContentDigest(pathname string) (Digest, error) {
 	const bufSize = 8192
 
 	f, err := os.Open(pathname)
@@ -96,5 +95,5 @@ func contentDigest(pathname string) (digestVal, error) {
 
 	hash := fnv.New32a()
 	hash.Write(buf)
-	return digestVal(hash.Sum32()), nil
+	return Digest(hash.Sum32()), nil
 }
