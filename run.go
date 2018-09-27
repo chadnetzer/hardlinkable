@@ -114,7 +114,7 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	// gathered during the walk.
 	var numPaths, numDirs int64
 	for _, fsdev := range ls.fsDevs {
-		p, d := fsdev.PathCount()
+		p, d := fsdev.InoPaths.PathCount()
 		numPaths += p
 		numDirs += d
 	}

@@ -33,7 +33,7 @@ type fsDev struct {
 	MaxNLinks      uint64
 	InoHashes      map[hashVal]I.Set
 	InoStatInfo    map[I.Ino]*I.StatInfo
-	InoPaths       map[I.Ino]*filenamePaths
+	InoPaths       I.PathsMap
 	LinkedInos     I.LinkedInoSets
 	DigestIno      map[digestVal]I.Set
 	InosWithDigest I.Set
@@ -50,7 +50,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 		MaxNLinks:      maxNLinks,
 		InoHashes:      make(map[hashVal]I.Set),
 		InoStatInfo:    make(map[I.Ino]*I.StatInfo),
-		InoPaths:       make(map[I.Ino]*filenamePaths),
+		InoPaths:       make(I.PathsMap),
 		LinkedInos:     make(I.LinkedInoSets),
 		DigestIno:      make(map[digestVal]I.Set),
 		InosWithDigest: I.NewSet(),
@@ -99,10 +99,10 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 		// See if the new file is an inode we've seen before
 		if _, ok := f.InoStatInfo[ino]; ok {
 			// If it's a path we've seen before, ignore it
-			if f.haveSeenPath(ino, curPath) {
+			if f.InoPaths.HasPath(ino, curPath) {
 				return
 			}
-			seenPath := f.ArbitraryPath(ino)
+			seenPath := f.InoPaths.ArbitraryPath(ino)
 			seenSize := f.InoStatInfo[ino].Size
 			f.Results.foundExistingLink(seenPath, curPath, seenSize)
 		}
@@ -139,7 +139,7 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 	}
 	// Remember Inode and filename/path information for each seen file
 	f.InoStatInfo[ino] = &di.StatInfo
-	f.InoAppendPathname(ino, curPath)
+	f.InoPaths.AppendPath(ino, curPath)
 }
 
 // possibleInos returns a slice of inos that can be searched for equal contents
@@ -176,7 +176,7 @@ func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
 }
 
 func (f *fsDev) PathInfoFromIno(ino I.Ino) I.PathInfo {
-	path := f.ArbitraryPath(ino)
+	path := f.InoPaths.ArbitraryPath(ino)
 	fi := f.InoStatInfo[ino]
 	return I.PathInfo{Pathsplit: path, StatInfo: *fi}
 }
