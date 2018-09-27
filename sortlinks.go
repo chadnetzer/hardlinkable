@@ -66,6 +66,16 @@ func appendReversedInos(toS []I.Ino, fromS ...I.Ino) []I.Ino {
 	return append(toS, fromS...)
 }
 
+// generateLinks takes the sets of matching inodes that were discovered by the
+// fsDev.FindIdenticalFiles() method, and generates lists of hardlinkable
+// pathnames (with a src pathname to be linked to multiple destination
+// pathnames) from them, optionally performing the actual linking as well.
+//
+// For every discovered set of matching inodes, this method sorts the inodes by
+// nlink count from highest to lowest, and generally proceeds by linking the
+// inodes with the highest nlink count to those with the lowest nlink count
+// (until the maximum nlink count is reached, at which point it proceeds to the
+// src inode with the next highest nlink count).
 func (f *fsDev) generateLinks() error {
 	for linkableSet := range f.LinkedInos.All() {
 		// Sort links highest nlink to lowest
@@ -77,9 +87,20 @@ func (f *fsDev) generateLinks() error {
 	return nil
 }
 
+// genLinksHelper operates on the set of matching inodes, sorted from highest
+// nlink count to lowest.  It selects the set of src and dst pathnames that
+// will (ideally) link all the inodes together.  It respects the maximum nlink
+// count, which can prevent all the inodes from being consolidated into one.
+// It also respects the "same name" option, which only generates linked
+// pathnames that have equal (case-sensitive) filenames, which can also prevent
+// all the inodes in the set from being consolidated.
 func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 	remainingInos := make([]I.Ino, 0)
 
+	// The remainingInos are the inodes at the far end of the sorted inode
+	// list, which were skipped over on a previous linking pass because
+	// of a restriction such as the optional "same name" linking
+	// requirement.
 	for len(sortedInos) > 0 || len(remainingInos) > 0 {
 		if len(remainingInos) > 0 {
 			// Reverse remainingInos and place at the end
@@ -88,6 +109,8 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 			sortedInos = appendReversedInos(sortedInos, remainingInos...)
 			remainingInos = make([]I.Ino, 0)
 		}
+		// Advance the srcIno forward by one inode, and loop over
+		// the remaining inodes looking for a potential link.
 		srcIno := sortedInos[0]
 		sortedInos = sortedInos[1:]
 		for len(sortedInos) > 0 {
@@ -106,6 +129,10 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 				break
 			}
 
+			// For a given dst inode, iterate over all the paths
+			// linking to it, using the pathnames for linking,
+			// while respecting both the SameName option and the
+			// maximum src inode nlink count.
 			dstPaths := f.InoPaths.AllPaths(dstIno)
 			for dstPath := range dstPaths {
 				var srcPath P.Pathsplit
@@ -126,6 +153,8 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 
 				f.Results.foundNewLink(srcPath, dstPath)
 
+				// Perform the actual linking if requested, but abort all remaining
+				// linking if a linking error is encountered.
 				if f.Options.LinkingEnabled {
 					linkingErr := f.hardlinkFiles(srcPathInfo, dstPathInfo)
 					if linkingErr != nil {
@@ -133,7 +162,7 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 					}
 				}
 
-				// Update StatInfo information for inodes
+				// Update cached StatInfo information for inodes
 				srcSI.Nlink += 1
 				dstSI.Nlink -= 1
 				if dstSI.Nlink == 0 {
@@ -144,8 +173,7 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 			}
 			// With SameName option, it's possible that the dstIno nLinks will not go
 			// to zero (if not all links have a matching filename), so place on the
-			// remainingInos list to allow it to (possibly) be linked with other linked
-			// inodes
+			// remainingInos list to allow it to (possibly) be linked with other inodes
 			fp, ok := f.InoPaths[dstIno]
 			if ok && !fp.IsEmpty() {
 				remainingInos = append(remainingInos, dstIno)
