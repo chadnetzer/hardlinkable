@@ -24,6 +24,12 @@ import (
 	"hardlinkable/internal/inode"
 )
 
+type status struct {
+	Options  *Options
+	Results  *Results
+	Progress progress
+}
+
 type linkableState struct {
 	status
 	fsDevs map[uint64]fsDev
