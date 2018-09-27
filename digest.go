@@ -50,16 +50,17 @@ func (id *inoDigests) add(pi I.PathInfo, digest digestVal) {
 	}
 }
 
-func (id *inoDigests) newDigest(pi I.PathInfo) error {
-	var err error
+func (id *inoDigests) newDigest(pi I.PathInfo) bool {
+	var computed bool
 	if !id.InosWithDigest.Has(pi.Ino) {
 		pathname := pi.Pathsplit.Join()
 		digest, err := contentDigest(pathname)
 		if err == nil {
 			digestHelper(id, pi, digest)
+			computed = true
 		}
 	}
-	return err
+	return computed
 }
 
 func digestHelper(id *inoDigests, pi I.PathInfo, digest digestVal) {
@@ -78,7 +79,7 @@ func digestHelper(id *inoDigests, pi I.PathInfo, digest digestVal) {
 // performed anyway (incurring the IO overhead), and saving the digest to help
 // quickly reduce the set of possibly equal inodes later (ie. reducing the
 // length of the repeated linear searches).
-func contentDigest(r *Results, pathname string) (digestVal, error) {
+func contentDigest(pathname string) (digestVal, error) {
 	const bufSize = 8192
 
 	f, err := os.Open(pathname)
@@ -92,8 +93,6 @@ func contentDigest(r *Results, pathname string) (digestVal, error) {
 	if err != nil {
 		return 0, err
 	}
-
-	r.computedDigest()
 
 	hash := fnv.New32a()
 	hash.Write(buf)

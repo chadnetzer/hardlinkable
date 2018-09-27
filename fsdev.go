@@ -149,7 +149,7 @@ func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
 	thresh := f.Options.SearchThresh
 	useDigest := thresh >= 0 && len(cachedSet) > thresh
 	if useDigest {
-		digest, err := contentDigest(f.Results, ps.Pathsplit.Join())
+		digest, err := contentDigest(ps.Pathsplit.Join())
 		if err == nil {
 			// With digests, we take the (potentially long) set of cached inodes (ie.
 			// those inodes that all have the same InoHash), and remove the inodes that
@@ -157,6 +157,7 @@ func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
 			// current inode.  We also put the inodes with equal digests before those
 			// that have no digest yet, in hopes of more quickly finding an identical file.
 			f.addPathStatDigest(ps, digest)
+			f.Results.computedDigest()
 			noDigests := cachedSet.Difference(f.InosWithDigest)
 			sameDigests := cachedSet.Intersection(f.DigestIno[digest])
 			differentDigests := cachedSet.Difference(sameDigests).Difference(noDigests)
@@ -204,8 +205,12 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 
 	// assert(st1.Dev == st2.Dev && st1.Ino != st2.Ino && st1.Size == st2.Size)
 	if useDigest {
-		f.newPathStatDigest(pi1)
-		f.newPathStatDigest(pi2)
+		if wasComputed := f.inoDigests.newDigest(pi1); wasComputed {
+			f.Results.computedDigest()
+		}
+		if wasComputed := f.inoDigests.newDigest(pi2); wasComputed {
+			f.Results.computedDigest()
+		}
 	}
 
 	f.Results.didComparison()
