@@ -29,15 +29,14 @@ type hashVal uint64
 
 type fsDev struct {
 	status
-	Dev            uint64
-	MaxNLinks      uint64
-	InoHashes      map[hashVal]I.Set
-	InoStatInfo    map[I.Ino]*I.StatInfo
-	InoPaths       I.PathsMap
-	LinkedInos     I.LinkedInoSets
-	DigestIno      map[digestVal]I.Set
-	InosWithDigest I.Set
-	pool           P.StringPool
+	Dev         uint64
+	MaxNLinks   uint64
+	InoHashes   map[hashVal]I.Set
+	InoStatInfo map[I.Ino]*I.StatInfo
+	InoPaths    I.PathsMap
+	LinkedInos  I.LinkedInoSets
+	I.InoDigests
+	pool P.StringPool
 
 	// For each directory name, keep track of all the StatInfo structures
 	DirnameStatInfos map[string]I.StatInfos
@@ -45,16 +44,15 @@ type fsDev struct {
 
 func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 	var w = fsDev{
-		status:         lstatus,
-		Dev:            dev,
-		MaxNLinks:      maxNLinks,
-		InoHashes:      make(map[hashVal]I.Set),
-		InoStatInfo:    make(map[I.Ino]*I.StatInfo),
-		InoPaths:       make(I.PathsMap),
-		LinkedInos:     make(I.LinkedInoSets),
-		DigestIno:      make(map[digestVal]I.Set),
-		InosWithDigest: I.NewSet(),
-		pool:           P.NewPool(),
+		status:      lstatus,
+		Dev:         dev,
+		MaxNLinks:   maxNLinks,
+		InoHashes:   make(map[hashVal]I.Set),
+		InoStatInfo: make(map[I.Ino]*I.StatInfo),
+		InoPaths:    make(I.PathsMap),
+		LinkedInos:  make(I.LinkedInoSets),
+		InoDigests:  I.NewInoDigests(),
+		pool:        P.NewPool(),
 	}
 
 	return w
@@ -151,16 +149,17 @@ func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
 	thresh := f.Options.SearchThresh
 	useDigest := thresh >= 0 && len(cachedSet) > thresh
 	if useDigest {
-		digest, err := contentDigest(f.Results, ps.Pathsplit.Join())
+		digest, err := I.ContentDigest(ps.Pathsplit.Join())
 		if err == nil {
 			// With digests, we take the (potentially long) set of cached inodes (ie.
 			// those inodes that all have the same InoHash), and remove the inodes that
 			// are definitely not a match because their digests do not match with the
 			// current inode.  We also put the inodes with equal digests before those
 			// that have no digest yet, in hopes of more quickly finding an identical file.
-			f.addPathStatDigest(ps, digest)
+			f.Results.computedDigest()
+			f.InoDigests.Add(ps, digest)
 			noDigests := cachedSet.Difference(f.InosWithDigest)
-			sameDigests := cachedSet.Intersection(f.DigestIno[digest])
+			sameDigests := cachedSet.Intersection(f.InoDigests.GetInos(digest))
 			differentDigests := cachedSet.Difference(sameDigests).Difference(noDigests)
 			cachedSeq = append(sameDigests.AsSlice(), noDigests.AsSlice()...)
 
@@ -206,8 +205,12 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 
 	// assert(st1.Dev == st2.Dev && st1.Ino != st2.Ino && st1.Size == st2.Size)
 	if useDigest {
-		f.newPathStatDigest(pi1)
-		f.newPathStatDigest(pi2)
+		if wasComputed := f.InoDigests.NewDigest(pi1); wasComputed {
+			f.Results.computedDigest()
+		}
+		if wasComputed := f.InoDigests.NewDigest(pi2); wasComputed {
+			f.Results.computedDigest()
+		}
 	}
 
 	f.Results.didComparison()
@@ -245,30 +248,4 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 		}
 	}
 	return eq
-}
-
-func (f *fsDev) addPathStatDigest(pi I.PathInfo, digest digestVal) {
-	if !f.InosWithDigest.Has(pi.Ino) {
-		f.helperPathStatDigest(pi, digest)
-	}
-}
-
-func (f *fsDev) newPathStatDigest(pi I.PathInfo) {
-	if !f.InosWithDigest.Has(pi.Ino) {
-		pathname := pi.Pathsplit.Join()
-		digest, err := contentDigest(f.Results, pathname)
-		if err == nil {
-			f.helperPathStatDigest(pi, digest)
-		}
-	}
-}
-
-func (f *fsDev) helperPathStatDigest(pi I.PathInfo, digest digestVal) {
-	if _, ok := f.DigestIno[digest]; !ok {
-		f.DigestIno[digest] = I.NewSet(pi.Ino)
-	} else {
-		set := f.DigestIno[digest]
-		set.Add(pi.Ino)
-	}
-	f.InosWithDigest.Add(pi.Ino)
 }
