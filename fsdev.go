@@ -35,9 +35,6 @@ type fsDev struct {
 	LinkedInos  I.LinkedInoSets
 	I.InoDigests
 	pool P.StringPool
-
-	// For each directory name, keep track of all the StatInfo structures
-	DirnameStatInfos map[string]I.StatInfos
 }
 
 func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
