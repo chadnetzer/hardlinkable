@@ -25,13 +25,11 @@ import (
 	P "hardlinkable/internal/pathpool"
 )
 
-type hashVal uint64
-
 type fsDev struct {
 	status
 	Dev         uint64
 	MaxNLinks   uint64
-	InoHashes   map[hashVal]I.Set
+	inoHashes   I.InoHashes
 	InoStatInfo map[I.Ino]*I.StatInfo
 	InoPaths    I.PathsMap
 	LinkedInos  I.LinkedInoSets
@@ -47,7 +45,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 		status:      lstatus,
 		Dev:         dev,
 		MaxNLinks:   maxNLinks,
-		InoHashes:   make(map[hashVal]I.Set),
+		inoHashes:   make(I.InoHashes),
 		InoStatInfo: make(map[I.Ino]*I.StatInfo),
 		InoPaths:    make(I.PathsMap),
 		LinkedInos:  make(I.LinkedInoSets),
@@ -56,25 +54,6 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 	}
 
 	return w
-}
-
-// InoHash produces an equal hash for potentially equal files, based only on
-// Inode metadata (size, time, etc.).  Content still has to be verified for
-// equality (but unequal hashes indicate files that definitely need not be
-// compared)
-func hashIno(i I.StatInfo, opt *Options) hashVal {
-	var value hashVal
-	size := hashVal(i.Size)
-	// The main requirement is that files that could be equal have equal
-	// hashes.  It's less important if unequal files also have the same
-	// hash value, since we will still compare the actual file content
-	// later.
-	if opt.IgnoreTime {
-		value = size
-	} else {
-		value = size ^ hashVal(i.Sec) ^ hashVal(i.Nsec)
-	}
-	return value
 }
 
 func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
@@ -87,11 +66,11 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 		f.Results.foundInode(di.StatInfo.Nlink)
 	}
 
-	H := hashIno(di.StatInfo, f.Options)
-	if _, ok := f.InoHashes[H]; !ok {
+	H := I.HashIno(di.StatInfo, f.Options.IgnoreTime)
+	if _, ok := f.inoHashes[H]; !ok {
 		// Setup for a newly seen hash value
 		f.Results.missedHash()
-		f.InoHashes[H] = I.NewSet(ino)
+		f.inoHashes[H] = I.NewSet(ino)
 	} else {
 		f.Results.foundHash()
 		// See if the new file is an inode we've seen before
@@ -108,7 +87,7 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 		// linked to another one, in which case we can avoid repeating
 		// the work of linking it again.
 		li := f.LinkedInos.Containing(ino)
-		hi := f.InoHashes[H]
+		hi := f.inoHashes[H]
 		linkedHashedInos := li.Intersection(hi)
 		foundLinkedHashedInos := len(linkedHashedInos) > 0
 		if !foundLinkedHashedInos {
@@ -130,7 +109,7 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 			// Add hash to set if no match was found in current set
 			if !foundLinkable {
 				f.Results.noHashMatch()
-				inoSet := f.InoHashes[H]
+				inoSet := f.inoHashes[H]
 				inoSet.Add(ino)
 			}
 		}
@@ -141,9 +120,9 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 }
 
 // possibleInos returns a slice of inos that can be searched for equal contents
-func (f *fsDev) cachedInos(H hashVal, ps I.PathInfo) ([]I.Ino, bool) {
+func (f *fsDev) cachedInos(H I.Hash, ps I.PathInfo) ([]I.Ino, bool) {
 	var cachedSeq []I.Ino
-	cachedSet := f.InoHashes[H]
+	cachedSet := f.inoHashes[H]
 	// If digests are enabled, and cached inode lists are
 	// long enough, then switch on the use of digests.
 	thresh := f.Options.SearchThresh
