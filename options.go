@@ -149,6 +149,15 @@ func IgnoreXattr(o *Options) {
 	o.IgnoreXattr = true
 }
 
+// ContentOnly uses only file content to determine equality (not inode
+// parameters like time, permission, ownership, etc.)
+func ContentOnly(o *Options) {
+	o.IgnoreTime = true
+	o.IgnorePerm = true
+	o.IgnoreOwner = true
+	o.IgnoreXattr = true
+}
+
 // LinkingEnabled allows Run() to actually perform linking of files
 func LinkingEnabled(o *Options) {
 	o.LinkingEnabled = true
