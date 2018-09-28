@@ -25,6 +25,7 @@ import (
 	"hardlinkable/internal/inode"
 	"io/ioutil"
 	"math/big"
+	"math/rand"
 	"os"
 	"path"
 	"reflect"
@@ -938,4 +939,152 @@ func TestMaxNlinks(t *testing.T) {
 			break
 		}
 	}
+}
+
+// TestRandFiles creates a bunch of files with random content, some with equal
+// contents, and some pre-linked.  It checks that the result of a linking run
+// are as expected.
+func TestRandFiles(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping RandFiles test in short mode")
+	} else {
+		t.Log("Use -short option to skip RandFiles test")
+	}
+
+	topdir := setUp("Run", t)
+	defer os.RemoveAll(topdir)
+
+	// Use "go test -count=1" to disable test result caching, otherwise the
+	// tests will not run with a new seed.
+	seed := time.Now().UnixNano()
+	rand.Seed(seed)
+
+	// Generate a bunch of random bytes
+	contentSrc := make([]byte, (1 << 18))
+	rand.Read(contentSrc)
+
+	// A set of all the file contents we've used, and their usage count
+	contents := map[string]int{}
+
+	dirnameChars := "ABC"
+	filenameChars := "abcde"
+	pathContents := map[string]string{}   // pathname:contents map
+	contentPaths := map[string][]string{} // contents:[]pathname map
+	for dirs := range powersetPerms(strings.Split(dirnameChars, "")) {
+		for files := range powersetPerms(strings.Split(filenameChars, "")) {
+			dirname := strings.Join(dirs, "")
+			filename := strings.Join(files, "")
+			pathname := path.Join(dirname, filename)
+
+			if err := os.Mkdir(dirname, 0755); err != nil && !os.IsExist(err) {
+				t.Fatalf("Couldn't create dirname '%v'", dirname)
+			}
+
+			var b []byte
+			var s string
+			// Each new file can either be new content or repeated
+			// content, or a link to an existing path.
+			rnd := rand.Float32()
+			if len(pathContents) > 0 && rnd > 0.9 {
+				// Link to arbitrary exising pathname (can create clusters)
+				var oldPathname string
+				n := rand.Intn(len(pathContents))
+				for k := range pathContents {
+					if n == 0 {
+						oldPathname = k
+						break
+					}
+					n--
+				}
+
+				// We can't yet handle clusters, so only link to the first
+				// pathname (which won't create clusters)
+				oldPathname = contentPaths[pathContents[oldPathname]][0]
+
+				if err := os.Link(oldPathname, pathname); err != nil {
+					t.Fatalf("Couldn't link %v to %v: %v", pathname, oldPathname, err)
+				}
+
+				s = pathContents[oldPathname]
+			} else {
+				rnd := rand.Float32()
+				if len(contents) > 0 && rnd < 0.25 {
+					// Choose arbitrary existing contents
+					n := rand.Intn(len(contents))
+					for k := range contents {
+						if n == 0 {
+							b = []byte(k)
+							break
+						}
+						n--
+					}
+				} else {
+					// Come up with a previously unseen content string
+					for {
+						// Weight max length towards zero, basically
+						// making it more likely to have smaller files
+						// than large (but definitely allow large)
+						const avgSize = 8192
+						var n int
+						for {
+							n = int(rand.ExpFloat64() * avgSize)
+							if n < len(contentSrc) {
+								n++
+								break
+							}
+						}
+						m := rand.Intn(n)
+						b = contentSrc[m:n]
+
+						if _, ok := contents[string(b)]; !ok {
+							break
+						}
+					}
+				}
+
+				if err := ioutil.WriteFile(pathname, b, 0644); err != nil {
+					t.Fatalf("Couldn't write pathname '%v' w/ rnd byte contents", pathname)
+				}
+
+				s = string(b)
+				contents[s] += 1
+			}
+
+			pathContents[pathname] = s
+			contentPaths[s] = append(contentPaths[s], pathname)
+		}
+	}
+
+	opts := SetupOptions(LinkingEnabled, ContentOnly)
+	result, err := Run([]string{"."}, []string{}, opts)
+	if err != nil {
+		t.Errorf("Error with Run() on random test files")
+	}
+
+	// Count how many times file content was used more than once.  The
+	// result should equal the number of LinkPaths (ie. sets of pathnames
+	// to link together).  The total number of content uses (minus 1 for
+	// each src inode), should equal the total number of new links.
+	numLinkPaths := 0
+	numNewLinks := int64(0)
+	numUnique := 0
+	for _, v := range contents {
+		if v > 1 {
+			numLinkPaths++
+			numNewLinks += int64(v - 1)
+		} else {
+			numUnique++
+		}
+	}
+	if numLinkPaths != len(result.LinkPaths) {
+		t.Errorf("Expected %v LinkPaths, got: %v", numLinkPaths, len(result.LinkPaths))
+	}
+	if numNewLinks != result.NewLinkCount {
+		t.Errorf("Expected %v NewLinkCount, got: %v", numNewLinks, result.NewLinkCount)
+	}
+	//fmt.Println(len(contents))
+	//fmt.Println(numLinkPaths)
+	//fmt.Println(numNewLinks)
+	//fmt.Printf("%+v\n", result.RunStats)
+	//fmt.Printf("%+v\n", result.LinkPaths)
 }
