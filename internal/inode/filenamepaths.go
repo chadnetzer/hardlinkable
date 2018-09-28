@@ -131,3 +131,28 @@ func (f *FilenamePaths) Copy() *FilenamePaths {
 	}
 	return &FilenamePaths{c, f.arbPath}
 }
+
+// CountPaths returns the number of stored paths
+func (f *FilenamePaths) CountPaths() int {
+	n := 0
+	for _, paths := range f.FPMap {
+		n += len(paths)
+	}
+	return n
+}
+
+// PathsAsSlice returns a slice of all the stored paths
+func (f *FilenamePaths) PathsAsSlice() []P.Pathsplit {
+	// Makes two passes over the FilenamePaths maps in order to preallocate
+	// and fill the slice.  Not clear if its an actual time saver over
+	// appends...
+	s := make([]P.Pathsplit, f.CountPaths())
+	i := 0
+	for _, paths := range f.FPMap {
+		for path := range paths {
+			s[i] = path
+			i++
+		}
+	}
+	return s
+}
