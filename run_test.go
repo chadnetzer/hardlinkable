@@ -621,13 +621,13 @@ func TestRunTwoDifferentTimesIgnoreTime(t *testing.T) {
 	verifyContents(name, t, m)
 }
 
-func TestRunIgnorePerms(t *testing.T) {
+func TestRunIgnorePerm(t *testing.T) {
 	topdir := setUp("Run", t)
 	defer os.RemoveAll(topdir)
 
-	opts := SetupOptions(LinkingEnabled, IgnorePerms)
+	opts := SetupOptions(LinkingEnabled, IgnorePerm)
 
-	name := "testname: 'Two Unequal File Modes w/ IgnorePerms'"
+	name := "testname: 'Two Unequal File Modes w/ IgnorePerm'"
 
 	m := pathContents{"f1": "X", "f2": "X"}
 	simpleFileMaker(t, m)
