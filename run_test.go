@@ -889,6 +889,11 @@ func TestRunLinearVsDigestSearch(t *testing.T) {
 }
 
 func TestMaxNlinks(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping MaxNlink test in short mode")
+	} else {
+		t.Log("Use -short option to skip MaxNlinks test")
+	}
 	topdir := setUp("Run", t)
 	defer os.RemoveAll(topdir)
 
@@ -898,11 +903,6 @@ func TestMaxNlinks(t *testing.T) {
 	N := inode.MaxNlinkVal("f1")
 	if N > (1<<15 - 1) {
 		t.Skip("Skipping MaxNlink test because Nlink max is greater than 32767")
-	}
-	if testing.Short() {
-		t.Skip("Skipping MaxNlink test in short mode")
-	} else {
-		t.Log("Use -short option to skip MaxNlinks test")
 	}
 
 	opts := SetupOptions(LinkingEnabled)
