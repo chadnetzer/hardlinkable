@@ -139,12 +139,12 @@ func IgnorePerms(o *Options) {
 	o.IgnorePerms = true
 }
 
-// IgnorePerms allows linked files to have unequal uid or gid
+// IgnoreOwner allows linked files to have unequal uid or gid
 func IgnoreOwner(o *Options) {
 	o.IgnoreOwner = true
 }
 
-// IgnorePerms allows linked files to have unequal xattrs
+// IgnoreXattr allows linked files to have unequal xattrs
 func IgnoreXattr(o *Options) {
 	o.IgnoreXattr = true
 }
