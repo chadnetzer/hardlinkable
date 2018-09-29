@@ -49,8 +49,8 @@ func (p pathsplitSet) remove(ps P.Pathsplit) {
 }
 
 func (p pathsplitSet) clone() pathsplitSet {
-	c := newPathsplitSet()
-	for k, _ := range p {
+	c := make(pathsplitSet, len(p))
+	for k := range p {
 		c.add(k)
 	}
 	return c
