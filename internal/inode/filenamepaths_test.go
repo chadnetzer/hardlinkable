@@ -70,9 +70,9 @@ func TestPathsplitSet(t *testing.T) {
 }
 
 func TestFilenamePaths(t *testing.T) {
-	var f *filenamePaths
+	var f *FilenamePaths
 	f = newFilenamePaths()
-	if len(f.PMap) != 0 {
+	if len(f.FPMap) != 0 {
 		t.Errorf("Empty FilenamePaths length isn't 0: %v", f)
 	}
 	if !f.IsEmpty() {
@@ -81,60 +81,50 @@ func TestFilenamePaths(t *testing.T) {
 
 	// Add two separate paths with same filename (ie. basename)
 	f.Add(SP("/a/a"))
-	if len(f.PMap) != 1 {
-		t.Errorf("Length %d of FilenamePaths PMap should be 1", len(f.PMap))
+	if len(f.FPMap) != 1 {
+		t.Errorf("Length %d of FilenamePaths FPMap should be 1", len(f.FPMap))
 	}
 	if f.IsEmpty() {
 		t.Errorf("isEmpty() on non-empty FilenamePaths is wrong")
 	}
 	f.Add(SP("/b/a"))
-	if len(f.PMap) != 1 {
-		t.Errorf("Length %d of FilenamePaths PMap should be 1", len(f.PMap))
+	if len(f.FPMap) != 1 {
+		t.Errorf("Length %d of FilenamePaths FPMap should be 1", len(f.FPMap))
 	}
 
 	// Add a new path with a unique filename
 	f.Add(SP("/a/c"))
-	if len(f.PMap) != 2 {
-		t.Errorf("Length %d of FilenamePaths PMap should be 2", len(f.PMap))
+	if len(f.FPMap) != 2 {
+		t.Errorf("Length %d of FilenamePaths FPMap should be 2", len(f.FPMap))
 	}
-	if len(f.PMap["a"]) != 2 {
-		t.Errorf("Length %d of FilenamePaths PMap[\"a\"] should be 2", len(f.PMap["a"]))
+	if len(f.FPMap["a"]) != 2 {
+		t.Errorf("Length %d of FilenamePaths FPMap[\"a\"] should be 2", len(f.FPMap["a"]))
 	}
-	if len(f.PMap["c"]) != 1 {
-		t.Errorf("Length %d of FilenamePaths PMap[\"c\"] should be 1", len(f.PMap["c"]))
+	if len(f.FPMap["c"]) != 1 {
+		t.Errorf("Length %d of FilenamePaths FPMap[\"c\"] should be 1", len(f.FPMap["c"]))
 	}
 
 	// Remove one of the path's with "a" filename
 	f.Remove(SP("/a/a"))
-	if len(f.PMap) != 2 {
-		t.Errorf("Length %d of FilenamePaths PMap should be 2", len(f.PMap))
+	if len(f.FPMap) != 2 {
+		t.Errorf("Length %d of FilenamePaths FPMap should be 2", len(f.FPMap))
 	}
-	if len(f.PMap["a"]) != 1 {
-		t.Errorf("Length %d of FilenamePaths PMap[\"a\"] should be 1", len(f.PMap["a"]))
-	}
-
-	c := f.Copy()
-	if !reflect.DeepEqual(f, c) {
-		t.Errorf("FilenamePaths clone: %v is unequal to original: %v", c, f)
+	if len(f.FPMap["a"]) != 1 {
+		t.Errorf("Length %d of FilenamePaths FPMap[\"a\"] should be 1", len(f.FPMap["a"]))
 	}
 
-	c.Add(SP("/c/b"))
-	if reflect.DeepEqual(f, c) {
-		t.Errorf("FilenamePaths clone: %v is equal to original: %v after added path", c, f)
-	}
-
-	z := c.AnyWithFilename("c")
+	z := f.AnyWithFilename("c")
 	if z.Filename != "c" {
 		t.Errorf("FilenamePaths anyWithFilename(\"c\") returned wrong filename: %v", z)
 	}
 
-	x := c.Any()
-	y := c.Any()
+	x := f.Any()
+	y := f.Any()
 	if x != y {
 		t.Errorf("FilenamePaths any() returned two different values: %v %v", x, y)
 	}
-	c.Remove(x)
-	x = c.Any()
+	f.Remove(x)
+	x = f.Any()
 	if x == y {
 		t.Errorf("FilenamePaths any() returned removed path: %v", y)
 	}

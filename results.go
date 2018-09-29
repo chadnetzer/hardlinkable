@@ -79,6 +79,7 @@ type RunStats struct {
 // new links.  It also includes a measurement of how long the Run() took to
 // execute, and the Options that were used to perform the Run().
 type Results struct {
+	// Link member strings are pathnames
 	ExistingLinks     map[string][]string `json:"existingLinks"`
 	ExistingLinkSizes map[string]uint64   `json:"existingLinkSizes"`
 	LinkPaths         [][]string          `json:"linkPaths"`

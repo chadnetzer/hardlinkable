@@ -173,7 +173,7 @@ var cfgFile string
 // separateArgs will remove duplicate args and separate into dirs and files
 func separateArgs(args []string) (argPaths, error) {
 	a := argPaths{make([]string, 0), make([]string, 0)}
-	seenPaths := make(map[string]struct{})
+	seenPaths := make(map[string]struct{}) // key = pathname
 	for _, name := range args {
 		if _, ok := seenPaths[name]; ok {
 			continue

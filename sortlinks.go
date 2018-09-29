@@ -139,9 +139,9 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 				if f.Options.SameName {
 					// Skip to next destination inode path if dst filename
 					// isn't also found as a src filename
-					srcPaths := f.InoPaths[srcIno].PMap
+					srcPaths := f.InoPaths[srcIno]
 					dstFilename := dstPath.Filename
-					if _, ok := srcPaths[dstFilename]; !ok {
+					if !srcPaths.HasFilename(dstFilename) {
 						continue
 					}
 					srcPath = f.InoPaths.ArbitraryFilenamePath(srcIno, dstFilename)
