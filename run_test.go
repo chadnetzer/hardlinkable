@@ -38,12 +38,6 @@ import (
 	"github.com/pkg/xattr"
 )
 
-const testdata0 = ""
-const testdata1a = "A"
-const testdata1b = "B"
-const testdata2a = "aa"
-const testdata2b = "bb"
-
 // ShuffleString returns a random shuffle of a given string (for test case
 // generation uses; complex unicode will likely confuse it)
 func ShuffleString(s string) string {
