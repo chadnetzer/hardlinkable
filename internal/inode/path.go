@@ -43,36 +43,36 @@ func (p1 PathInfo) EqualOwnership(p2 PathInfo) bool {
 
 type PathsMap map[Ino]*FilenamePaths
 
-func (ip PathsMap) ArbitraryPath(ino Ino) P.Pathsplit {
+func (pm PathsMap) ArbitraryPath(ino Ino) P.Pathsplit {
 	// ino must exist in f.InoPaths.  If it does, there will be at least
 	// one pathname to return
-	return ip[ino].Any()
+	return pm[ino].Any()
 }
 
-func (ip PathsMap) ArbitraryFilenamePath(ino Ino, filename string) P.Pathsplit {
-	return ip[ino].AnyWithFilename(filename)
+func (pm PathsMap) ArbitraryFilenamePath(ino Ino, filename string) P.Pathsplit {
+	return pm[ino].AnyWithFilename(filename)
 }
 
-func (ip PathsMap) HasPath(ino Ino, path P.Pathsplit) bool {
-	return ip[ino].HasPath(path)
+func (pm PathsMap) HasPath(ino Ino, path P.Pathsplit) bool {
+	return pm[ino].HasPath(path)
 }
 
-func (ip PathsMap) AppendPath(ino Ino, path P.Pathsplit) {
-	fp, ok := ip[ino]
+func (pm PathsMap) AppendPath(ino Ino, path P.Pathsplit) {
+	fp, ok := pm[ino]
 	if !ok {
 		fp = newFilenamePaths()
-		ip[ino] = fp
+		pm[ino] = fp
 	}
 	fp.Add(path)
 }
 
 // AllPaths returns a channel that can be iterated over to sequentially access
 // all the paths for a given inode.
-func (ip PathsMap) AllPaths(ino Ino) <-chan P.Pathsplit {
+func (pm PathsMap) AllPaths(ino Ino) <-chan P.Pathsplit {
 	// To avoid concurrent modification to the PathsMap maps while
 	// iterating from another goroutine, first place all the pathnames into
 	// a slice, in order to send them over the channel.
-	paths := ip[ino].PathsAsSlice()
+	paths := pm[ino].PathsAsSlice()
 
 	out := make(chan P.Pathsplit)
 	go func() {
@@ -84,15 +84,15 @@ func (ip PathsMap) AllPaths(ino Ino) <-chan P.Pathsplit {
 	return out
 }
 
-func (ip PathsMap) MovePath(dstPath P.Pathsplit, srcIno Ino, dstIno Ino) {
+func (pm PathsMap) MovePath(dstPath P.Pathsplit, srcIno Ino, dstIno Ino) {
 	// Get pathnames slice matching Ino and filename
-	fp := ip[dstIno]
+	fp := pm[dstIno]
 	fp.Remove(dstPath)
 
 	if fp.IsEmpty() {
-		delete(ip, dstIno)
+		delete(pm, dstIno)
 	}
-	ip.AppendPath(srcIno, dstPath)
+	pm.AppendPath(srcIno, dstPath)
 }
 
 // PathCount returns the number of unique paths and dirs encountered after the
@@ -101,14 +101,14 @@ func (ip PathsMap) MovePath(dstPath P.Pathsplit, srcIno Ino, dstIno Ino) {
 // walk.  Conversely, if we count the nlinks from all the encountered inodes,
 // and compare to the number of paths this function returns, we should have a
 // count of how many inode paths were not seen by the walk.
-func (ip PathsMap) PathCount() (paths int64, dirs int64) {
+func (pm PathsMap) PathCount() (paths int64, dirs int64) {
 	var numPaths, numDirs int64
 
 	// Make a set for storing unique dirs (key = dirname)
 	dirMap := make(map[string]struct{})
 
 	// loop over all inos, getting FilenamePaths
-	for _, fp := range ip {
+	for _, fp := range pm {
 		// loop over all filenames, getting paths
 		for _, paths := range fp.FPMap {
 			// Loop over all paths
