@@ -198,11 +198,11 @@ func TestLinkableInoSets(t *testing.T) {
 		get   uint64
 		has   []uint64
 	}{
-		// A pair of linked inos
+		// A pair of linkable inos
 		{[2]uint64{1, 2}, 1, []uint64{1, 2}},
 		{[2]uint64{2, 1}, 2, []uint64{1, 2}},
 
-		// Another group of linked inos
+		// Another group of linkable inos
 		{[2]uint64{3, 4}, 3, []uint64{4, 3}},
 		{[2]uint64{4, 3}, 4, []uint64{3, 4}},
 		{[2]uint64{3, 5}, 5, []uint64{3, 4, 5}},
@@ -248,10 +248,10 @@ func TestLinkableInoSets(t *testing.T) {
 		pairs   [2]uint64
 		numSets int
 	}{
-		// A pair of linked inos
+		// A pair of linkable inos
 		{[2]uint64{1, 2}, 1},
 
-		// Another group of linked inos
+		// Another group of linkable inos
 		{[2]uint64{3, 4}, 2},
 		{[2]uint64{3, 5}, 2},
 

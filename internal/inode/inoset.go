@@ -133,13 +133,13 @@ func (s Set) AsSlice() []Ino {
 
 type LinkableInoSets map[Ino]Set
 
-// AddLinkableInos places both ino1 and ino2 into the LinkedInoSets map.
+// Add places both ino1 and ino2 into the LinkableInoSets map.
 //
-// Potentially races with AllLinkedInoSets(), but typically all the data is
-// collected and added with AddLinkableInos() before calling AllLinkedInoSets()
-// (so we don't bother with locking).
+// Potentially races with All(), but typically all the data is collected and
+// added with AddLinkableInos() before calling All() (so we don't bother with
+// locking).
 func (l LinkableInoSets) Add(ino1, ino2 Ino) {
-	// Add both src and destination inos to the linked InoSets
+	// Add both src and destination inos to the linkable InoSets
 	inoSet1, ok := l[ino1]
 	if !ok {
 		l[ino1] = NewSet(ino2)
@@ -155,9 +155,9 @@ func (l LinkableInoSets) Add(ino1, ino2 Ino) {
 	}
 }
 
-// LinkedInoSetHelper is used by linkedInoSet and linkedInoSets to iterate over
-// the LinkedInos map to return a connected set of inodes (ie. inodes that the
-// hardlinkable algorithm has determined can all be linked together.
+// linkableInoSetHelper is used by Containing and All to iterate over the
+// LinkableInos map to return a connected set of inodes (ie.  inodes that the
+// hardlinkable algorithm has determined are allowed to be linked together.)
 func linkableInoSetHelper(l LinkableInoSets, ino Ino, seen Set) Set {
 	results := NewSet(ino)
 	pending := NewSet(ino)
@@ -169,7 +169,7 @@ func linkableInoSetHelper(l LinkableInoSets, ino Ino, seen Set) Set {
 		pending.Remove(ino)
 		results.Add(ino)
 
-		// Don't check for linked inos that we've seen already
+		// Don't check for linkable inos that we've seen already
 		if seen.Has(ino) {
 			continue
 		}
@@ -185,9 +185,9 @@ func linkableInoSetHelper(l LinkableInoSets, ino Ino, seen Set) Set {
 	return results
 }
 
-// Containing calls linkedInoSetHelper to return a single set of linked
-// inodes containing the given 'ino'.  Linked inodes are those determined by
-// the algorithm to have been able to be hard linked together (ie. have
+// Containing calls linkableInoSetHelper to return a single set of linkable
+// inodes containing the given 'ino'.  Linkable inodes are those determined by
+// the algorithm to have been able to be hardlinked together (ie. have
 // identical contents, and compatible inode parameters)
 func (l LinkableInoSets) Containing(ino Ino) Set {
 	if _, ok := l[ino]; !ok {
@@ -197,7 +197,7 @@ func (l LinkableInoSets) Containing(ino Ino) Set {
 	return linkableInoSetHelper(l, ino, seen)
 }
 
-// All sends all the linked InoSets over the returned channel.
+// All sends all the linkable InoSets over the returned channel.
 // The InoSets are ordered, by starting with the lowest inode and progressing
 // through the highest (rather than returning InoSets in random order).
 func (l LinkableInoSets) All() <-chan Set {
@@ -205,12 +205,12 @@ func (l LinkableInoSets) All() <-chan Set {
 	go func() {
 		defer close(out)
 
-		// Make a slice of the Ino keys in LinkedInoSets, so that we can
-		// sort them.  This allows us to output the full number of
-		// linkedInoSets in a deterministic order (leading to
-		// more repeatable ordering of link pairs across multiple
-		// dry-runs).  It's not completely deterministic because there
-		// can still be multiple choices for pre-linked src paths.
+		// Make a slice of the Ino keys in LinkableInoSets, so that we
+		// can sort them.  This allows us to output the full number of
+		// linkableInoSets in a deterministic order (leading to more
+		// repeatable ordering of link pairs across multiple dry-runs).
+		// It's not completely deterministic because there can still be
+		// multiple choices for pre-linked src paths.
 		i := 0
 		sortedInos := make([]Ino, len(l))
 		for ino := range l {
