@@ -201,23 +201,23 @@ func (l LinkableInoSets) Containing(ino Ino) Set {
 // The InoSets are ordered, by starting with the lowest inode and progressing
 // through the highest (rather than returning InoSets in random order).
 func (l LinkableInoSets) All() <-chan Set {
+	// Make a slice of the Ino keys in LinkableInoSets, so that we can sort
+	// them.  This allows us to output the full number of linkableInoSets
+	// in a deterministic order (leading to more repeatable ordering of
+	// link pairs across multiple dry-runs).  It's not completely
+	// deterministic because there can still be multiple choices for
+	// pre-linked src paths.
+	i := 0
+	sortedInos := make([]Ino, len(l))
+	for ino := range l {
+		sortedInos[i] = ino
+		i++
+	}
+	sort.Slice(sortedInos, func(i, j int) bool { return sortedInos[i] < sortedInos[j] })
+
 	out := make(chan Set)
 	go func() {
 		defer close(out)
-
-		// Make a slice of the Ino keys in LinkableInoSets, so that we
-		// can sort them.  This allows us to output the full number of
-		// linkableInoSets in a deterministic order (leading to more
-		// repeatable ordering of link pairs across multiple dry-runs).
-		// It's not completely deterministic because there can still be
-		// multiple choices for pre-linked src paths.
-		i := 0
-		sortedInos := make([]Ino, len(l))
-		for ino := range l {
-			sortedInos[i] = ino
-			i++
-		}
-		sort.Slice(sortedInos, func(i, j int) bool { return sortedInos[i] < sortedInos[j] })
 
 		seen := NewSet()
 		for _, startIno := range sortedInos {
