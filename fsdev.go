@@ -97,9 +97,9 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 		// the work of linking it again.
 		li := f.LinkableInos.Containing(ino)
 		hi := f.inoHashes[H]
-		linkedHashedInos := li.Intersection(hi)
-		foundLinkedHashedInos := len(linkedHashedInos) > 0
-		if !foundLinkedHashedInos {
+		linkableHashedInos := li.Intersection(hi)
+		foundLinkableHashedInos := len(linkableHashedInos) > 0
+		if !foundLinkableHashedInos {
 			// Get a list of previously seen inodes that may be linkable
 			cachedSeq, useDigest := f.cachedInos(H, curPathStat)
 

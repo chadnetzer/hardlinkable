@@ -176,8 +176,8 @@ func linkableInoSetHelper(l LinkableInoSets, ino Ino, seen Set) Set {
 		seen.Add(ino)
 
 		// Add connected inos to pending
-		if linked, ok := l[ino]; ok {
-			for k := range linked {
+		if linkable, ok := l[ino]; ok {
+			for k := range linkable {
 				pending.Add(k)
 			}
 		}
