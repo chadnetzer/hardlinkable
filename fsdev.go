@@ -27,11 +27,11 @@ import (
 
 type fsDev struct {
 	status
-	Dev         uint64
-	MaxNLinks   uint64
-	inoHashes   I.InoHashes
-	inoStatInfo I.InoStatInfo
-	InoPaths    I.PathsMap
+	Dev          uint64
+	MaxNLinks    uint64
+	inoHashes    I.InoHashes
+	inoStatInfo  I.InoStatInfo
+	InoPaths     I.PathsMap
 	LinkableInos I.LinkableInoSets
 	I.InoDigests
 	pool P.StringPool
@@ -39,15 +39,15 @@ type fsDev struct {
 
 func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 	var w = fsDev{
-		status:      lstatus,
-		Dev:         dev,
-		MaxNLinks:   maxNLinks,
-		inoHashes:   make(I.InoHashes),
-		inoStatInfo: make(I.InoStatInfo),
-		InoPaths:    make(I.PathsMap),
+		status:       lstatus,
+		Dev:          dev,
+		MaxNLinks:    maxNLinks,
+		inoHashes:    make(I.InoHashes),
+		inoStatInfo:  make(I.InoStatInfo),
+		InoPaths:     make(I.PathsMap),
 		LinkableInos: make(I.LinkableInoSets),
-		InoDigests:  I.NewInoDigests(),
-		pool:        P.NewPool(),
+		InoDigests:   I.NewInoDigests(),
+		pool:         P.NewPool(),
 	}
 
 	return w
