@@ -183,7 +183,7 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 	if !f.Options.IgnoreTime && !pi1.EqualTime(pi2) {
 		return false
 	}
-	if !f.Options.IgnorePerms && !pi1.EqualMode(pi2) {
+	if !f.Options.IgnorePerm && !pi1.EqualMode(pi2) {
 		return false
 	}
 	if !f.Options.IgnoreOwner && !pi1.EqualOwnership(pi2) {

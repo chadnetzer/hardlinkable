@@ -78,7 +78,7 @@ func (c CLIOptions) ToOptions() hardlinkable.Options {
 	o.SearchThresh = c.CLISearchThresh.n
 	if c.CLIContentOnly {
 		o.IgnoreTime = true
-		o.IgnorePerms = true
+		o.IgnorePerm = true
 		o.IgnoreOwner = true
 		o.IgnoreXattr = true
 	}
@@ -269,7 +269,7 @@ func init() {
 
 	flg.BoolVarP(&co.SameName, "same-name", "f", false, "Filenames need to be identical")
 	flg.BoolVarP(&co.IgnoreTime, "ignore-time", "t", false, "File modification times need not match")
-	flg.BoolVarP(&co.IgnorePerms, "ignore-perms", "p", false, "File permissions need not match")
+	flg.BoolVarP(&co.IgnorePerm, "ignore-perm", "p", false, "File permission (mode) need not match")
 	flg.BoolVarP(&co.IgnoreOwner, "ignore-owner", "o", false, "File uid/gid need not match")
 	flg.BoolVarP(&co.IgnoreXattr, "ignore-xattr", "x", false, "Xattrs need not match")
 	flg.BoolVarP(&co.CLIContentOnly, "content-only", "c", false, "Only file contents have to match (ie. -potx)")

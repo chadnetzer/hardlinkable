@@ -40,9 +40,9 @@ type Options struct {
 	// linked
 	IgnoreTime bool
 
-	// IgnorePerms enabled allows files with different inode mode values
+	// IgnorePerm enabled allows files with different inode mode values
 	// can be linked
-	IgnorePerms bool
+	IgnorePerm bool
 
 	// IgnoreOwner enabled allows files with different uid or gid can be
 	// linked
@@ -134,18 +134,27 @@ func IgnoreTime(o *Options) {
 	o.IgnoreTime = true
 }
 
-// IgnorePerms allows linked files to have unequal mode bits
-func IgnorePerms(o *Options) {
-	o.IgnorePerms = true
+// IgnorePerm allows linked files to have unequal mode bits
+func IgnorePerm(o *Options) {
+	o.IgnorePerm = true
 }
 
-// IgnorePerms allows linked files to have unequal uid or gid
+// IgnoreOwner allows linked files to have unequal uid or gid
 func IgnoreOwner(o *Options) {
 	o.IgnoreOwner = true
 }
 
-// IgnorePerms allows linked files to have unequal xattrs
+// IgnoreXattr allows linked files to have unequal xattrs
 func IgnoreXattr(o *Options) {
+	o.IgnoreXattr = true
+}
+
+// ContentOnly uses only file content to determine equality (not inode
+// parameters like time, permission, ownership, etc.)
+func ContentOnly(o *Options) {
+	o.IgnoreTime = true
+	o.IgnorePerm = true
+	o.IgnoreOwner = true
 	o.IgnoreXattr = true
 }
 
