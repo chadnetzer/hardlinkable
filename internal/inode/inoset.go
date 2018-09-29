@@ -221,7 +221,7 @@ func (l LinkableInoSets) All() <-chan Set {
 
 		seen := NewSet()
 		for _, startIno := range sortedInos {
-			if _, ok := seen[startIno]; ok {
+			if seen.Has(startIno) {
 				continue
 			}
 			out <- linkableInoSetHelper(l, startIno, seen)
