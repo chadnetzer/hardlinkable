@@ -60,7 +60,7 @@ func (p pathsplitSet) clone() pathsplitSet {
 // different paths to an inode), and also holds an arbitrary pathname that can
 // be used for consistency (rather than a fully random one from the map)
 type FilenamePaths struct {
-	PMap    map[string]pathsplitSet
+	FPMap   map[string]pathsplitSet
 	arbPath P.Pathsplit
 }
 
@@ -74,7 +74,7 @@ func newFilenamePaths() *FilenamePaths {
 // unnecessarily, and basically makes the output a bit more friendly.
 func (f *FilenamePaths) Any() P.Pathsplit {
 	if f.arbPath == (P.Pathsplit{}) {
-		for _, pathnames := range f.PMap {
+		for _, pathnames := range f.FPMap {
 			f.arbPath = pathnames.any()
 			return f.arbPath
 		}
@@ -84,24 +84,24 @@ func (f *FilenamePaths) Any() P.Pathsplit {
 
 // AnyWithFilename will return an arbitrary path with the given filename
 func (f *FilenamePaths) AnyWithFilename(filename string) P.Pathsplit {
-	f.arbPath = f.PMap[filename].any()
+	f.arbPath = f.FPMap[filename].any()
 	return f.arbPath
 }
 
 func (f *FilenamePaths) Add(ps P.Pathsplit) {
-	p, ok := f.PMap[ps.Filename]
+	p, ok := f.FPMap[ps.Filename]
 	if !ok {
 		p = newPathsplitSet()
 	}
 	p.add(ps)
-	f.PMap[ps.Filename] = p
+	f.FPMap[ps.Filename] = p
 }
 
 func (f *FilenamePaths) Remove(ps P.Pathsplit) {
-	// Find and remove given Pathsplit from PMap
-	f.PMap[ps.Filename].remove(ps)
-	if len(f.PMap[ps.Filename]) == 0 {
-		delete(f.PMap, ps.Filename)
+	// Find and remove given Pathsplit from FPMap
+	f.FPMap[ps.Filename].remove(ps)
+	if len(f.FPMap[ps.Filename]) == 0 {
+		delete(f.FPMap, ps.Filename)
 		f.arbPath = P.Pathsplit{}
 	} else if ps == f.arbPath {
 		f.arbPath = P.Pathsplit{}
@@ -109,11 +109,11 @@ func (f *FilenamePaths) Remove(ps P.Pathsplit) {
 }
 
 func (f *FilenamePaths) IsEmpty() bool {
-	return len(f.PMap) == 0
+	return len(f.FPMap) == 0
 }
 
 func (f *FilenamePaths) HasPath(ps P.Pathsplit) bool {
-	paths, ok := f.PMap[ps.Filename]
+	paths, ok := f.FPMap[ps.Filename]
 	if !ok {
 		return false
 	}

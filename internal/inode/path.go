@@ -121,7 +121,7 @@ func (ip PathsMap) PathCount() (paths int64, dirs int64) {
 	// loop over all inos, getting FilenamePaths
 	for _, fp := range ip {
 		// loop over all filenames, getting paths
-		for _, paths := range fp.PMap {
+		for _, paths := range fp.FPMap {
 			// Loop over all paths
 			for p := range paths {
 				numPaths++
