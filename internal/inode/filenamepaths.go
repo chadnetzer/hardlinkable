@@ -123,6 +123,11 @@ func (f *FilenamePaths) HasPath(ps P.Pathsplit) bool {
 	return true
 }
 
+func (f *FilenamePaths) HasFilename(filename string) bool {
+	_, ok := f.FPMap[filename]
+	return ok
+}
+
 // CountPaths returns the number of stored paths
 func (f *FilenamePaths) CountPaths() int {
 	n := 0
