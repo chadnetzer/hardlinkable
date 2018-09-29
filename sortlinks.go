@@ -77,7 +77,7 @@ func appendReversedInos(toS []I.Ino, fromS ...I.Ino) []I.Ino {
 // (until the maximum nlink count is reached, at which point it proceeds to the
 // src inode with the next highest nlink count).
 func (f *fsDev) generateLinks() error {
-	for linkableSet := range f.LinkedInos.All() {
+	for linkableSet := range f.LinkableInos.All() {
 		// Sort links highest nlink to lowest
 		sortedInos := f.sortSetByNlink(linkableSet)
 		if err := f.genLinksHelper(sortedInos); err != nil {

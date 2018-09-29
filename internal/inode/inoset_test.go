@@ -183,13 +183,13 @@ func TestSetAsSlice(t *testing.T) {
 	}
 }
 
-func TestLinkedInoSets(t *testing.T) {
-	l := make(LinkedInoSets)
+func TestLinkableInoSets(t *testing.T) {
+	l := make(LinkableInoSets)
 
 	// Test when no linkable inos have been added yet
 	s := l.Containing(1)
 	if len(s) != 1 && !s.Has(1) {
-		t.Errorf("Linked InoSet was expected to contain just {1}: %v", s)
+		t.Errorf("Linkable InoSet was expected to contain just {1}: %v", s)
 	}
 
 	// Create a list of cumulative linkable ino tests
@@ -261,7 +261,7 @@ func TestLinkedInoSets(t *testing.T) {
 
 	// Simple test that All() returns correct number of sets (ignoring contents)
 	// (Content tests for Contains() above should be sufficient)
-	l = make(LinkedInoSets)
+	l = make(LinkableInoSets)
 	for _, v := range tests2 {
 		l.Add(v.pairs[0], v.pairs[1])
 		i := 0

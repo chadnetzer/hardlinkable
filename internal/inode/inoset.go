@@ -131,14 +131,14 @@ func (s Set) AsSlice() []Ino {
 	return r
 }
 
-type LinkedInoSets map[Ino]Set
+type LinkableInoSets map[Ino]Set
 
 // AddLinkableInos places both ino1 and ino2 into the LinkedInoSets map.
 //
 // Potentially races with AllLinkedInoSets(), but typically all the data is
 // collected and added with AddLinkableInos() before calling AllLinkedInoSets()
 // (so we don't bother with locking).
-func (l LinkedInoSets) Add(ino1, ino2 Ino) {
+func (l LinkableInoSets) Add(ino1, ino2 Ino) {
 	// Add both src and destination inos to the linked InoSets
 	inoSet1, ok := l[ino1]
 	if !ok {
@@ -158,7 +158,7 @@ func (l LinkedInoSets) Add(ino1, ino2 Ino) {
 // LinkedInoSetHelper is used by linkedInoSet and linkedInoSets to iterate over
 // the LinkedInos map to return a connected set of inodes (ie. inodes that the
 // hardlinkable algorithm has determined can all be linked together.
-func linkedInoSetHelper(l LinkedInoSets, ino Ino, seen Set) Set {
+func linkableInoSetHelper(l LinkableInoSets, ino Ino, seen Set) Set {
 	results := NewSet(ino)
 	pending := NewSet(ino)
 	for len(pending) > 0 {
@@ -189,18 +189,18 @@ func linkedInoSetHelper(l LinkedInoSets, ino Ino, seen Set) Set {
 // inodes containing the given 'ino'.  Linked inodes are those determined by
 // the algorithm to have been able to be hard linked together (ie. have
 // identical contents, and compatible inode parameters)
-func (l LinkedInoSets) Containing(ino Ino) Set {
+func (l LinkableInoSets) Containing(ino Ino) Set {
 	if _, ok := l[ino]; !ok {
 		return NewSet(ino)
 	}
 	seen := NewSet()
-	return linkedInoSetHelper(l, ino, seen)
+	return linkableInoSetHelper(l, ino, seen)
 }
 
 // All sends all the linked InoSets over the returned channel.
 // The InoSets are ordered, by starting with the lowest inode and progressing
 // through the highest (rather than returning InoSets in random order).
-func (l LinkedInoSets) All() <-chan Set {
+func (l LinkableInoSets) All() <-chan Set {
 	out := make(chan Set)
 	go func() {
 		defer close(out)
@@ -224,7 +224,7 @@ func (l LinkedInoSets) All() <-chan Set {
 			if _, ok := seen[startIno]; ok {
 				continue
 			}
-			out <- linkedInoSetHelper(l, startIno, seen)
+			out <- linkableInoSetHelper(l, startIno, seen)
 		}
 	}()
 	return out
