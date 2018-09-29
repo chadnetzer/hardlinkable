@@ -82,6 +82,10 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	defer ls.Results.end()
 	defer ls.Progress.Done()
 
+	// Phase 1: Gather path and inode information by walking the dirs and
+	// files, looking for files that can be linked due to identical
+	// contents, and optionally equivalent inode parameters (time,
+	// permission, ownership, etc.)
 	c := matchedPathnames(*ls.Options, ls.Results, dirs, files)
 	for pathname := range c {
 		ls.Progress.Show()
@@ -120,8 +124,11 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	}
 	ls.Results.fileAndDirectoryCount(numPaths, numDirs)
 
-	// Iterate over all the inode sorted links, to gather accurate linking
-	// statistics, and optionally link them if requested.
+	// Phase 2: Link generation - with all the path and inode information
+	// collected, iterate over all the inode links sorted from highest
+	// nlink count to lowest, gathering accurate linking statistics,
+	// determine what link() pairs and in what order are needed to produce
+	// the desired result, and optionally link them if requested.
 	for _, fsdev := range ls.fsDevs {
 		if err := fsdev.generateLinks(); err != nil {
 			return err
