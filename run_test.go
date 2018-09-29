@@ -326,7 +326,7 @@ func inoVal(pathname string) uint64 {
 
 func verifyLinkPaths(name string, t *testing.T, r *Results, paths []string) {
 	if len(paths) == 0 && len(r.LinkPaths) > 0 {
-		t.Errorf("%v: Expected empty LinkedPaths, got: %v\n", name, r.LinkPaths)
+		t.Errorf("%v: Expected empty LinkPaths, got: %v\n", name, r.LinkPaths)
 		return
 	}
 	if len(paths) == 0 {
@@ -340,7 +340,7 @@ func verifyLinkPaths(name string, t *testing.T, r *Results, paths []string) {
 			return
 		}
 	}
-	t.Errorf("%v: Couldn't find expected LinkedPaths in results: %v\n", name, paths)
+	t.Errorf("%v: Couldn't find expected LinkPaths in results: %v\n", name, paths)
 }
 
 func verifyInodeCounts(name string, t *testing.T, r *Results, inoRemovedCount int64, inoRemovedBytes uint64, nlinkCount uint32, filenames ...string) {
