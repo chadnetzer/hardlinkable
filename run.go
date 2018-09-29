@@ -82,7 +82,7 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	defer ls.Results.end()
 	defer ls.Progress.Done()
 
-	c := matchedPathnames(ls.status, dirs, files)
+	c := matchedPathnames(*ls.Options, ls.Results, dirs, files)
 	for pathname := range c {
 		ls.Progress.Show()
 		di, err := inode.LStatInfo(pathname)
