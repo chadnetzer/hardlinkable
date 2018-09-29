@@ -27,27 +27,27 @@ import (
 
 type fsDev struct {
 	status
-	Dev         uint64
-	MaxNLinks   uint64
-	inoHashes   I.InoHashes
-	inoStatInfo I.InoStatInfo
-	InoPaths    I.PathsMap
-	LinkedInos  I.LinkedInoSets
+	Dev          uint64
+	MaxNLinks    uint64
+	inoHashes    I.InoHashes
+	inoStatInfo  I.InoStatInfo
+	InoPaths     I.PathsMap
+	LinkableInos I.LinkableInoSets
 	I.InoDigests
 	pool P.StringPool
 }
 
 func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 	var w = fsDev{
-		status:      lstatus,
-		Dev:         dev,
-		MaxNLinks:   maxNLinks,
-		inoHashes:   make(I.InoHashes),
-		inoStatInfo: make(I.InoStatInfo),
-		InoPaths:    make(I.PathsMap),
-		LinkedInos:  make(I.LinkedInoSets),
-		InoDigests:  I.NewInoDigests(),
-		pool:        P.NewPool(),
+		status:       lstatus,
+		Dev:          dev,
+		MaxNLinks:    maxNLinks,
+		inoHashes:    make(I.InoHashes),
+		inoStatInfo:  make(I.InoStatInfo),
+		InoPaths:     make(I.PathsMap),
+		LinkableInos: make(I.LinkableInoSets),
+		InoDigests:   I.NewInoDigests(),
+		pool:         P.NewPool(),
 	}
 
 	return w
@@ -95,11 +95,11 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 		// See if this inode is already one we've determined can be
 		// linked to another one, in which case we can avoid repeating
 		// the work of linking it again.
-		li := f.LinkedInos.Containing(ino)
+		li := f.LinkableInos.Containing(ino)
 		hi := f.inoHashes[H]
-		linkedHashedInos := li.Intersection(hi)
-		foundLinkedHashedInos := len(linkedHashedInos) > 0
-		if !foundLinkedHashedInos {
+		linkableHashedInos := li.Intersection(hi)
+		foundLinkableHashedInos := len(linkableHashedInos) > 0
+		if !foundLinkableHashedInos {
 			// Get a list of previously seen inodes that may be linkable
 			cachedSeq, useDigest := f.cachedInos(H, curPathStat)
 
@@ -110,7 +110,7 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 				f.Results.incInoSeqIterations()
 				cachedPathStat := f.PathInfoFromIno(cachedIno)
 				if f.areFilesLinkable(cachedPathStat, curPathStat, useDigest) {
-					f.LinkedInos.Add(cachedPathStat.Ino, ino)
+					f.LinkableInos.Add(cachedPathStat.Ino, ino)
 					foundLinkable = true
 					break
 				}
