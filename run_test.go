@@ -93,6 +93,8 @@ func TestPermutations(t *testing.T) {
 		{[]string{"a"}, 1},
 		{[]string{"a", "b"}, 2},
 		{[]string{"a", "b", "c"}, 6},
+		{[]string{"c", "b", "a"}, 6},
+		{[]string{"b", "a", "c"}, 6},
 		{[]string{"a", "b", "c", "d"}, 24},
 		{[]string{"a", "b", "c", "d", "e"}, 120},
 	}
@@ -140,6 +142,8 @@ func TestPowersets(t *testing.T) {
 		{[]string{"a"}, 1},
 		{[]string{"a", "b"}, 3},
 		{[]string{"a", "b", "c"}, 7},
+		{[]string{"b", "c", "a"}, 7},
+		{[]string{"c", "a", "b"}, 7},
 		{[]string{"a", "b", "c", "d"}, 15},
 		{[]string{"a", "b", "c", "d", "e"}, 31},
 	}
@@ -196,7 +200,10 @@ func TestPowersetPerms(t *testing.T) {
 		// a(n) = n*(a(n) + 1)
 		{[]string{"a"}, 1},
 		{[]string{"a", "b"}, 4},
+		{[]string{"b", "a"}, 4},
 		{[]string{"a", "b", "c"}, 15},
+		{[]string{"c", "a", "b"}, 15},
+		{[]string{"b", "c", "a"}, 15},
 		{[]string{"a", "b", "c", "d"}, 64},
 		{[]string{"a", "b", "c", "d", "e"}, 325},
 	}
