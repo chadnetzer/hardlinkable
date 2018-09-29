@@ -44,6 +44,19 @@ const testdata1b = "B"
 const testdata2a = "aa"
 const testdata2b = "bb"
 
+// ShuffleString returns a random shuffle of a given string (for test case
+// generation uses; complex unicode will likely confuse it)
+func ShuffleString(s string) string {
+	b := []rune(s)
+
+	dest := make([]rune, len(b))
+	perm := rand.Perm(len(b))
+	for i, v := range perm {
+		dest[v] = b[i]
+	}
+	return string(dest)
+}
+
 // Algorithm from http://www.quickperm.org/
 // Output of emptyset is nil
 func permutations(a []string) <-chan []string {
@@ -973,8 +986,8 @@ func TestRandFiles(t *testing.T) {
 	// A set of all the file contents we've used, and their usage count
 	contents := map[string]int{}
 
-	dirnameChars := "ABC"
-	filenameChars := "abcde"
+	dirnameChars := ShuffleString("ABC")
+	filenameChars := ShuffleString("abcde")
 	pathContents := map[string]string{}   // pathname:contents map
 	contentPaths := map[string][]string{} // contents:[]pathname map
 	for dirs := range powersetPerms(strings.Split(dirnameChars, "")) {
