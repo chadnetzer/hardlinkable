@@ -123,15 +123,6 @@ func (f *FilenamePaths) HasPath(ps P.Pathsplit) bool {
 	return true
 }
 
-// Return a copy of the given FilenamePaths
-func (f *FilenamePaths) Copy() *FilenamePaths {
-	c := make(map[string]pathsplitSet, len(f.PMap))
-	for k, v := range f.PMap {
-		c[k] = v.clone()
-	}
-	return &FilenamePaths{c, f.arbPath}
-}
-
 // CountPaths returns the number of stored paths
 func (f *FilenamePaths) CountPaths() int {
 	n := 0

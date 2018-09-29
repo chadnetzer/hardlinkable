@@ -113,28 +113,18 @@ func TestFilenamePaths(t *testing.T) {
 		t.Errorf("Length %d of FilenamePaths FPMap[\"a\"] should be 1", len(f.FPMap["a"]))
 	}
 
-	c := f.Copy()
-	if !reflect.DeepEqual(f, c) {
-		t.Errorf("FilenamePaths clone: %v is unequal to original: %v", c, f)
-	}
-
-	c.Add(SP("/c/b"))
-	if reflect.DeepEqual(f, c) {
-		t.Errorf("FilenamePaths clone: %v is equal to original: %v after added path", c, f)
-	}
-
-	z := c.AnyWithFilename("c")
+	z := f.AnyWithFilename("c")
 	if z.Filename != "c" {
 		t.Errorf("FilenamePaths anyWithFilename(\"c\") returned wrong filename: %v", z)
 	}
 
-	x := c.Any()
-	y := c.Any()
+	x := f.Any()
+	y := f.Any()
 	if x != y {
 		t.Errorf("FilenamePaths any() returned two different values: %v %v", x, y)
 	}
-	c.Remove(x)
-	x = c.Any()
+	f.Remove(x)
+	x = f.Any()
 	if x == y {
 		t.Errorf("FilenamePaths any() returned removed path: %v", y)
 	}
