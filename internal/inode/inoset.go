@@ -200,6 +200,11 @@ func (l LinkableInoSets) Containing(ino Ino) Set {
 // All sends all the linkable InoSets over the returned channel.
 // The InoSets are ordered, by starting with the lowest inode and progressing
 // through the highest (rather than returning InoSets in random order).
+//
+// This method races with the Add() method, but since it is called after all
+// the Add()s have completed (ie. the path/inode information gathering phase
+// has completed, and moved to the link generation phase), no locking of
+// LinkableInoSets is required.
 func (l LinkableInoSets) All() <-chan Set {
 	// Make a slice of the Ino keys in LinkableInoSets, so that we can sort
 	// them.  This allows us to output the full number of linkableInoSets
