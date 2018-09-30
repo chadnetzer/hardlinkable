@@ -1010,7 +1010,7 @@ func TestRandFiles(t *testing.T) {
 	var numFiles int64
 	dirnameChars := ShuffleString("ABC")
 	filenameChars := ShuffleString("abcde")
-	pathContents := map[string]string{}      // pathname:contents map
+	pc := pathContents{}                     // pathname:contents map
 	contentPaths := map[string][]string{}    // contents:[]pathname map
 	contentClusters := map[string]Clusters{} // contents:Clusters
 	for dirs := range powersetPerms(strings.Split(dirnameChars, "")) {
@@ -1029,11 +1029,11 @@ func TestRandFiles(t *testing.T) {
 			// Each new file can either be new content or repeated
 			// content, or a link to an existing path.
 			rnd := rand.Float32()
-			if len(pathContents) > 0 && rnd > 0.9 {
+			if len(pc) > 0 && rnd > 0.9 {
 				// Link to arbitrary exising pathname (can create clusters)
 				var oldPathname string
-				n := rand.Intn(len(pathContents))
-				for k := range pathContents {
+				n := rand.Intn(len(pc))
+				for k := range pc {
 					if n == 0 {
 						oldPathname = k
 						break
@@ -1045,7 +1045,7 @@ func TestRandFiles(t *testing.T) {
 					t.Fatalf("Couldn't link %v to %v: %v", pathname, oldPathname, err)
 				}
 
-				s = pathContents[oldPathname]
+				s = pc[oldPathname]
 				if len(s) >= minSize && (maxSize == 0 || len(s) <= maxSize) {
 					contentClusters[s].addToCluster(oldPathname, pathname)
 				}
@@ -1097,7 +1097,7 @@ func TestRandFiles(t *testing.T) {
 			}
 
 			if len(s) >= minSize && (maxSize == 0 || len(s) <= maxSize) {
-				pathContents[pathname] = s
+				pc[pathname] = s
 				contentPaths[s] = append(contentPaths[s], pathname)
 				numFiles += 1
 				if newDir {
