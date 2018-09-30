@@ -43,7 +43,6 @@ func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <
 						if dir != osPathname && isMatched(de.Name(), dirExcludes) {
 							return filepath.SkipDir
 						}
-						r.foundDirectory()
 					} else if de.ModeType().IsRegular() {
 						if isFileIncluded(de.Name(), &opts) {
 							out <- osPathname

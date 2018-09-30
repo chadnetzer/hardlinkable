@@ -102,10 +102,6 @@ func newResults(o *Options) *Results {
 	return &r
 }
 
-func (r *Results) foundDirectory() {
-	r.DirCount += 1
-}
-
 func (r *Results) foundFile() {
 	r.FileCount += 1
 }
