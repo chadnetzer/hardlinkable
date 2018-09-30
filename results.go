@@ -102,6 +102,10 @@ func newResults(o *Options) *Results {
 	return &r
 }
 
+// foundFile keeps a running count of the files found (not counting those that
+// are excluded).  The final tally can be overwritten when all paths are
+// walked, but the running tally is used by the progress interfaces while the
+// walk is occurring.
 func (r *Results) foundFile() {
 	r.FileCount += 1
 }
