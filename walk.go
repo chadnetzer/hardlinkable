@@ -30,9 +30,7 @@ import (
 
 // Return allowed pathnames through the given channel.
 func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <-chan string {
-	// Options is a copy to prevent being changed during walk.  Also note
-	// that Results.foundDirectory() is only called from inside this
-	// particular goroutine, so is safe from races.
+	// Options is a copy to prevent being changed during walk.
 	out := make(chan string)
 	go func() {
 		defer close(out)
@@ -45,7 +43,6 @@ func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <
 						if dir != osPathname && isMatched(de.Name(), dirExcludes) {
 							return filepath.SkipDir
 						}
-						r.foundDirectory()
 					} else if de.ModeType().IsRegular() {
 						if isFileIncluded(de.Name(), &opts) {
 							out <- osPathname
