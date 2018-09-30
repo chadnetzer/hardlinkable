@@ -1112,12 +1112,20 @@ func TestRandFiles(t *testing.T) {
 	// test files (ie. grouping files with equal content by keeping track
 	// of those that are linked together before the Run()
 	numNewLinks := int64(0)
+	numPrevLinks := int64(0)
+	numInodes := int64(0)
+	numNlinks := int64(0)
 	linkPathsBytes := uint64(0)
+	prevLinksBytes := uint64(0)
 	for co, cl := range contentClusters {
+		numInodes += int64(len(cl))
+
 		// Sort by highest cluster count to lowest
 		sort.Slice(cl, func(i, j int) bool { return len(cl[i]) > len(cl[j]) })
 		// Doesn't handle maxNlink scenarios
 		for i, m := range cl {
+			numNlinks += int64(len(m))
+
 			// The first cluster (with highest nlink count) is skipped,
 			// because they will be linked to, not from, so aren't counted
 			// by the NewLinkCount
@@ -1125,13 +1133,32 @@ func TestRandFiles(t *testing.T) {
 				numNewLinks += int64(len(m))
 				linkPathsBytes += uint64(len(co))
 			}
+
+			// Also count the prev links using the cluster information.
+			// Clusters of more than 1 pathname are pre-existing.
+			if len(m) > 1 {
+				numPrevLinks += int64(len(m) - 1)
+				prevLinksBytes += uint64(len(co) * (len(m) - 1))
+			}
 		}
+	}
+	if numInodes != result.InodeCount {
+		t.Errorf("Expected %v inodes, got: %v", numInodes, result.InodeCount)
+	}
+	if numNlinks != result.NlinkCount {
+		t.Errorf("Expected %v nlinks, got: %v", numNlinks, result.NlinkCount)
 	}
 	if numNewLinks != result.NewLinkCount {
 		t.Errorf("Expected %v NewLinkCount, got: %v", numNewLinks, result.NewLinkCount)
 	}
+	if numPrevLinks != result.PrevLinkCount {
+		t.Errorf("Expected %v PrevLinkCount, got: %v", numPrevLinks, result.PrevLinkCount)
+	}
 	if linkPathsBytes != result.InodeRemovedByteAmount {
 		t.Errorf("Expected %v InodeRemovedByteAmount, got: %v", linkPathsBytes, result.InodeRemovedByteAmount)
+	}
+	if prevLinksBytes != result.PrevLinkedByteAmount {
+		t.Errorf("Expected %v PrevLinkedByteAmount, got: %v", prevLinksBytes, result.PrevLinkedByteAmount)
 	}
 	//fmt.Println(len(contents))
 	//fmt.Println(numLinkPaths)
