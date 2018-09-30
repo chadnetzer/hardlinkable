@@ -286,8 +286,8 @@ func simpleRun(name string, t *testing.T, opts Options, numLinkPaths int, dirs .
 	return &result
 }
 
-type pathContents map[string]string
-type existingLinks map[string][]string
+type pathContents map[string]string    // pathname:contents
+type existingLinks map[string][]string // pathname:pathnames
 
 // provided with a map of filenames:content, create the files
 func simpleFileMaker(t *testing.T, m pathContents) {
