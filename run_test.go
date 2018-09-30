@@ -999,6 +999,10 @@ func TestRandFiles(t *testing.T) {
 	contentSrc := make([]byte, maxContentLen)
 	rand.Read(contentSrc)
 
+	// Setup min/max file sizes
+	maxSize := rand.Intn(maxContentIndex) + 1
+	minSize := rand.Intn(maxSize)
+
 	// A set of all the file contents we've used, and their usage count
 	contents := map[string]int{}
 
@@ -1010,9 +1014,8 @@ func TestRandFiles(t *testing.T) {
 	contentPaths := map[string][]string{}    // contents:[]pathname map
 	contentClusters := map[string]Clusters{} // contents:Clusters
 	for dirs := range powersetPerms(strings.Split(dirnameChars, "")) {
-		numDirs += 1
+		newDir := true
 		for files := range powersetPerms(strings.Split(filenameChars, "")) {
-			numFiles += 1
 			dirname := strings.Join(dirs, "")
 			filename := strings.Join(files, "")
 			pathname := path.Join(dirname, filename)
@@ -1043,7 +1046,9 @@ func TestRandFiles(t *testing.T) {
 				}
 
 				s = pathContents[oldPathname]
-				contentClusters[s].addToCluster(oldPathname, pathname)
+				if len(s) >= minSize && (maxSize == 0 || len(s) <= maxSize) {
+					contentClusters[s].addToCluster(oldPathname, pathname)
+				}
 			} else {
 				rnd := rand.Float32()
 				if len(contents) > 0 && rnd < 0.25 {
@@ -1085,16 +1090,27 @@ func TestRandFiles(t *testing.T) {
 				}
 
 				s = string(b)
-				contents[s] += 1
-				contentClusters[s] = append(contentClusters[s], newPathnameSet(pathname))
+				if len(s) >= minSize && (maxSize == 0 || len(s) <= maxSize) {
+					contents[s] += 1
+					contentClusters[s] = append(contentClusters[s], newPathnameSet(pathname))
+				}
 			}
 
-			pathContents[pathname] = s
-			contentPaths[s] = append(contentPaths[s], pathname)
+			if len(s) >= minSize && (maxSize == 0 || len(s) <= maxSize) {
+				pathContents[pathname] = s
+				contentPaths[s] = append(contentPaths[s], pathname)
+				numFiles += 1
+				if newDir {
+					numDirs += 1
+					newDir = false
+				}
+			}
 		}
 	}
 
 	opts := SetupOptions(LinkingEnabled, ContentOnly)
+	opts.MaxFileSize = uint64(maxSize)
+	opts.MinFileSize = uint64(minSize)
 	result, err := Run([]string{"."}, []string{}, opts)
 	if err != nil {
 		t.Errorf("Error with Run() on random test files")
