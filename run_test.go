@@ -992,8 +992,11 @@ func TestRandFiles(t *testing.T) {
 	seed := time.Now().UnixNano()
 	rand.Seed(seed)
 
+	const maxContentLen = (1 << 18)
+	const maxContentIndex = maxContentLen - 1
+
 	// Generate a bunch of random bytes
-	contentSrc := make([]byte, (1 << 18))
+	contentSrc := make([]byte, maxContentLen)
 	rand.Read(contentSrc)
 
 	// A set of all the file contents we've used, and their usage count
