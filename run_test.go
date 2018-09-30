@@ -1003,8 +1003,8 @@ func TestRandFiles(t *testing.T) {
 	var numFiles int64
 	dirnameChars := ShuffleString("ABC")
 	filenameChars := ShuffleString("abcde")
-	pathContents := map[string]string{}   // pathname:contents map
-	contentPaths := map[string][]string{} // contents:[]pathname map
+	pathContents := map[string]string{}      // pathname:contents map
+	contentPaths := map[string][]string{}    // contents:[]pathname map
 	contentClusters := map[string]Clusters{} // contents:Clusters
 	for dirs := range powersetPerms(strings.Split(dirnameChars, "")) {
 		numDirs += 1
