@@ -955,6 +955,25 @@ func TestMaxNlinks(t *testing.T) {
 	}
 }
 
+type PathnameSet map[string]struct{} // string = pathname
+type Clusters []PathnameSet
+
+func newPathnameSet(s string) PathnameSet {
+	ps := PathnameSet{}
+	ps[s] = struct{}{}
+	return ps
+}
+
+// Add newPath to the cluster containing prevPath
+func (c Clusters) addToCluster(prevPath, newPath string) {
+	for _, m := range c {
+		if _, ok := m[prevPath]; ok {
+			m[newPath] = struct{}{}
+			break
+		}
+	}
+}
+
 // TestRandFiles creates a bunch of files with random content, some with equal
 // contents, and some pre-linked.  It checks that the result of a linking run
 // are as expected.
@@ -984,6 +1003,7 @@ func TestRandFiles(t *testing.T) {
 	filenameChars := ShuffleString("abcde")
 	pathContents := map[string]string{}   // pathname:contents map
 	contentPaths := map[string][]string{} // contents:[]pathname map
+	contentClusters := map[string]Clusters{} // contents:Clusters
 	for dirs := range powersetPerms(strings.Split(dirnameChars, "")) {
 		for files := range powersetPerms(strings.Split(filenameChars, "")) {
 			dirname := strings.Join(dirs, "")
@@ -1011,15 +1031,12 @@ func TestRandFiles(t *testing.T) {
 					n--
 				}
 
-				// We can't yet handle clusters, so only link to the first
-				// pathname (which won't create clusters)
-				oldPathname = contentPaths[pathContents[oldPathname]][0]
-
 				if err := os.Link(oldPathname, pathname); err != nil {
 					t.Fatalf("Couldn't link %v to %v: %v", pathname, oldPathname, err)
 				}
 
 				s = pathContents[oldPathname]
+				contentClusters[s].addToCluster(oldPathname, pathname)
 			} else {
 				rnd := rand.Float32()
 				if len(contents) > 0 && rnd < 0.25 {
@@ -1062,6 +1079,7 @@ func TestRandFiles(t *testing.T) {
 
 				s = string(b)
 				contents[s] += 1
+				contentClusters[s] = append(contentClusters[s], newPathnameSet(pathname))
 			}
 
 			pathContents[pathname] = s
@@ -1080,21 +1098,40 @@ func TestRandFiles(t *testing.T) {
 	// to link together).  The total number of content uses (minus 1 for
 	// each src inode), should equal the total number of new links.
 	numLinkPaths := 0
-	numNewLinks := int64(0)
-	numUnique := 0
 	for _, v := range contents {
 		if v > 1 {
 			numLinkPaths++
-			numNewLinks += int64(v - 1)
-		} else {
-			numUnique++
 		}
 	}
 	if numLinkPaths != len(result.LinkPaths) {
 		t.Errorf("Expected %v LinkPaths, got: %v", numLinkPaths, len(result.LinkPaths))
 	}
+
+	// Check to see if our expected NewLinkCount matches what was computed.
+	// This is done by having kept track of "clusters" when setting up the
+	// test files (ie. grouping files with equal content by keeping track
+	// of those that are linked together before the Run()
+	numNewLinks := int64(0)
+	linkPathsBytes := uint64(0)
+	for co, cl := range contentClusters {
+		// Sort by highest cluster count to lowest
+		sort.Slice(cl, func(i, j int) bool { return len(cl[i]) > len(cl[j]) })
+		// Doesn't handle maxNlink scenarios
+		for i, m := range cl {
+			// The first cluster (with highest nlink count) is skipped,
+			// because they will be linked to, not from, so aren't counted
+			// by the NewLinkCount
+			if i > 0 {
+				numNewLinks += int64(len(m))
+				linkPathsBytes += uint64(len(co))
+			}
+		}
+	}
 	if numNewLinks != result.NewLinkCount {
 		t.Errorf("Expected %v NewLinkCount, got: %v", numNewLinks, result.NewLinkCount)
+	}
+	if linkPathsBytes != result.InodeRemovedByteAmount {
+		t.Errorf("Expected %v InodeRemovedByteAmount, got: %v", linkPathsBytes, result.InodeRemovedByteAmount)
 	}
 	//fmt.Println(len(contents))
 	//fmt.Println(numLinkPaths)
