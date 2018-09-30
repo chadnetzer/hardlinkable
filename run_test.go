@@ -999,13 +999,17 @@ func TestRandFiles(t *testing.T) {
 	// A set of all the file contents we've used, and their usage count
 	contents := map[string]int{}
 
+	var numDirs int64
+	var numFiles int64
 	dirnameChars := ShuffleString("ABC")
 	filenameChars := ShuffleString("abcde")
 	pathContents := map[string]string{}   // pathname:contents map
 	contentPaths := map[string][]string{} // contents:[]pathname map
 	contentClusters := map[string]Clusters{} // contents:Clusters
 	for dirs := range powersetPerms(strings.Split(dirnameChars, "")) {
+		numDirs += 1
 		for files := range powersetPerms(strings.Split(filenameChars, "")) {
+			numFiles += 1
 			dirname := strings.Join(dirs, "")
 			filename := strings.Join(files, "")
 			pathname := path.Join(dirname, filename)
@@ -1091,6 +1095,13 @@ func TestRandFiles(t *testing.T) {
 	result, err := Run([]string{"."}, []string{}, opts)
 	if err != nil {
 		t.Errorf("Error with Run() on random test files")
+	}
+
+	if numDirs != result.DirCount {
+		t.Errorf("Expected %v dirs, got: %v", numDirs, result.DirCount)
+	}
+	if numFiles != result.FileCount {
+		t.Errorf("Expected %v files, got: %v", numFiles, result.FileCount)
 	}
 
 	// Count how many times file content was used more than once.  The
