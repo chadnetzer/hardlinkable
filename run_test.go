@@ -1103,12 +1103,12 @@ func setupRandTestFiles(t *testing.T, topdir string) *randTestVals {
 				if len(s) >= r.minSize && (r.maxSize == 0 || len(s) <= r.maxSize) {
 					r.contents[s] += 1
 					r.contentClusters[s] = append(r.contentClusters[s], newPathnameSet(pathname))
+					r.contentPaths[s] = append(r.contentPaths[s], pathname)
 				}
 			}
 
 			if len(s) >= r.minSize && (r.maxSize == 0 || len(s) <= r.maxSize) {
 				r.pc[pathname] = s
-				r.contentPaths[s] = append(r.contentPaths[s], pathname)
 				r.numFiles += 1
 				if newDir {
 					r.numDirs += 1
@@ -1200,6 +1200,19 @@ func checkRunStats(t *testing.T, r *randTestVals, result *Results) {
 	}
 }
 
+func checkSameNameRunStats(t *testing.T, r *randTestVals, result *Results) {
+	// Verify same filename is used in all LinkPaths
+	for _, paths := range result.LinkPaths {
+		filenames := map[string]struct{}{}
+		for _, p := range paths {
+			filenames[path.Base(p)] = struct{}{}
+		}
+		if len(filenames) > 1 {
+			t.Errorf("SameName LinkPaths has mismatched filenames: %+v", result.LinkPaths)
+		}
+	}
+}
+
 // TestRandFiles creates a bunch of files with random content, some with equal
 // contents, and some pre-linked.  It checks that the result of a linking run
 // are as expected.
@@ -1214,7 +1227,23 @@ func TestRandFiles(t *testing.T) {
 	defer os.RemoveAll(topdir)
 
 	opts := SetupOptions(LinkingEnabled, ContentOnly)
-	r := setupRandTestFiles(t, topdir, opts)
+	r := setupRandTestFiles(t, topdir)
 	results := runAndCheckFileCounts(t, opts, r)
 	checkRunStats(t, r, results)
+}
+
+func TestRandSameNameFiles(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping RandFiles test in short mode")
+	} else {
+		t.Log("Use -short option to skip RandFiles test")
+	}
+
+	topdir := setUp("Run", t)
+	defer os.RemoveAll(topdir)
+
+	opts := SetupOptions(LinkingEnabled, ContentOnly, SameName)
+	r := setupRandTestFiles(t, topdir)
+	results := runAndCheckFileCounts(t, opts, r)
+	checkSameNameRunStats(t, r, results)
 }
