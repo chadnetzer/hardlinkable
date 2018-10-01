@@ -1120,7 +1120,7 @@ func setupRandTestFiles(t *testing.T, topdir string) *randTestVals {
 	return r
 }
 
-func runAndCheckCounts(t *testing.T, opts Options, r *randTestVals) {
+func runAndCheckFileCounts(t *testing.T, opts Options, r *randTestVals) *Results {
 	opts.MaxFileSize = uint64(r.maxSize)
 	opts.MinFileSize = uint64(r.minSize)
 	result, err := Run([]string{"."}, []string{}, opts)
@@ -1134,7 +1134,10 @@ func runAndCheckCounts(t *testing.T, opts Options, r *randTestVals) {
 	if r.numFiles != result.FileCount {
 		t.Errorf("Expected %v files, got: %v", r.numFiles, result.FileCount)
 	}
+	return &result
+}
 
+func checkRunStats(t *testing.T, r *randTestVals, result *Results) {
 	// Count how many times file content was used more than once.  The
 	// result should equal the number of LinkPaths (ie. sets of pathnames
 	// to link together).
@@ -1210,8 +1213,8 @@ func TestRandFiles(t *testing.T) {
 	topdir := setUp("Run", t)
 	defer os.RemoveAll(topdir)
 
-	r := setupRandTestFiles(t, topdir)
-
 	opts := SetupOptions(LinkingEnabled, ContentOnly)
-	runAndCheckCounts(t, opts, r)
+	r := setupRandTestFiles(t, topdir, opts)
+	results := runAndCheckFileCounts(t, opts, r)
+	checkRunStats(t, r, results)
 }
