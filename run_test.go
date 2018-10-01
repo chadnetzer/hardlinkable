@@ -1002,18 +1002,8 @@ func newRandTestVals() *randTestVals {
 	}
 }
 
-// TestRandFiles creates a bunch of files with random content, some with equal
-// contents, and some pre-linked.  It checks that the result of a linking run
-// are as expected.
-func TestRandFiles(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping RandFiles test in short mode")
-	} else {
-		t.Log("Use -short option to skip RandFiles test")
-	}
-
-	topdir := setUp("Run", t)
-	defer os.RemoveAll(topdir)
+func setupRandTestFiles(t *testing.T, topdir string) *randTestVals {
+	r := newRandTestVals()
 
 	// Use "go test -count=1" to disable test result caching, otherwise the
 	// tests will not run with a new seed.
@@ -1028,19 +1018,11 @@ func TestRandFiles(t *testing.T) {
 	rand.Read(contentSrc)
 
 	// Setup min/max file sizes
-	maxSize := rand.Intn(maxContentIndex) + 1
-	minSize := rand.Intn(maxSize)
+	r.maxSize = rand.Intn(maxContentIndex) + 1
+	r.minSize = rand.Intn(r.maxSize)
 
-	// A set of all the file contents we've used, and their usage count
-	contents := map[string]int{}
-
-	var numDirs int64
-	var numFiles int64
 	dirnameChars := ShuffleString("ABC")
 	filenameChars := ShuffleString("abcde")
-	pc := pathContents{}                     // pathname:contents map
-	contentPaths := map[string][]string{}    // contents:[]pathname map
-	contentClusters := map[string]Clusters{} // contents:Clusters
 	for dirs := range powersetPerms(strings.Split(dirnameChars, "")) {
 		newDir := true
 		for files := range powersetPerms(strings.Split(filenameChars, "")) {
@@ -1057,11 +1039,11 @@ func TestRandFiles(t *testing.T) {
 			// Each new file can either be new content or repeated
 			// content, or a link to an existing path.
 			rnd := rand.Float32()
-			if len(pc) > 0 && rnd > 0.9 {
+			if len(r.pc) > 0 && rnd > 0.9 {
 				// Link to arbitrary exising pathname (can create clusters)
 				var oldPathname string
-				n := rand.Intn(len(pc))
-				for k := range pc {
+				n := rand.Intn(len(r.pc))
+				for k := range r.pc {
 					if n == 0 {
 						oldPathname = k
 						break
@@ -1073,16 +1055,16 @@ func TestRandFiles(t *testing.T) {
 					t.Fatalf("Couldn't link %v to %v: %v", pathname, oldPathname, err)
 				}
 
-				s = pc[oldPathname]
-				if len(s) >= minSize && (maxSize == 0 || len(s) <= maxSize) {
-					contentClusters[s].addToCluster(oldPathname, pathname)
+				s = r.pc[oldPathname]
+				if len(s) >= r.minSize && (r.maxSize == 0 || len(s) <= r.maxSize) {
+					r.contentClusters[s].addToCluster(oldPathname, pathname)
 				}
 			} else {
 				rnd := rand.Float32()
-				if len(contents) > 0 && rnd < 0.25 {
+				if len(r.contents) > 0 && rnd < 0.25 {
 					// Choose arbitrary existing contents
-					n := rand.Intn(len(contents))
-					for k := range contents {
+					n := rand.Intn(len(r.contents))
+					for k := range r.contents {
 						if n == 0 {
 							b = []byte(k)
 							break
@@ -1107,7 +1089,7 @@ func TestRandFiles(t *testing.T) {
 						m := rand.Intn(n)
 						b = contentSrc[m:n]
 
-						if _, ok := contents[string(b)]; !ok {
+						if _, ok := r.contents[string(b)]; !ok {
 							break
 						}
 					}
@@ -1118,45 +1100,46 @@ func TestRandFiles(t *testing.T) {
 				}
 
 				s = string(b)
-				if len(s) >= minSize && (maxSize == 0 || len(s) <= maxSize) {
-					contents[s] += 1
-					contentClusters[s] = append(contentClusters[s], newPathnameSet(pathname))
+				if len(s) >= r.minSize && (r.maxSize == 0 || len(s) <= r.maxSize) {
+					r.contents[s] += 1
+					r.contentClusters[s] = append(r.contentClusters[s], newPathnameSet(pathname))
 				}
 			}
 
-			if len(s) >= minSize && (maxSize == 0 || len(s) <= maxSize) {
-				pc[pathname] = s
-				contentPaths[s] = append(contentPaths[s], pathname)
-				numFiles += 1
+			if len(s) >= r.minSize && (r.maxSize == 0 || len(s) <= r.maxSize) {
+				r.pc[pathname] = s
+				r.contentPaths[s] = append(r.contentPaths[s], pathname)
+				r.numFiles += 1
 				if newDir {
-					numDirs += 1
+					r.numDirs += 1
 					newDir = false
 				}
 			}
 		}
 	}
+	return r
+}
 
-	opts := SetupOptions(LinkingEnabled, ContentOnly)
-	opts.MaxFileSize = uint64(maxSize)
-	opts.MinFileSize = uint64(minSize)
+func runAndCheckCounts(t *testing.T, opts Options, r *randTestVals) {
+	opts.MaxFileSize = uint64(r.maxSize)
+	opts.MinFileSize = uint64(r.minSize)
 	result, err := Run([]string{"."}, []string{}, opts)
 	if err != nil {
 		t.Errorf("Error with Run() on random test files")
 	}
 
-	if numDirs != result.DirCount {
-		t.Errorf("Expected %v dirs, got: %v", numDirs, result.DirCount)
+	if r.numDirs != result.DirCount {
+		t.Errorf("Expected %v dirs, got: %v", r.numDirs, result.DirCount)
 	}
-	if numFiles != result.FileCount {
-		t.Errorf("Expected %v files, got: %v", numFiles, result.FileCount)
+	if r.numFiles != result.FileCount {
+		t.Errorf("Expected %v files, got: %v", r.numFiles, result.FileCount)
 	}
 
 	// Count how many times file content was used more than once.  The
 	// result should equal the number of LinkPaths (ie. sets of pathnames
-	// to link together).  The total number of content uses (minus 1 for
-	// each src inode), should equal the total number of new links.
+	// to link together).
 	numLinkPaths := 0
-	for _, v := range contents {
+	for _, v := range r.contents {
 		if v > 1 {
 			numLinkPaths++
 		}
@@ -1169,58 +1152,66 @@ func TestRandFiles(t *testing.T) {
 	// This is done by having kept track of "clusters" when setting up the
 	// test files (ie. grouping files with equal content by keeping track
 	// of those that are linked together before the Run()
-	numNewLinks := int64(0)
-	numPrevLinks := int64(0)
-	numInodes := int64(0)
-	numNlinks := int64(0)
-	linkPathsBytes := uint64(0)
-	prevLinksBytes := uint64(0)
-	for co, cl := range contentClusters {
-		numInodes += int64(len(cl))
+	for co, cl := range r.contentClusters {
+		r.numInodes += int64(len(cl))
 
 		// Sort by highest cluster count to lowest
 		sort.Slice(cl, func(i, j int) bool { return len(cl[i]) > len(cl[j]) })
 		// Doesn't handle maxNlink scenarios
 		for i, m := range cl {
-			numNlinks += int64(len(m))
+			r.numNlinks += int64(len(m))
 
 			// The first cluster (with highest nlink count) is skipped,
 			// because they will be linked to, not from, so aren't counted
 			// by the NewLinkCount
 			if i > 0 {
-				numNewLinks += int64(len(m))
-				linkPathsBytes += uint64(len(co))
+				r.numNewLinks += int64(len(m))
+				r.linkPathsBytes += uint64(len(co))
 			}
 
 			// Also count the prev links using the cluster information.
 			// Clusters of more than 1 pathname are pre-existing.
 			if len(m) > 1 {
-				numPrevLinks += int64(len(m) - 1)
-				prevLinksBytes += uint64(len(co) * (len(m) - 1))
+				r.numPrevLinks += int64(len(m) - 1)
+				r.prevLinksBytes += uint64(len(co) * (len(m) - 1))
 			}
 		}
 	}
-	if numInodes != result.InodeCount {
-		t.Errorf("Expected %v inodes, got: %v", numInodes, result.InodeCount)
+	if r.numInodes != result.InodeCount {
+		t.Errorf("Expected %v inodes, got: %v", r.numInodes, result.InodeCount)
 	}
-	if numNlinks != result.NlinkCount {
-		t.Errorf("Expected %v nlinks, got: %v", numNlinks, result.NlinkCount)
+	if r.numNlinks != result.NlinkCount {
+		t.Errorf("Expected %v nlinks, got: %v", r.numNlinks, result.NlinkCount)
 	}
-	if numNewLinks != result.NewLinkCount {
-		t.Errorf("Expected %v NewLinkCount, got: %v", numNewLinks, result.NewLinkCount)
+	if r.numNewLinks != result.NewLinkCount {
+		t.Errorf("Expected %v NewLinkCount, got: %v", r.numNewLinks, result.NewLinkCount)
 	}
-	if numPrevLinks != result.PrevLinkCount {
-		t.Errorf("Expected %v PrevLinkCount, got: %v", numPrevLinks, result.PrevLinkCount)
+	if r.numPrevLinks != result.PrevLinkCount {
+		t.Errorf("Expected %v PrevLinkCount, got: %v", r.numPrevLinks, result.PrevLinkCount)
 	}
-	if linkPathsBytes != result.InodeRemovedByteAmount {
-		t.Errorf("Expected %v InodeRemovedByteAmount, got: %v", linkPathsBytes, result.InodeRemovedByteAmount)
+	if r.linkPathsBytes != result.InodeRemovedByteAmount {
+		t.Errorf("Expected %v InodeRemovedByteAmount, got: %v", r.linkPathsBytes, result.InodeRemovedByteAmount)
 	}
-	if prevLinksBytes != result.PrevLinkedByteAmount {
-		t.Errorf("Expected %v PrevLinkedByteAmount, got: %v", prevLinksBytes, result.PrevLinkedByteAmount)
+	if r.prevLinksBytes != result.PrevLinkedByteAmount {
+		t.Errorf("Expected %v PrevLinkedByteAmount, got: %v", r.prevLinksBytes, result.PrevLinkedByteAmount)
 	}
-	//fmt.Println(len(contents))
-	//fmt.Println(numLinkPaths)
-	//fmt.Println(numNewLinks)
-	//fmt.Printf("%+v\n", result.RunStats)
-	//fmt.Printf("%+v\n", result.LinkPaths)
+}
+
+// TestRandFiles creates a bunch of files with random content, some with equal
+// contents, and some pre-linked.  It checks that the result of a linking run
+// are as expected.
+func TestRandFiles(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping RandFiles test in short mode")
+	} else {
+		t.Log("Use -short option to skip RandFiles test")
+	}
+
+	topdir := setUp("Run", t)
+	defer os.RemoveAll(topdir)
+
+	r := setupRandTestFiles(t, topdir)
+
+	opts := SetupOptions(LinkingEnabled, ContentOnly)
+	runAndCheckCounts(t, opts, r)
 }
