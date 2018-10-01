@@ -974,6 +974,34 @@ func (c Clusters) addToCluster(prevPath, newPath string) {
 	}
 }
 
+type randTestVals struct {
+	minSize         int
+	maxSize         int
+	numDirs         int64
+	numFiles        int64
+	numNewLinks     int64
+	numPrevLinks    int64
+	numInodes       int64
+	numNlinks       int64
+	linkPathsBytes  uint64
+	prevLinksBytes  uint64
+	pc              pathContents        // pathname:contents map
+	contentPaths    map[string][]string // contents:[]pathname map
+	contentClusters map[string]Clusters // contents:Clusters
+
+	// A set of all the file contents we've used, and their usage count
+	contents map[string]int // contents:fileCount
+}
+
+func newRandTestVals() *randTestVals {
+	return &randTestVals{
+		pc:              make(pathContents),
+		contentPaths:    make(map[string][]string),
+		contentClusters: make(map[string]Clusters),
+		contents:        make(map[string]int),
+	}
+}
+
 // TestRandFiles creates a bunch of files with random content, some with equal
 // contents, and some pre-linked.  It checks that the result of a linking run
 // are as expected.
