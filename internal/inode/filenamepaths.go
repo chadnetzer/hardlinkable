@@ -84,7 +84,9 @@ func (f *FilenamePaths) Any() P.Pathsplit {
 
 // AnyWithFilename will return an arbitrary path with the given filename
 func (f *FilenamePaths) AnyWithFilename(filename string) P.Pathsplit {
-	f.arbPath = f.FPMap[filename].any()
+	if f.arbPath == (P.Pathsplit{}) || filename != f.arbPath.Filename {
+		f.arbPath = f.FPMap[filename].any()
+	}
 	return f.arbPath
 }
 
