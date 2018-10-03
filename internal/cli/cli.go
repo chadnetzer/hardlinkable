@@ -231,11 +231,11 @@ func init() {
 
 	// rootCmd represents the base command when called without any subcommands
 	rootCmd = &cobra.Command{
-		Use:     "hardlinkable [OPTIONS] dir1 [dir2 ...] [files...]",
+		Use:     "hardlinkable [OPTIONS] dir1 [dir2...] [files...]",
 		Version: "0.9 alpha - 2018-09-05 (Sep 5 2018)",
 		Short:   "A tool to save space by hardlinking identical files",
-		Long: `A tool to scan directories and report on the space that could be saved by hard
-	linking identical files.  It can also perform the linking.`,
+		Long: `A tool to scan directories and report on the space that could be saved
+by hard linking identical files.  It can also perform the linking.`,
 		Args: cobra.MinimumNArgs(1),
 		DisableFlagsInUseLine: true,
 		Run: func(cmd *cobra.Command, args []string) {
