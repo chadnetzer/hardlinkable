@@ -213,6 +213,8 @@ func (r *Results) runCompletedSuccessfully() {
 	r.RunSuccessful = true
 }
 
+// Track the count of new links, and optionally keep a list of linkable or
+// linked pathnames for later output.
 func (r *Results) foundNewLink(srcP, dstP P.Pathsplit) {
 	r.NewLinkCount += 1
 	if !r.Opts.StoreNewLinkResults {
@@ -234,6 +236,8 @@ func (r *Results) foundNewLink(srcP, dstP P.Pathsplit) {
 	}
 }
 
+// Track count of existing links found during walk, and optionally keep a list
+// of them and their sizes for later output.
 func (r *Results) foundExistingLink(srcP P.Pathsplit, dstP P.Pathsplit, size uint64) {
 	r.PrevLinkCount += 1
 	r.PrevLinkedByteAmount += size
