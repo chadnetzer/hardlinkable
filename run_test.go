@@ -514,7 +514,6 @@ func TestRunLinkingTableTests(t *testing.T) {
 		},
 		{
 			name: "testname: 'Equal Filenames No Removed Inodes test'",
-			//opts: SetupOptions(LinkingEnabled, SameName),
 			opts: SetupOptions(LinkingEnabled, SameName),
 			c:    pathContents{"A/f1": "X", "B/f1": "X", "B/f2": "X"},
 			l: existingLinks{
@@ -1135,7 +1134,7 @@ func runAndCheckFileCounts(t *testing.T, opts Options, r *randTestVals) *Results
 	opts.MinFileSize = uint64(r.minSize)
 	result, err := Run([]string{"."}, []string{}, opts)
 	if err != nil {
-		t.Errorf("Error with Run() on random test files")
+		t.Errorf("Error with Run() on random test files: %v", err)
 	}
 
 	if r.numDirs != result.DirCount {
