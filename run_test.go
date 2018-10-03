@@ -1200,6 +1200,8 @@ func checkRunStats(t *testing.T, r *randTestVals, result *Results) {
 	}
 }
 
+type FilenameCounts map[string]int
+
 func checkSameNameRunStats(t *testing.T, r *randTestVals, result *Results) {
 	// Verify same filename is used in all LinkPaths
 	for _, paths := range result.LinkPaths {
@@ -1210,6 +1212,44 @@ func checkSameNameRunStats(t *testing.T, r *randTestVals, result *Results) {
 		if len(filenames) > 1 {
 			t.Errorf("SameName LinkPaths has mismatched filenames: %+v", result.LinkPaths)
 		}
+	}
+
+	// Count the number of new links by counting the number of pathnames
+	// with matching filenames, but *not* counting those used in the first
+	// link cluster where the filename is encountered.
+	for _, clusters := range r.contentClusters {
+		// Sort by max nlink to min to replicate algorithm.  The
+		// results will differ otherwise
+		sort.Slice(clusters, func(i, j int) bool { return len(clusters[i]) > len(clusters[j]) })
+
+		// The number of filenames to be linked to (ie. the number found after
+		// the initial cluster)
+		linkableFC := FilenameCounts{}
+
+		// Cluster index where a filename was first encountered
+		firstSeen := FilenameCounts{}
+
+		// For each cluster in the list of clusters, keep track of which one
+		// holds the first appearance of a filename (of any given pathname),
+		// and don't count the filename (or names) in the first encountered
+		// cluster (which would act as the src inode, not the destination).
+		for i, cluster := range clusters {
+			for pathname := range cluster {
+				filename := path.Base(pathname)
+				whenSeen, ok := firstSeen[filename]
+				if !ok {
+					firstSeen[filename] = i
+				} else if whenSeen < i {
+					linkableFC[filename]++
+				}
+			}
+		}
+		for _, count := range linkableFC {
+			r.numNewLinks += int64(count)
+		}
+	}
+	if r.numNewLinks != result.NewLinkCount {
+		t.Errorf("Expected %v NewLinkCount, got: %v\n", r.numNewLinks, result.NewLinkCount)
 	}
 }
 
