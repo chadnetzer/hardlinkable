@@ -158,6 +158,11 @@ func (r *Results) foundInode(n uint32) {
 	r.NlinkCount += int64(n)
 }
 
+func (r *Results) foundRemovedInode(size uint64) {
+	r.InodeRemovedByteAmount += size
+	r.InodeRemovedCount += 1
+}
+
 func (r *Results) missedHash() {
 	r.MissedHashCount += 1
 }
@@ -227,11 +232,6 @@ func (r *Results) foundNewLink(srcP, dstP P.Pathsplit) {
 			r.LinkPaths = append(r.LinkPaths, pair)
 		}
 	}
-}
-
-func (r *Results) foundRemovedInode(size uint64) {
-	r.InodeRemovedByteAmount += size
-	r.InodeRemovedCount += 1
 }
 
 func (r *Results) foundExistingLink(srcP P.Pathsplit, dstP P.Pathsplit, size uint64) {
