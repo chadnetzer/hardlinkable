@@ -1268,8 +1268,6 @@ func checkSameNameRunStats(t *testing.T, r *randTestVals, result *Results) {
 func TestRandFiles(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping RandFiles test in short mode")
-	} else {
-		t.Log("Use -short option to skip RandFiles test")
 	}
 
 	topdir := setUp("Run", t)
@@ -1284,8 +1282,6 @@ func TestRandFiles(t *testing.T) {
 func TestRandSameNameFiles(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping RandFiles test in short mode")
-	} else {
-		t.Log("Use -short option to skip RandFiles test")
 	}
 
 	topdir := setUp("Run", t)
