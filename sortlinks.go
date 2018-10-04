@@ -169,7 +169,9 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 					}
 				}
 
-				if linkingErr == nil {
+				if linkingErr != nil {
+					f.Results.skippedNewLink(srcPath, dstPath)
+				} else {
 					f.Results.foundNewLink(srcPath, dstPath)
 
 					// Update cached StatInfo information for inodes
