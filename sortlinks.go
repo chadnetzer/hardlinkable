@@ -154,6 +154,11 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 				// Perform the actual linking if requested, but abort all remaining
 				// linking if a linking error is encountered.
 				if f.Options.LinkingEnabled {
+					modifiedErr := f.haveNotBeenModified(srcPathInfo, dstPathInfo)
+					if modifiedErr != nil {
+						return modifiedErr
+					}
+
 					linkingErr := f.hardlinkFiles(srcPathInfo, dstPathInfo)
 					if linkingErr != nil {
 						return linkingErr
