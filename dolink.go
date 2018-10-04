@@ -28,16 +28,18 @@ import (
 	"strconv"
 )
 
-func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
-	// Quit early if the src or dst files have changed since we first
-	// stat()-ed them.
-	if hasBeenModified(src, fs.Dev) {
-		return fmt.Errorf("Detected modified file before linking: %v", src.Pathsplit.Join())
+// haveNotBeenModified returns an error if a given PathInfo has changed on disk
+func (fs *fsDev) haveNotBeenModified(paths ...I.PathInfo) error {
+	for _, p := range paths {
+		if hasBeenModified(p, fs.Dev) {
+			return fmt.Errorf("Detected modified file before linking: %v", p.Pathsplit.Join())
+		}
 	}
-	if hasBeenModified(dst, fs.Dev) {
-		return fmt.Errorf("Detected modified file before linking: %v", dst.Pathsplit.Join())
-	}
+	return nil
+}
 
+// hardlinkFiles() will unconditionally attempt link dst (ie. target) to src
+func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
 	// Add some randomness to the tmpName to minimize chances of collisions
 	// with deliberately targeted matching names
 	tmpName := dst.Pathsplit.Join() + ".tmp" + strconv.FormatUint(rand.Uint64(), 36)
