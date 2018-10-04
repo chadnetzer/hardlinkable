@@ -56,6 +56,7 @@ type RunStats struct {
 	NewLinkCount           int64  `json:"newLinkCount"`
 	PrevLinkedByteAmount   uint64 `json:"prevLinkedByteAmount"`
 	InodeRemovedByteAmount uint64 `json:"inodeRemovedByteAmount"`
+	BytesCompared          uint64 `json:"bytesCompared"`
 
 	// Some stats on files that compared equal, but which had some
 	// mismatching inode parameters.  This can be helpful for tuning the
@@ -72,7 +73,6 @@ type RunStats struct {
 	MismatchedGidBytes   uint64 `json:"mismatchedGidBytes"`
 	MismatchedXattrBytes uint64 `json:"mismatchedXattrBytes"`
 	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
-	BytesCompared        uint64 `json:"bytesCompared"`
 
 	// Debugging counts
 	EqualComparisonCount int64 `json:"equalComparisonCount"`
