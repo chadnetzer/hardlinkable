@@ -31,6 +31,15 @@ import (
 	"time"
 )
 
+type RunPhases int
+
+const (
+	StartPhase RunPhases = iota // nothing yet happened
+	WalkPhase
+	LinkPhase
+	EndPhase
+)
+
 // RunStats holds information about counts, the number of files found to be
 // linkable, the bytes that linking would save (or did save), and a variety of
 // related, useful, or just interesting information gathered during the Run().
@@ -91,6 +100,10 @@ type Results struct {
 
 	// Set to true when Run() has completed successfully
 	RunSuccessful bool `json:"runSuccessful"`
+
+	// Record which 'phase' we've gotten to in the algorithms, in case of
+	// early termination of the run.
+	Phase RunPhases
 }
 
 func newResults(o *Options) *Results {
@@ -210,6 +223,7 @@ func (r *Results) end() {
 }
 
 func (r *Results) runCompletedSuccessfully() {
+	r.Phase = EndPhase
 	r.RunSuccessful = true
 }
 

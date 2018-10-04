@@ -207,16 +207,34 @@ func Execute() {
 func CLIRun(dirs []string, files []string, co CLIOptions) {
 	var results hardlinkable.Results
 	var err error
+
+	opts := co.ToOptions()
 	if co.ProgressOutputDisabled {
-		results, err = hardlinkable.Run(dirs, files, co.ToOptions())
+		results, err = hardlinkable.Run(dirs, files, opts)
 	} else {
-		results, err = hardlinkable.RunWithProgress(dirs, files, co.ToOptions())
+		results, err = hardlinkable.RunWithProgress(dirs, files, opts)
 	}
+
 	if err != nil {
 		log.Printf("%v", err)
 	}
 	if err != nil || !results.RunSuccessful {
-		fmt.Println("Directory walk was stopped early.  Result output may be incomplete...")
+		var s string
+		switch results.Phase {
+		case hardlinkable.StartPhase:
+			s = "Stopped before directory walk started.  Results are incomplete..."
+		case hardlinkable.WalkPhase:
+			s = "Stopped during directory walk.  Results are incomplete..."
+		case hardlinkable.LinkPhase:
+			if opts.LinkingEnabled {
+				s = "Stopped while linking.  Results may be incomplete..."
+			} else {
+				s = "Stopped while calculating links.  Results may be incomplete..."
+			}
+		default:
+			s = "Stopped early.  Results may be incomplete..."
+		}
+		fmt.Println(s)
 	}
 
 	if co.JSONOutputEnabled {

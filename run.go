@@ -86,6 +86,7 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	// files, looking for files that can be linked due to identical
 	// contents, and optionally equivalent inode parameters (time,
 	// permission, ownership, etc.)
+	ls.Results.Phase = WalkPhase
 	c := matchedPathnames(*ls.Options, ls.Results, dirs, files)
 	for pathname := range c {
 		ls.Progress.Show()
@@ -129,6 +130,7 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	// nlink count to lowest, gathering accurate linking statistics,
 	// determine what link() pairs and in what order are needed to produce
 	// the desired result, and optionally link them if requested.
+	ls.Results.Phase = LinkPhase
 	for _, fsdev := range ls.fsDevs {
 		if err := fsdev.generateLinks(); err != nil {
 			return err
