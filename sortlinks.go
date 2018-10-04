@@ -151,30 +151,36 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 				srcPathInfo := I.PathInfo{Pathsplit: srcPath, StatInfo: *srcSI}
 				dstPathInfo := I.PathInfo{Pathsplit: dstPath, StatInfo: *dstSI}
 
-				// Perform the actual linking if requested, but abort all remaining
-				// linking if a linking error is encountered.
+				// Abort if the filesystem is found to be "active" (ie. changing)
 				if f.Options.LinkingEnabled {
 					modifiedErr := f.haveNotBeenModified(srcPathInfo, dstPathInfo)
 					if modifiedErr != nil {
 						return modifiedErr
 					}
+				}
 
-					linkingErr := f.hardlinkFiles(srcPathInfo, dstPathInfo)
-					if linkingErr != nil {
+				// Perform the actual linking if requested, but abort all remaining
+				// linking if a linking error is encountered.
+				var linkingErr error
+				if f.Options.LinkingEnabled {
+					linkingErr = f.hardlinkFiles(srcPathInfo, dstPathInfo)
+					if !f.Options.IgnoreLinkingErrors && linkingErr != nil {
 						return linkingErr
 					}
 				}
 
-				f.Results.foundNewLink(srcPath, dstPath)
+				if linkingErr == nil {
+					f.Results.foundNewLink(srcPath, dstPath)
 
-				// Update cached StatInfo information for inodes
-				srcSI.Nlink += 1
-				dstSI.Nlink -= 1
-				if dstSI.Nlink == 0 {
-					f.Results.foundRemovedInode(dstSI.Size)
-					delete(f.inoStatInfo, dstIno)
+					// Update cached StatInfo information for inodes
+					srcSI.Nlink += 1
+					dstSI.Nlink -= 1
+					if dstSI.Nlink == 0 {
+						f.Results.foundRemovedInode(dstSI.Size)
+						delete(f.inoStatInfo, dstIno)
+					}
+					f.InoPaths.MovePath(dstPath, srcIno, dstIno)
 				}
-				f.InoPaths.MovePath(dstPath, srcIno, dstIno)
 			}
 			// With SameName option, it's possible that the dstIno nLinks will not go
 			// to zero (if not all links have a matching filename), so place on the

@@ -105,6 +105,9 @@ type Options struct {
 
 	// ShowRunStats enabled displays Result stats output.
 	ShowRunStats bool
+
+	// IgnoreLinkingErrors allows Run to continue when linking fails
+	IgnoreLinkingErrors bool
 }
 
 // SetupOptions returns a Options struct with the defaults initialized and the

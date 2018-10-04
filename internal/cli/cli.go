@@ -303,7 +303,9 @@ by hard linking identical files.  It can also perform the linking.`,
 
 	co.CLISearchThresh.n = hardlinkable.DefaultSearchThresh
 	flg.VarP(&co.CLISearchThresh, "search-thresh", "", "Ino search length before enabling digests")
-	//flg.MarkHidden("search-thresh")
+
+	flg.BoolVar(&co.IgnoreLinkingErrors, "ignore-linkerr", false, "Continue even if linking fails")
+
 	flg.SortFlags = false
 }
 
