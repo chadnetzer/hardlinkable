@@ -146,5 +146,10 @@ func validateOptions(opts Options) error {
 		return fmt.Errorf("minFileSize (%v) cannot be larger than maxFileSize (%v)",
 			opts.MinFileSize, opts.MaxFileSize)
 	}
+
+	if opts.LinkingEnabled {
+		opts.CheckQuiescence = true
+	}
+
 	return nil
 }

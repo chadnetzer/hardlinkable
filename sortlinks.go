@@ -152,7 +152,7 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 				dstPathInfo := I.PathInfo{Pathsplit: dstPath, StatInfo: *dstSI}
 
 				// Abort if the filesystem is found to be "active" (ie. changing)
-				if f.Options.LinkingEnabled {
+				if f.Options.CheckQuiescence || f.Options.LinkingEnabled {
 					modifiedErr := f.haveNotBeenModified(srcPathInfo, dstPathInfo)
 					if modifiedErr != nil {
 						return modifiedErr

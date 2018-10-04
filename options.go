@@ -106,6 +106,10 @@ type Options struct {
 	// ShowRunStats enabled displays Result stats output.
 	ShowRunStats bool
 
+	// CheckQuiescence enabled looks for signs of the filesystems changing
+	// during walk.  Always enabled when LinkingEnabled is true.
+	CheckQuiescence bool
+
 	// IgnoreLinkingErrors allows Run to continue when linking fails
 	IgnoreLinkingErrors bool
 }
