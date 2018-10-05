@@ -106,9 +106,9 @@ func TestDoLink(t *testing.T) {
 	fs.inoStatInfo[dsi3.Ino] = &dsi3.StatInfo
 	ps3 := I.PathInfo{P.Split(f3.Name(), nil), dsi3.StatInfo}
 
-	err = fs.hardlinkFiles(ps1, ps3)
+	err = fs.haveNotBeenModified(ps1, ps3)
 	if err == nil {
-		t.Errorf("Linking ps1 and ps3 was expected to fail: %+v %+v", dsi11, dsi3)
+		t.Errorf("Checking ps1 and ps3 for modifications was expected to fail: %+v %+v", dsi11, dsi3)
 	}
 }
 
