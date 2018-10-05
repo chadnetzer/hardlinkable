@@ -286,7 +286,7 @@ by hard linking identical files.  It can also perform the linking.`,
 	flg.BoolVar(&co.ProgressOutputDisabled, "no-progress", false, "Disable progress output while processing")
 	flg.BoolVar(&co.JSONOutputEnabled, "json", false, "Output results as JSON")
 
-	flg.BoolVar(&co.LinkingEnabled, "linking-enabled", false, "Perform the actual linking")
+	flg.BoolVar(&co.LinkingEnabled, "enable-linking", false, "Perform the actual linking (implies --quiescence)")
 
 	flg.BoolVarP(&co.SameName, "same-name", "f", false, "Filenames need to be identical")
 	flg.BoolVarP(&co.IgnoreTime, "ignore-time", "t", false, "File modification times need not match")
