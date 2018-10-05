@@ -75,6 +75,7 @@ type RunStats struct {
 	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
 
 	// Debugging counts
+	SkippedNewLinkCount  int64 `json:"skippedNewLinkCount"` // skipped due to errors
 	EqualComparisonCount int64 `json:"equalComparisonCount"`
 	FoundHashCount       int64 `json:"foundHashCount"`
 	MissedHashCount      int64 `json:"missedHashCount"`
@@ -92,6 +93,7 @@ type Results struct {
 	ExistingLinks     map[string][]string `json:"existingLinks"`
 	ExistingLinkSizes map[string]uint64   `json:"existingLinkSizes"`
 	LinkPaths         [][]string          `json:"linkPaths"`
+	SkippedLinkPaths  [][]string          `json:"skippedLinkPaths"` // Skipped when link failed
 	RunStats
 	StartTime time.Time `json:"startTime"`
 	EndTime   time.Time `json:"endTime"`
@@ -274,20 +276,54 @@ func (r *Results) foundExistingLink(srcP P.Pathsplit, dstP P.Pathsplit, size uin
 			src, size, r.ExistingLinkSizes[src]))
 }
 
+// Track the count of skipped new links (ie. those where linking was attempted,
+// but failed), and optionally keep a list of linkable or linked pathnames for
+// later output.
+func (r *Results) skippedNewLink(srcP, dstP P.Pathsplit) {
+	r.SkippedNewLinkCount += 1
+	if !r.Opts.StoreNewLinkResults {
+		return
+	}
+	src := srcP.Join()
+	dst := dstP.Join()
+	N := len(r.SkippedLinkPaths)
+	if N == 0 {
+		r.SkippedLinkPaths = [][]string{[]string{src, dst}}
+	} else {
+		prevSrc := r.SkippedLinkPaths[N-1][0]
+		if src == prevSrc {
+			r.SkippedLinkPaths[N-1] = append(r.SkippedLinkPaths[N-1], dst)
+		} else {
+			pair := []string{src, dst}
+			r.SkippedLinkPaths = append(r.SkippedLinkPaths, pair)
+		}
+	}
+}
+
 // OutputResults prints results in text form, including existing links that
 // were found, new pathnames that were discovered to be linkable, and stats
 // about the run giving information on the amount of data that can be saved (or
 // was saved if linking was enabled).
 func (r *Results) OutputResults() {
+	showStats := r.Opts.ShowRunStats || r.Opts.ShowExtendedRunStats
+
 	r.OutputExistingLinks()
-	if len(r.ExistingLinks) > 0 && (len(r.LinkPaths) > 0 || r.Opts.ShowRunStats) {
+	if len(r.ExistingLinks) > 0 &&
+		(len(r.LinkPaths) > 0 || len(r.SkippedLinkPaths) > 0 || showStats) {
 		fmt.Println("")
 	}
+
 	r.OutputNewLinks()
-	if len(r.LinkPaths) > 0 && r.Opts.ShowRunStats {
+	if len(r.LinkPaths) > 0 && (len(r.SkippedLinkPaths) > 0 || showStats) {
 		fmt.Println("")
 	}
-	if r.Opts.ShowRunStats || r.Opts.ShowExtendedRunStats {
+
+	r.OutputSkippedNewLinks()
+	if len(r.SkippedLinkPaths) > 0 && showStats {
+		fmt.Println("")
+	}
+
+	if showStats {
 		r.OutputRunStats()
 	}
 }
@@ -328,7 +364,25 @@ func (r *Results) OutputNewLinks() {
 		s = append(s, "Files that are hardlinkable")
 		s = append(s, "---------------------------")
 	}
-	for _, paths := range r.LinkPaths {
+	outputLinkPaths(s, r.LinkPaths)
+}
+
+// OutputSkippedNewLinks shows in text form the pathnames that were skipped due
+// to linking errors.
+func (r *Results) OutputSkippedNewLinks() {
+	if len(r.SkippedLinkPaths) == 0 {
+		return
+	}
+	s := make([]string, 0)
+	s = append(s, "Files that had linking errors this run")
+	s = append(s, "--------------------------------------")
+	outputLinkPaths(s, r.SkippedLinkPaths)
+	fmt.Println(strings.Join(s, "\n"))
+}
+
+// outputLinkPaths is a helper for outputting LinkPaths slices
+func outputLinkPaths(s []string, lp [][]string) {
+	for _, paths := range lp {
 		for i, path := range paths {
 			if i == 0 {
 				s = append(s, "from: "+path)
@@ -422,6 +476,10 @@ func (r *Results) OutputRunStats() {
 
 		remainingInodes := r.InodeCount - r.InodeRemovedCount
 		s = statStr(s, "Total remaining inodes", remainingInodes)
+
+		if r.SkippedNewLinkCount > 0 {
+			s = statStr(s, "Link errors this run", r.SkippedNewLinkCount)
+		}
 	}
 
 	if r.Opts.DebugLevel > 0 {

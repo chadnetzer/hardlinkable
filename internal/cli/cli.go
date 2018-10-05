@@ -93,6 +93,9 @@ func (c CLIOptions) ToOptions() hardlinkable.Options {
 	if c.Verbosity > 2 || c.JSONOutputEnabled {
 		o.StoreExistingLinkResults = true
 	}
+	if c.LinkingEnabled {
+		c.CheckQuiescence = true
+	}
 	return o
 }
 
@@ -303,7 +306,10 @@ by hard linking identical files.  It can also perform the linking.`,
 
 	co.CLISearchThresh.n = hardlinkable.DefaultSearchThresh
 	flg.VarP(&co.CLISearchThresh, "search-thresh", "", "Ino search length before enabling digests")
-	//flg.MarkHidden("search-thresh")
+
+	flg.BoolVar(&co.IgnoreLinkingErrors, "ignore-linkerr", false, "Continue even if linking fails")
+	flg.BoolVar(&co.CheckQuiescence, "quiescence", false, "Abort if filesystem is being modified")
+
 	flg.SortFlags = false
 }
 
