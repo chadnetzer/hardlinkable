@@ -151,8 +151,6 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 				srcPathInfo := I.PathInfo{Pathsplit: srcPath, StatInfo: *srcSI}
 				dstPathInfo := I.PathInfo{Pathsplit: dstPath, StatInfo: *dstSI}
 
-				f.Results.foundNewLink(srcPath, dstPath)
-
 				// Perform the actual linking if requested, but abort all remaining
 				// linking if a linking error is encountered.
 				if f.Options.LinkingEnabled {
@@ -161,6 +159,8 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 						return linkingErr
 					}
 				}
+
+				f.Results.foundNewLink(srcPath, dstPath)
 
 				// Update cached StatInfo information for inodes
 				srcSI.Nlink += 1

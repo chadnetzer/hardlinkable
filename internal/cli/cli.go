@@ -207,16 +207,34 @@ func Execute() {
 func CLIRun(dirs []string, files []string, co CLIOptions) {
 	var results hardlinkable.Results
 	var err error
+
+	opts := co.ToOptions()
 	if co.ProgressOutputDisabled {
-		results, err = hardlinkable.Run(dirs, files, co.ToOptions())
+		results, err = hardlinkable.Run(dirs, files, opts)
 	} else {
-		results, err = hardlinkable.RunWithProgress(dirs, files, co.ToOptions())
+		results, err = hardlinkable.RunWithProgress(dirs, files, opts)
 	}
+
 	if err != nil {
 		log.Printf("%v", err)
 	}
 	if err != nil || !results.RunSuccessful {
-		fmt.Println("Directory walk was stopped early.  Result output may be incomplete...")
+		var s string
+		switch results.Phase {
+		case hardlinkable.StartPhase:
+			s = "Stopped before directory walk started.  Results are incomplete..."
+		case hardlinkable.WalkPhase:
+			s = "Stopped during directory walk.  Results are incomplete..."
+		case hardlinkable.LinkPhase:
+			if opts.LinkingEnabled {
+				s = "Stopped while linking.  Results may be incomplete..."
+			} else {
+				s = "Stopped while calculating links.  Results may be incomplete..."
+			}
+		default:
+			s = "Stopped early.  Results may be incomplete..."
+		}
+		fmt.Println(s)
 	}
 
 	if co.JSONOutputEnabled {
@@ -231,11 +249,11 @@ func init() {
 
 	// rootCmd represents the base command when called without any subcommands
 	rootCmd = &cobra.Command{
-		Use:     "hardlinkable [OPTIONS] dir1 [dir2 ...] [files...]",
+		Use:     "hardlinkable [OPTIONS] dir1 [dir2...] [files...]",
 		Version: "0.9 alpha - 2018-09-05 (Sep 5 2018)",
 		Short:   "A tool to save space by hardlinking identical files",
-		Long: `A tool to scan directories and report on the space that could be saved by hard
-	linking identical files.  It can also perform the linking.`,
+		Long: `A tool to scan directories and report on the space that could be saved
+by hard linking identical files.  It can also perform the linking.`,
 		Args: cobra.MinimumNArgs(1),
 		DisableFlagsInUseLine: true,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -260,7 +278,7 @@ func init() {
 	// Local flags
 	flg := rootCmd.Flags()
 
-	flg.CountVarP(&co.Verbosity, "verbose", "v", "``Increase verbosity level (up to 3 times)")
+	flg.CountVarP(&co.Verbosity, "verbose", "v", "``Increase verbosity level (up to 4 times)")
 	flg.BoolVar(&co.StatsOutputDisabled, "no-stats", false, "Do not print the final stats")
 	flg.BoolVar(&co.ProgressOutputDisabled, "no-progress", false, "Disable progress output while processing")
 	flg.BoolVar(&co.JSONOutputEnabled, "json", false, "Output results as JSON")

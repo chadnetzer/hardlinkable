@@ -31,6 +31,15 @@ import (
 	"time"
 )
 
+type RunPhases int
+
+const (
+	StartPhase RunPhases = iota // nothing yet happened
+	WalkPhase
+	LinkPhase
+	EndPhase
+)
+
 // RunStats holds information about counts, the number of files found to be
 // linkable, the bytes that linking would save (or did save), and a variety of
 // related, useful, or just interesting information gathered during the Run().
@@ -47,6 +56,7 @@ type RunStats struct {
 	NewLinkCount           int64  `json:"newLinkCount"`
 	PrevLinkedByteAmount   uint64 `json:"prevLinkedByteAmount"`
 	InodeRemovedByteAmount uint64 `json:"inodeRemovedByteAmount"`
+	BytesCompared          uint64 `json:"bytesCompared"`
 
 	// Some stats on files that compared equal, but which had some
 	// mismatching inode parameters.  This can be helpful for tuning the
@@ -63,7 +73,6 @@ type RunStats struct {
 	MismatchedGidBytes   uint64 `json:"mismatchedGidBytes"`
 	MismatchedXattrBytes uint64 `json:"mismatchedXattrBytes"`
 	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
-	BytesCompared        uint64 `json:"bytesCompared"`
 
 	// Debugging counts
 	EqualComparisonCount int64 `json:"equalComparisonCount"`
@@ -91,6 +100,10 @@ type Results struct {
 
 	// Set to true when Run() has completed successfully
 	RunSuccessful bool `json:"runSuccessful"`
+
+	// Record which 'phase' we've gotten to in the algorithms, in case of
+	// early termination of the run.
+	Phase RunPhases
 }
 
 func newResults(o *Options) *Results {
@@ -158,6 +171,11 @@ func (r *Results) foundInode(n uint32) {
 	r.NlinkCount += int64(n)
 }
 
+func (r *Results) foundRemovedInode(size uint64) {
+	r.InodeRemovedByteAmount += size
+	r.InodeRemovedCount += 1
+}
+
 func (r *Results) missedHash() {
 	r.MissedHashCount += 1
 }
@@ -205,9 +223,12 @@ func (r *Results) end() {
 }
 
 func (r *Results) runCompletedSuccessfully() {
+	r.Phase = EndPhase
 	r.RunSuccessful = true
 }
 
+// Track the count of new links, and optionally keep a list of linkable or
+// linked pathnames for later output.
 func (r *Results) foundNewLink(srcP, dstP P.Pathsplit) {
 	r.NewLinkCount += 1
 	if !r.Opts.StoreNewLinkResults {
@@ -229,11 +250,8 @@ func (r *Results) foundNewLink(srcP, dstP P.Pathsplit) {
 	}
 }
 
-func (r *Results) foundRemovedInode(size uint64) {
-	r.InodeRemovedByteAmount += size
-	r.InodeRemovedCount += 1
-}
-
+// Track count of existing links found during walk, and optionally keep a list
+// of them and their sizes for later output.
 func (r *Results) foundExistingLink(srcP P.Pathsplit, dstP P.Pathsplit, size uint64) {
 	r.PrevLinkCount += 1
 	r.PrevLinkedByteAmount += size
