@@ -147,6 +147,10 @@ func validateOptions(opts Options) error {
 			opts.MinFileSize, opts.MaxFileSize)
 	}
 
+	if opts.ShowExtendedRunStats {
+		opts.ShowRunStats = true
+	}
+
 	if opts.LinkingEnabled {
 		opts.CheckQuiescence = true
 	}
