@@ -364,16 +364,7 @@ func (r *Results) OutputNewLinks() {
 		s = append(s, "Files that are hardlinkable")
 		s = append(s, "---------------------------")
 	}
-	for _, paths := range r.LinkPaths {
-		for i, path := range paths {
-			if i == 0 {
-				s = append(s, "from: "+path)
-			} else {
-				s = append(s, "  to: "+path)
-			}
-		}
-	}
-	fmt.Println(strings.Join(s, "\n"))
+	outputLinkPaths(s, r.LinkPaths)
 }
 
 // OutputSkippedNewLinks shows in text form the pathnames that were skipped due
@@ -385,7 +376,13 @@ func (r *Results) OutputSkippedNewLinks() {
 	s := make([]string, 0)
 	s = append(s, "Files that had linking errors this run")
 	s = append(s, "--------------------------------------")
-	for _, paths := range r.SkippedLinkPaths {
+	outputLinkPaths(s, r.SkippedLinkPaths)
+	fmt.Println(strings.Join(s, "\n"))
+}
+
+// outputLinkPaths is a helper for outputting LinkPaths slices
+func outputLinkPaths(s []string, lp [][]string) {
+	for _, paths := range lp {
 		for i, path := range paths {
 			if i == 0 {
 				s = append(s, "from: "+path)
