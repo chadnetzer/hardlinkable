@@ -305,19 +305,25 @@ func (r *Results) skippedNewLink(srcP, dstP P.Pathsplit) {
 // about the run giving information on the amount of data that can be saved (or
 // was saved if linking was enabled).
 func (r *Results) OutputResults() {
+	showStats := r.Opts.ShowRunStats || r.Opts.ShowExtendedRunStats
+
 	r.OutputExistingLinks()
-	if len(r.ExistingLinks) > 0 && (len(r.LinkPaths) > 0 || r.Opts.ShowRunStats) {
+	if len(r.ExistingLinks) > 0 &&
+		(len(r.LinkPaths) > 0 || len(r.SkippedLinkPaths) > 0 || showStats) {
 		fmt.Println("")
 	}
+
 	r.OutputNewLinks()
-	if len(r.LinkPaths) > 0 && r.Opts.ShowRunStats {
+	if len(r.LinkPaths) > 0 && (len(r.SkippedLinkPaths) > 0 || showStats) {
 		fmt.Println("")
 	}
+
 	r.OutputSkippedNewLinks()
-	if len(r.SkippedLinkPaths) > 0 && r.Opts.ShowRunStats {
+	if len(r.SkippedLinkPaths) > 0 && showStats {
 		fmt.Println("")
 	}
-	if r.Opts.ShowRunStats || r.Opts.ShowExtendedRunStats {
+
+	if showStats {
 		r.OutputRunStats()
 	}
 }
