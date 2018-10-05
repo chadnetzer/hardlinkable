@@ -25,6 +25,7 @@ import (
 	"hardlinkable/internal/inode"
 	"io/ioutil"
 	"math/big"
+	"math/rand"
 	"os"
 	"path"
 	"reflect"
@@ -37,11 +38,18 @@ import (
 	"github.com/pkg/xattr"
 )
 
-const testdata0 = ""
-const testdata1a = "A"
-const testdata1b = "B"
-const testdata2a = "aa"
-const testdata2b = "bb"
+// ShuffleString returns a random shuffle of a given string (for test case
+// generation uses; complex unicode will likely confuse it)
+func ShuffleString(s string) string {
+	b := []rune(s)
+
+	dest := make([]rune, len(b))
+	perm := rand.Perm(len(b))
+	for i, v := range perm {
+		dest[v] = b[i]
+	}
+	return string(dest)
+}
 
 // Algorithm from http://www.quickperm.org/
 // Output of emptyset is nil
@@ -92,6 +100,8 @@ func TestPermutations(t *testing.T) {
 		{[]string{"a"}, 1},
 		{[]string{"a", "b"}, 2},
 		{[]string{"a", "b", "c"}, 6},
+		{[]string{"c", "b", "a"}, 6},
+		{[]string{"b", "a", "c"}, 6},
 		{[]string{"a", "b", "c", "d"}, 24},
 		{[]string{"a", "b", "c", "d", "e"}, 120},
 	}
@@ -139,6 +149,8 @@ func TestPowersets(t *testing.T) {
 		{[]string{"a"}, 1},
 		{[]string{"a", "b"}, 3},
 		{[]string{"a", "b", "c"}, 7},
+		{[]string{"b", "c", "a"}, 7},
+		{[]string{"c", "a", "b"}, 7},
 		{[]string{"a", "b", "c", "d"}, 15},
 		{[]string{"a", "b", "c", "d", "e"}, 31},
 	}
@@ -195,7 +207,10 @@ func TestPowersetPerms(t *testing.T) {
 		// a(n) = n*(a(n) + 1)
 		{[]string{"a"}, 1},
 		{[]string{"a", "b"}, 4},
+		{[]string{"b", "a"}, 4},
 		{[]string{"a", "b", "c"}, 15},
+		{[]string{"c", "a", "b"}, 15},
+		{[]string{"b", "c", "a"}, 15},
 		{[]string{"a", "b", "c", "d"}, 64},
 		{[]string{"a", "b", "c", "d", "e"}, 325},
 	}
@@ -271,8 +286,8 @@ func simpleRun(name string, t *testing.T, opts Options, numLinkPaths int, dirs .
 	return &result
 }
 
-type pathContents map[string]string
-type existingLinks map[string][]string
+type pathContents map[string]string    // pathname:contents
+type existingLinks map[string][]string // pathname:pathnames
 
 // provided with a map of filenames:content, create the files
 func simpleFileMaker(t *testing.T, m pathContents) {
@@ -499,7 +514,6 @@ func TestRunLinkingTableTests(t *testing.T) {
 		},
 		{
 			name: "testname: 'Equal Filenames No Removed Inodes test'",
-			//opts: SetupOptions(LinkingEnabled, SameName),
 			opts: SetupOptions(LinkingEnabled, SameName),
 			c:    pathContents{"A/f1": "X", "B/f1": "X", "B/f2": "X"},
 			l: existingLinks{
@@ -889,6 +903,11 @@ func TestRunLinearVsDigestSearch(t *testing.T) {
 }
 
 func TestMaxNlinks(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping MaxNlink test in short mode")
+	} else {
+		t.Log("Use -short option to skip MaxNlinks test")
+	}
 	topdir := setUp("Run", t)
 	defer os.RemoveAll(topdir)
 
@@ -898,11 +917,6 @@ func TestMaxNlinks(t *testing.T) {
 	N := inode.MaxNlinkVal("f1")
 	if N > (1<<15 - 1) {
 		t.Skip("Skipping MaxNlink test because Nlink max is greater than 32767")
-	}
-	if testing.Short() {
-		t.Skip("Skipping MaxNlink test in short mode")
-	} else {
-		t.Log("Use -short option to skip MaxNlinks test")
 	}
 
 	opts := SetupOptions(LinkingEnabled)
@@ -938,4 +952,343 @@ func TestMaxNlinks(t *testing.T) {
 			break
 		}
 	}
+}
+
+type PathnameSet map[string]struct{} // string = pathname
+type Clusters []PathnameSet
+
+func newPathnameSet(s string) PathnameSet {
+	ps := PathnameSet{}
+	ps[s] = struct{}{}
+	return ps
+}
+
+// Add newPath to the cluster containing prevPath
+func (c Clusters) addToCluster(prevPath, newPath string) {
+	for _, m := range c {
+		if _, ok := m[prevPath]; ok {
+			m[newPath] = struct{}{}
+			break
+		}
+	}
+}
+
+type randTestVals struct {
+	minSize         int
+	maxSize         int
+	numDirs         int64
+	numFiles        int64
+	numNewLinks     int64
+	numPrevLinks    int64
+	numInodes       int64
+	numNlinks       int64
+	linkPathsBytes  uint64
+	prevLinksBytes  uint64
+	pc              pathContents        // pathname:contents map
+	contentPaths    map[string][]string // contents:[]pathname map
+	contentClusters map[string]Clusters // contents:Clusters
+
+	// A set of all the file contents we've used, and their usage count
+	contents map[string]int // contents:fileCount
+}
+
+func newRandTestVals() *randTestVals {
+	return &randTestVals{
+		pc:              make(pathContents),
+		contentPaths:    make(map[string][]string),
+		contentClusters: make(map[string]Clusters),
+		contents:        make(map[string]int),
+	}
+}
+
+func setupRandTestFiles(t *testing.T, topdir string, samename bool) *randTestVals {
+	r := newRandTestVals()
+
+	// Use "go test -count=1" to disable test result caching, otherwise the
+	// tests will not run with a new seed.
+	seed := time.Now().UnixNano()
+	rand.Seed(seed)
+
+	const maxContentLen = (1 << 18)
+	const maxContentIndex = maxContentLen - 1
+
+	// Generate a bunch of random bytes
+	contentSrc := make([]byte, maxContentLen)
+	rand.Read(contentSrc)
+
+	// Setup min/max file sizes
+	if samename {
+		// Using samename option with excluded files due to size restrictions
+		// affects the end result of the linking (because the on-disk files are
+		// sorted by nlink, which are not reflected in the cluster sorting.
+		// For now, work around by disabling file size restrictions for
+		// samename mode.
+		r.maxSize = 0
+		r.minSize = 0
+	} else {
+		r.maxSize = rand.Intn(maxContentIndex) + 1
+		r.minSize = rand.Intn(r.maxSize)
+	}
+
+	dirnameChars := ShuffleString("ABC")
+	filenameChars := ShuffleString("abcde")
+	for dirs := range powersetPerms(strings.Split(dirnameChars, "")) {
+		newDir := true
+		for files := range powersetPerms(strings.Split(filenameChars, "")) {
+			dirname := strings.Join(dirs, "")
+			filename := strings.Join(files, "")
+			pathname := path.Join(dirname, filename)
+
+			if err := os.Mkdir(dirname, 0755); err != nil && !os.IsExist(err) {
+				t.Fatalf("Couldn't create dirname '%v'", dirname)
+			}
+
+			var b []byte
+			var s string
+			// Each new file can either be new content or repeated
+			// content, or a link to an existing path.
+			rnd := rand.Float32()
+			if len(r.pc) > 0 && rnd > 0.9 {
+				// Link to arbitrary exising pathname (can create clusters)
+				var oldPathname string
+				n := rand.Intn(len(r.pc))
+				for k := range r.pc {
+					if n == 0 {
+						oldPathname = k
+						break
+					}
+					n--
+				}
+
+				if err := os.Link(oldPathname, pathname); err != nil {
+					t.Fatalf("Couldn't link %v to %v: %v", pathname, oldPathname, err)
+				}
+
+				s = r.pc[oldPathname]
+				if len(s) >= r.minSize && (r.maxSize == 0 || len(s) <= r.maxSize) {
+					r.contentClusters[s].addToCluster(oldPathname, pathname)
+				}
+			} else {
+				rnd := rand.Float32()
+				if len(r.contents) > 0 && rnd < 0.25 {
+					// Choose arbitrary existing contents
+					n := rand.Intn(len(r.contents))
+					for k := range r.contents {
+						if n == 0 {
+							b = []byte(k)
+							break
+						}
+						n--
+					}
+				} else {
+					// Come up with a previously unseen content string
+					for {
+						// Weight max length towards zero, basically
+						// making it more likely to have smaller files
+						// than large (but definitely allow large)
+						const avgSize = 8192
+						var n int
+						for {
+							n = int(rand.ExpFloat64() * avgSize)
+							if n < len(contentSrc) {
+								n++
+								break
+							}
+						}
+						m := rand.Intn(n)
+						b = contentSrc[m:n]
+
+						if _, ok := r.contents[string(b)]; !ok {
+							break
+						}
+					}
+				}
+
+				if err := ioutil.WriteFile(pathname, b, 0644); err != nil {
+					t.Fatalf("Couldn't write pathname '%v' w/ rnd byte contents", pathname)
+				}
+
+				s = string(b)
+				if len(s) >= r.minSize && (r.maxSize == 0 || len(s) <= r.maxSize) {
+					r.contents[s] += 1
+					r.contentClusters[s] = append(r.contentClusters[s], newPathnameSet(pathname))
+					r.contentPaths[s] = append(r.contentPaths[s], pathname)
+				}
+			}
+
+			if len(s) >= r.minSize && (r.maxSize == 0 || len(s) <= r.maxSize) {
+				r.pc[pathname] = s
+				r.numFiles += 1
+				if newDir {
+					r.numDirs += 1
+					newDir = false
+				}
+			}
+		}
+	}
+	return r
+}
+
+func runAndCheckFileCounts(t *testing.T, opts Options, r *randTestVals) *Results {
+	opts.MaxFileSize = uint64(r.maxSize)
+	opts.MinFileSize = uint64(r.minSize)
+	result, err := Run([]string{"."}, []string{}, opts)
+	if err != nil {
+		t.Errorf("Error with Run() on random test files: %v", err)
+	}
+
+	if r.numDirs != result.DirCount {
+		t.Errorf("Expected %v dirs, got: %v", r.numDirs, result.DirCount)
+	}
+	if r.numFiles != result.FileCount {
+		t.Errorf("Expected %v files, got: %v", r.numFiles, result.FileCount)
+	}
+	return &result
+}
+
+func checkRunStats(t *testing.T, r *randTestVals, result *Results) {
+	// Count how many times file content was used more than once.  The
+	// result should equal the number of LinkPaths (ie. sets of pathnames
+	// to link together).
+	numLinkPaths := 0
+	for _, v := range r.contents {
+		if v > 1 {
+			numLinkPaths++
+		}
+	}
+	if numLinkPaths != len(result.LinkPaths) {
+		t.Errorf("Expected %v LinkPaths, got: %v", numLinkPaths, len(result.LinkPaths))
+	}
+
+	// Check to see if our expected NewLinkCount matches what was computed.
+	// This is done by having kept track of "clusters" when setting up the
+	// test files (ie. grouping files with equal content by keeping track
+	// of those that are linked together before the Run()
+	for co, cl := range r.contentClusters {
+		r.numInodes += int64(len(cl))
+
+		// Sort by highest cluster count to lowest
+		sort.Slice(cl, func(i, j int) bool { return len(cl[i]) > len(cl[j]) })
+		// Doesn't handle maxNlink scenarios
+		for i, m := range cl {
+			r.numNlinks += int64(len(m))
+
+			// The first cluster (with highest nlink count) is skipped,
+			// because they will be linked to, not from, so aren't counted
+			// by the NewLinkCount
+			if i > 0 {
+				r.numNewLinks += int64(len(m))
+				r.linkPathsBytes += uint64(len(co))
+			}
+
+			// Also count the prev links using the cluster information.
+			// Clusters of more than 1 pathname are pre-existing.
+			if len(m) > 1 {
+				r.numPrevLinks += int64(len(m) - 1)
+				r.prevLinksBytes += uint64(len(co) * (len(m) - 1))
+			}
+		}
+	}
+	if r.numInodes != result.InodeCount {
+		t.Errorf("Expected %v inodes, got: %v", r.numInodes, result.InodeCount)
+	}
+	if r.numNlinks != result.NlinkCount {
+		t.Errorf("Expected %v nlinks, got: %v", r.numNlinks, result.NlinkCount)
+	}
+	if r.numNewLinks != result.NewLinkCount {
+		t.Errorf("Expected %v NewLinkCount, got: %v", r.numNewLinks, result.NewLinkCount)
+	}
+	if r.numPrevLinks != result.PrevLinkCount {
+		t.Errorf("Expected %v PrevLinkCount, got: %v", r.numPrevLinks, result.PrevLinkCount)
+	}
+	if r.linkPathsBytes != result.InodeRemovedByteAmount {
+		t.Errorf("Expected %v InodeRemovedByteAmount, got: %v", r.linkPathsBytes, result.InodeRemovedByteAmount)
+	}
+	if r.prevLinksBytes != result.PrevLinkedByteAmount {
+		t.Errorf("Expected %v PrevLinkedByteAmount, got: %v", r.prevLinksBytes, result.PrevLinkedByteAmount)
+	}
+}
+
+type FilenameCounts map[string]int
+
+func checkSameNameRunStats(t *testing.T, r *randTestVals, result *Results) {
+	// Verify same filename is used in all LinkPaths
+	for _, paths := range result.LinkPaths {
+		filenames := map[string]struct{}{}
+		for _, p := range paths {
+			filenames[path.Base(p)] = struct{}{}
+		}
+		if len(filenames) > 1 {
+			t.Errorf("SameName LinkPaths has mismatched filenames: %+v", result.LinkPaths)
+		}
+	}
+
+	// Count the number of new links by counting the number of pathnames
+	// with matching filenames, but *not* counting those used in the first
+	// link cluster where the filename is encountered.
+	for _, clusters := range r.contentClusters {
+		// Sort by max nlink to min to replicate algorithm.  The
+		// results will differ otherwise
+		sort.Slice(clusters, func(i, j int) bool { return len(clusters[i]) > len(clusters[j]) })
+
+		// The number of filenames to be linked to (ie. the number found after
+		// the initial cluster)
+		linkableFC := FilenameCounts{}
+
+		// Cluster index where a filename was first encountered
+		firstSeen := FilenameCounts{}
+
+		// For each cluster in the list of clusters, keep track of which one
+		// holds the first appearance of a filename (of any given pathname),
+		// and don't count the filename (or names) in the first encountered
+		// cluster (which would act as the src inode, not the destination).
+		for i, cluster := range clusters {
+			for pathname := range cluster {
+				filename := path.Base(pathname)
+				whenSeen, ok := firstSeen[filename]
+				if !ok {
+					firstSeen[filename] = i
+				} else if whenSeen < i {
+					linkableFC[filename]++
+				}
+			}
+		}
+		for _, count := range linkableFC {
+			r.numNewLinks += int64(count)
+		}
+	}
+	if r.numNewLinks != result.NewLinkCount {
+		t.Errorf("Expected %v NewLinkCount, got: %v\n", r.numNewLinks, result.NewLinkCount)
+	}
+}
+
+// TestRandFiles creates a bunch of files with random content, some with equal
+// contents, and some pre-linked.  It checks that the result of a linking run
+// are as expected.
+func TestRandFiles(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping RandFiles test in short mode")
+	}
+
+	topdir := setUp("Run", t)
+	defer os.RemoveAll(topdir)
+
+	opts := SetupOptions(LinkingEnabled, ContentOnly)
+	r := setupRandTestFiles(t, topdir, opts.SameName)
+	results := runAndCheckFileCounts(t, opts, r)
+	checkRunStats(t, r, results)
+}
+
+func TestRandSameNameFiles(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping RandFiles test in short mode")
+	}
+
+	topdir := setUp("Run", t)
+	defer os.RemoveAll(topdir)
+
+	opts := SetupOptions(LinkingEnabled, ContentOnly, SameName)
+	r := setupRandTestFiles(t, topdir, opts.SameName)
+	results := runAndCheckFileCounts(t, opts, r)
+	checkSameNameRunStats(t, r, results)
 }

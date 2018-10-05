@@ -36,6 +36,7 @@ func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <
 		defer close(out)
 		for _, dir := range dirs {
 			err := godirwalk.Walk(dir, &godirwalk.Options{
+				Unsorted: true,
 				Callback: func(osPathname string, de *godirwalk.Dirent) error {
 					if de.ModeType().IsDir() {
 						dirExcludes := opts.DirExcludes
