@@ -84,7 +84,7 @@ func (c CLIOptions) ToOptions() hardlinkable.Options {
 	}
 	// Verbosity level enables storing new and existing hardlink in
 	// Results, as well as the amount of stats output by Results
-	if c.Verbosity > 0 {
+	if c.Verbosity > 0 && o.ShowRunStats {
 		o.ShowExtendedRunStats = true
 	}
 	if c.Verbosity > 1 || c.JSONOutputEnabled {
