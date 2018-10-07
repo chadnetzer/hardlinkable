@@ -36,7 +36,7 @@ type StatInfo struct {
 	Ino   uint64
 	Sec   uint64
 	Nsec  uint64
-	Nlink uint32 // 32 bits ought to be enough for anybody
+	Nlink uint64
 	Uid   uint32
 	Gid   uint32
 	Mode  os.FileMode
@@ -70,7 +70,7 @@ func LStatInfo(pathname string) (DevStatInfo, error) {
 			Ino:   uint64(stat_t.Ino),
 			Sec:   uint64(stat_t.Mtimespec.Sec),
 			Nsec:  uint64(stat_t.Mtimespec.Nsec),
-			Nlink: uint32(stat_t.Nlink),
+			Nlink: uint64(stat_t.Nlink),
 			Uid:   uint32(stat_t.Uid),
 			Gid:   uint32(stat_t.Gid),
 			Mode:  fi.Mode(),
