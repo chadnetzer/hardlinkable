@@ -95,6 +95,25 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 			log.Printf("Couldn't stat(\"%v\"). Skipping...", pathname)
 			continue
 		}
+
+		// Ignore files with setuid/setgid bits.  Linking them could
+		// have security implications.
+		if di.Mode&os.ModeSetuid != 0 {
+			ls.Results.foundSetuidFile()
+			continue
+		}
+		if di.Mode&os.ModeSetgid != 0 {
+			ls.Results.foundSetgidFile()
+			continue
+		}
+
+		// Also exclude files with any other non-perm mode bits set
+		if di.Mode != (di.Mode & os.ModePerm) {
+			ls.Results.foundNonPermBitFile()
+			continue
+		}
+
+		// Ensure the files fall within the allowed Size range
 		if di.Size < ls.Options.MinFileSize {
 			ls.Results.foundFileTooSmall()
 			continue
