@@ -107,6 +107,12 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 			continue
 		}
 
+		// Also exclude files with any other non-perm mode bits set
+		if di.Mode != (di.Mode & os.ModePerm) {
+			ls.Results.foundNonPermBitFile()
+			continue
+		}
+
 		// Ensure the files fall within the allowed Size range
 		if di.Size < ls.Options.MinFileSize {
 			ls.Results.foundFileTooSmall()

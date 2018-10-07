@@ -78,6 +78,11 @@ type RunStats struct {
 	SkippedSetuidCount uint64 `json:"skippedSetuidCount"`
 	SkippedSetgidCount uint64 `json:"skippedSetgidCount"`
 
+	// Also keep track of files with bits other than the permission bits
+	// set (other than setuid/setgid and bits already excluded by "regular"
+	// file bits)
+	SkippedNonPermBitCount uint64 `json:"skippedNonPermBitCount"`
+
 	// Debugging counts
 	SkippedNewLinkCount  int64 `json:"skippedNewLinkCount"` // skipped due to errors
 	EqualComparisonCount int64 `json:"equalComparisonCount"`
@@ -188,6 +193,10 @@ func (r *Results) foundSetuidFile() {
 
 func (r *Results) foundSetgidFile() {
 	r.SkippedSetgidCount++
+}
+
+func (r *Results) foundNonPermBitFile() {
+	r.SkippedNonPermBitCount++
 }
 
 func (r *Results) missedHash() {
@@ -494,6 +503,9 @@ func (r *Results) OutputRunStats() {
 		}
 		if r.SkippedSetgidCount > 0 {
 			s = statStr(s, "Skipped setgid files", r.SkippedSetgidCount)
+		}
+		if r.SkippedNonPermBitCount > 0 {
+			s = statStr(s, "Skipped files with non-perm bits set", r.SkippedNonPermBitCount)
 		}
 		if r.SkippedNewLinkCount > 0 {
 			s = statStr(s, "Link errors this run", r.SkippedNewLinkCount)
