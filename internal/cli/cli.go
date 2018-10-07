@@ -46,7 +46,6 @@ import (
 // struct
 type CLIOptions struct {
 	JSONOutputEnabled      bool
-	StatsOutputDisabled    bool
 	ProgressOutputDisabled bool
 	CLIContentOnly         bool
 	CLIMinFileSize         uintN
@@ -69,7 +68,7 @@ type CLIOptions struct {
 
 func (c CLIOptions) ToOptions() hardlinkable.Options {
 	o := c.Options
-	o.ShowRunStats = !c.StatsOutputDisabled
+	o.ShowRunStats = true // Default for cli
 	o.MinFileSize = c.CLIMinFileSize.n
 	o.MaxFileSize = c.CLIMaxFileSize.n
 	o.FileIncludes = c.CLIFileIncludes.vals
@@ -282,7 +281,6 @@ by hard linking identical files.  It can also perform the linking.`,
 	flg := rootCmd.Flags()
 
 	flg.CountVarP(&co.Verbosity, "verbose", "v", "``Increase verbosity level (up to 4 times)")
-	flg.BoolVar(&co.StatsOutputDisabled, "no-stats", false, "Do not print the final stats")
 	flg.BoolVar(&co.ProgressOutputDisabled, "no-progress", false, "Disable progress output while processing")
 	flg.BoolVar(&co.JSONOutputEnabled, "json", false, "Output results as JSON")
 
