@@ -34,7 +34,7 @@ func (p1 PathInfo) EqualTime(p2 PathInfo) bool {
 }
 
 func (p1 PathInfo) EqualMode(p2 PathInfo) bool {
-	return p1.Mode.Perm() == p2.Mode.Perm()
+	return p1.Mode == p2.Mode
 }
 
 func (p1 PathInfo) EqualOwnership(p2 PathInfo) bool {
