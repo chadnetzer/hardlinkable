@@ -26,6 +26,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestDoLink(t *testing.T) {
@@ -102,7 +103,7 @@ func TestDoLink(t *testing.T) {
 	}
 	// Deliberately create a mismatch between the file's stat info, and the
 	// stored stat info
-	dsi3.StatInfo.Sec -= 999
+	dsi3.Mtim = dsi3.Mtim.Add(-999 * time.Second)
 	fs.inoStatInfo[dsi3.Ino] = &dsi3.StatInfo
 	ps3 := I.PathInfo{P.Split(f3.Name(), nil), dsi3.StatInfo}
 
@@ -158,14 +159,9 @@ func TestHasBeenModified(t *testing.T) {
 
 	// Change PathInfo time, so that hasBeenModified() returns true
 	newPI = pi
-	newPI.Sec -= 86400
+	newPI.Mtim = newPI.Mtim.Add(-24 * time.Hour)
 	if !hasBeenModified(newPI, dsi.Dev) {
-		t.Errorf("Failed to detect Sec time modification to file: '%v'", filename)
-	}
-	newPI = pi
-	newPI.Nsec = pi.Nsec*2 + 1
-	if !hasBeenModified(newPI, dsi.Dev) {
-		t.Errorf("Failed to detect Nsec time modification to file: '%v'", filename)
+		t.Errorf("Failed to detect time modification to file: '%v'", filename)
 	}
 
 	// Change PathInfo ownership, so that hasBeenModified() returns true

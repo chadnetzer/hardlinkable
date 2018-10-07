@@ -52,8 +52,8 @@ func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
 	}
 
 	// Use destination file times if it's most recently modified
-	dstTime := dst.MTime()
-	if dstTime.After(src.MTime()) {
+	dstTime := dst.Mtim
+	if dstTime.After(src.Mtim) {
 		err := os.Chtimes(src.Pathsplit.Join(), dstTime, dstTime)
 		if err != nil {
 			// Ignore this error, and just return early, as we
@@ -64,8 +64,7 @@ func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
 
 		// Keep cached inode.StatInfo time updated
 		si := fs.inoStatInfo[src.Ino]
-		si.Sec = dst.Sec
-		si.Nsec = dst.Nsec
+		si.Mtim = dst.Mtim
 
 		err = os.Lchown(src.Pathsplit.Join(), int(src.Uid), int(src.Gid))
 		if err == nil {
@@ -87,8 +86,7 @@ func hasBeenModified(pi I.PathInfo, dev uint64) bool {
 		newDSI.Ino != pi.Ino ||
 		newDSI.Nlink != pi.Nlink ||
 		newDSI.Size != pi.Size ||
-		newDSI.Sec != pi.Sec ||
-		newDSI.Nsec != pi.Nsec ||
+		!newDSI.Mtim.Equal(pi.Mtim) ||
 		newDSI.Mode != pi.Mode ||
 		newDSI.Uid != pi.Uid ||
 		newDSI.Gid != pi.Gid {

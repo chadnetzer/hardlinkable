@@ -38,7 +38,7 @@ func HashIno(i StatInfo, ignoreTime bool) Hash {
 	if ignoreTime {
 		h = size
 	} else {
-		h = size ^ Hash(i.Sec) ^ Hash(i.Nsec)
+		h = size ^ Hash(i.Mtim.UnixNano())
 	}
 	return h
 }

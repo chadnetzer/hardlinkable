@@ -34,12 +34,11 @@ type InoStatInfo map[Ino]*StatInfo
 type StatInfo struct {
 	Size  uint64
 	Ino   uint64
-	Sec   uint64
-	Nsec  uint64
 	Nlink uint64
 	Uid   uint32
 	Gid   uint32
 	Mode  os.FileMode
+	Mtim  time.Time
 }
 
 // We need the Dev value returned from stat, but it can be discarded when we
@@ -47,10 +46,6 @@ type StatInfo struct {
 type DevStatInfo struct {
 	Dev uint64
 	StatInfo
-}
-
-func (s StatInfo) MTime() time.Time {
-	return time.Unix(int64(s.Sec), int64(s.Nsec))
 }
 
 func LStatInfo(pathname string) (DevStatInfo, error) {
@@ -68,12 +63,11 @@ func LStatInfo(pathname string) (DevStatInfo, error) {
 		StatInfo: StatInfo{
 			Size:  uint64(stat_t.Size),
 			Ino:   uint64(stat_t.Ino),
-			Sec:   uint64(stat_t.Mtimespec.Sec),
-			Nsec:  uint64(stat_t.Mtimespec.Nsec),
 			Nlink: uint64(stat_t.Nlink),
 			Uid:   uint32(stat_t.Uid),
 			Gid:   uint32(stat_t.Gid),
 			Mode:  fi.Mode(),
+			Mtim:  fi.ModTime(),
 		},
 	}
 
