@@ -175,8 +175,8 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 					f.Results.foundNewLink(srcPath, dstPath)
 
 					// Update cached StatInfo information for inodes
-					srcSI.Nlink += 1
-					dstSI.Nlink -= 1
+					srcSI.Nlink++
+					dstSI.Nlink--
 					if dstSI.Nlink == 0 {
 						f.Results.foundRemovedInode(dstSI.Size)
 						delete(f.inoStatInfo, dstIno)

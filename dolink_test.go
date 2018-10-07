@@ -145,14 +145,14 @@ func TestHasBeenModified(t *testing.T) {
 
 	// Change Ino on the PathInfo, so that hasBeenModified() returns true
 	newPI := pi
-	newPI.Ino += 1
+	newPI.Ino++
 	if !hasBeenModified(newPI, dsi.Dev) {
 		t.Errorf("Failed to detect Ino modification to file: '%v'", filename)
 	}
 
 	// Change Nlink on the PathInfo, so that hasBeenModified() returns true
 	newPI = pi
-	newPI.Nlink += 1
+	newPI.Nlink++
 	if !hasBeenModified(newPI, dsi.Dev) {
 		t.Errorf("Failed to detect Nlink modification to file: '%v'", filename)
 	}
@@ -166,12 +166,12 @@ func TestHasBeenModified(t *testing.T) {
 
 	// Change PathInfo ownership, so that hasBeenModified() returns true
 	newPI = pi
-	newPI.Uid += 1
+	newPI.Uid++
 	if !hasBeenModified(newPI, dsi.Dev) {
 		t.Errorf("Failed to detect UID modification to file: '%v'", filename)
 	}
 	newPI = pi
-	newPI.Gid += 1
+	newPI.Gid++
 	if !hasBeenModified(newPI, dsi.Dev) {
 		t.Errorf("Failed to detect GID modification to file: '%v'", filename)
 	}

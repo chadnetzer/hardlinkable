@@ -166,7 +166,7 @@ func TestPowersets(t *testing.T) {
 				t.Errorf("Repeated powerset found: %v\n", v)
 			}
 			seen[j] = struct{}{}
-			lengthCounts[len(v)] += 1
+			lengthCounts[len(v)]++
 		}
 		if len(seen) != d.want {
 			t.Errorf("Expected %v powersets for %v, got: %v", d.want, d.p, len(seen))
@@ -936,7 +936,7 @@ func TestMaxNlinks(t *testing.T) {
 	for i := 0; i < int(2*N+100); i++ {
 		filename := fmt.Sprintf("n%v", i)
 		n := int(inoVal(filename))
-		counts[n] += 1
+		counts[n]++
 	}
 
 	foundNlinks := []int{}
@@ -1110,7 +1110,7 @@ func setupRandTestFiles(t *testing.T, topdir string, samename bool) *randTestVal
 
 				s = string(b)
 				if len(s) >= r.minSize && (r.maxSize == 0 || len(s) <= r.maxSize) {
-					r.contents[s] += 1
+					r.contents[s]++
 					r.contentClusters[s] = append(r.contentClusters[s], newPathnameSet(pathname))
 					r.contentPaths[s] = append(r.contentPaths[s], pathname)
 				}
@@ -1118,9 +1118,9 @@ func setupRandTestFiles(t *testing.T, topdir string, samename bool) *randTestVal
 
 			if len(s) >= r.minSize && (r.maxSize == 0 || len(s) <= r.maxSize) {
 				r.pc[pathname] = s
-				r.numFiles += 1
+				r.numFiles++
 				if newDir {
-					r.numDirs += 1
+					r.numDirs++
 					newDir = false
 				}
 			}

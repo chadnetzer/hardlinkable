@@ -131,7 +131,7 @@ func newResults(o *Options) *Results {
 // walked, but the running tally is used by the progress interfaces while the
 // walk is occurring.
 func (r *Results) foundFile() {
-	r.FileCount += 1
+	r.FileCount++
 }
 
 func (r *Results) fileAndDirectoryCount(fileCount, dirCount int64) {
@@ -140,51 +140,51 @@ func (r *Results) fileAndDirectoryCount(fileCount, dirCount int64) {
 }
 
 func (r *Results) foundFileTooSmall() {
-	r.FileTooSmallCount += 1
+	r.FileTooSmallCount++
 }
 
 func (r *Results) foundFileTooLarge() {
-	r.FileTooLargeCount += 1
+	r.FileTooLargeCount++
 }
 
 func (r *Results) addMismatchedMtimeBytes(size uint64) {
-	r.MismatchedMtimeCount += 1
+	r.MismatchedMtimeCount++
 	r.MismatchedMtimeBytes += size
 }
 
 func (r *Results) addMismatchedModeBytes(size uint64) {
-	r.MismatchedModeCount += 1
+	r.MismatchedModeCount++
 	r.MismatchedModeBytes += size
 }
 
 func (r *Results) addMismatchedUidBytes(size uint64) {
-	r.MismatchedUidCount += 1
+	r.MismatchedUidCount++
 	r.MismatchedUidBytes += size
 }
 
 func (r *Results) addMismatchedGidBytes(size uint64) {
-	r.MismatchedGidCount += 1
+	r.MismatchedGidCount++
 	r.MismatchedGidBytes += size
 }
 
 func (r *Results) addMismatchedXattrBytes(size uint64) {
-	r.MismatchedXattrCount += 1
+	r.MismatchedXattrCount++
 	r.MismatchedXattrBytes += size
 }
 
 func (r *Results) addMismatchedTotalBytes(size uint64) {
-	r.MismatchedTotalCount += 1
+	r.MismatchedTotalCount++
 	r.MismatchedTotalBytes += size
 }
 
 func (r *Results) foundInode(n uint64) {
-	r.InodeCount += 1
+	r.InodeCount++
 	r.NlinkCount += int64(n)
 }
 
 func (r *Results) foundRemovedInode(size uint64) {
+	r.InodeRemovedCount++
 	r.InodeRemovedByteAmount += size
-	r.InodeRemovedCount += 1
 }
 
 func (r *Results) foundSetuidFile() {
@@ -200,27 +200,27 @@ func (r *Results) foundNonPermBitFile() {
 }
 
 func (r *Results) missedHash() {
-	r.MissedHashCount += 1
+	r.MissedHashCount++
 }
 
 func (r *Results) foundHash() {
-	r.FoundHashCount += 1
+	r.FoundHashCount++
 }
 
 func (r *Results) searchedInoSeq() {
-	r.InoSeqSearchCount += 1
+	r.InoSeqSearchCount++
 }
 
 func (r *Results) incInoSeqIterations() {
-	r.InoSeqIterationCount += 1
+	r.InoSeqIterationCount++
 }
 
 func (r *Results) noHashMatch() {
-	r.HashMismatchCount += 1
+	r.HashMismatchCount++
 }
 
 func (r *Results) didComparison() {
-	r.ComparisonCount += 1
+	r.ComparisonCount++
 }
 
 func (r *Results) addBytesCompared(n uint64) {
@@ -228,11 +228,11 @@ func (r *Results) addBytesCompared(n uint64) {
 }
 
 func (r *Results) foundEqualFiles() {
-	r.EqualComparisonCount += 1
+	r.EqualComparisonCount++
 }
 
 func (r *Results) computedDigest() {
-	r.DigestComputedCount += 1
+	r.DigestComputedCount++
 }
 
 func (r *Results) start() {
@@ -253,7 +253,7 @@ func (r *Results) runCompletedSuccessfully() {
 // Track the count of new links, and optionally keep a list of linkable or
 // linked pathnames for later output.
 func (r *Results) foundNewLink(srcP, dstP P.Pathsplit) {
-	r.NewLinkCount += 1
+	r.NewLinkCount++
 	if !r.Opts.StoreNewLinkResults {
 		return
 	}
@@ -276,7 +276,7 @@ func (r *Results) foundNewLink(srcP, dstP P.Pathsplit) {
 // Track count of existing links found during walk, and optionally keep a list
 // of them and their sizes for later output.
 func (r *Results) foundExistingLink(srcP P.Pathsplit, dstP P.Pathsplit, size uint64) {
-	r.PrevLinkCount += 1
+	r.PrevLinkCount++
 	r.PrevLinkedByteAmount += size
 	if !r.Opts.StoreExistingLinkResults {
 		return
@@ -301,7 +301,7 @@ func (r *Results) foundExistingLink(srcP P.Pathsplit, dstP P.Pathsplit, size uin
 // but failed), and optionally keep a list of linkable or linked pathnames for
 // later output.
 func (r *Results) skippedNewLink(srcP, dstP P.Pathsplit) {
-	r.SkippedNewLinkCount += 1
+	r.SkippedNewLinkCount++
 	if !r.Opts.StoreNewLinkResults {
 		return
 	}
