@@ -68,6 +68,7 @@ type CLIOptions struct {
 
 func (c CLIOptions) ToOptions() hardlinkable.Options {
 	o := c.Options
+	o.ShowRunStats = true // Default for cli
 	o.MinFileSize = c.CLIMinFileSize.n
 	o.MaxFileSize = c.CLIMaxFileSize.n
 	o.FileIncludes = c.CLIFileIncludes.vals
