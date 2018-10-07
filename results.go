@@ -74,6 +74,10 @@ type RunStats struct {
 	MismatchedXattrBytes uint64 `json:"mismatchedXattrBytes"`
 	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
 
+	// Count of how many setuid and setgid files were encountered (and skipped)
+	SkippedSetuidCount uint64 `json:"skippedSetuidCount"`
+	SkippedSetgidCount uint64 `json:"skippedSetgidCount"`
+
 	// Debugging counts
 	SkippedNewLinkCount  int64 `json:"skippedNewLinkCount"` // skipped due to errors
 	EqualComparisonCount int64 `json:"equalComparisonCount"`
@@ -176,6 +180,14 @@ func (r *Results) foundInode(n uint64) {
 func (r *Results) foundRemovedInode(size uint64) {
 	r.InodeRemovedByteAmount += size
 	r.InodeRemovedCount += 1
+}
+
+func (r *Results) foundSetuidFile() {
+	r.SkippedSetuidCount++
+}
+
+func (r *Results) foundSetgidFile() {
+	r.SkippedSetgidCount++
 }
 
 func (r *Results) missedHash() {
@@ -477,6 +489,12 @@ func (r *Results) OutputRunStats() {
 		remainingInodes := r.InodeCount - r.InodeRemovedCount
 		s = statStr(s, "Total remaining inodes", remainingInodes)
 
+		if r.SkippedSetuidCount > 0 {
+			s = statStr(s, "Skipped setuid files", r.SkippedSetuidCount)
+		}
+		if r.SkippedSetgidCount > 0 {
+			s = statStr(s, "Skipped setgid files", r.SkippedSetgidCount)
+		}
 		if r.SkippedNewLinkCount > 0 {
 			s = statStr(s, "Link errors this run", r.SkippedNewLinkCount)
 		}
