@@ -29,7 +29,7 @@ import (
 // Implement sorting from greatest NLink count to least
 type inoNlink struct {
 	Ino   uint64
-	Nlink uint32
+	Nlink uint64
 }
 type byNlink []inoNlink
 

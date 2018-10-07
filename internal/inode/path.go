@@ -30,7 +30,7 @@ type PathInfo struct {
 }
 
 func (p1 PathInfo) EqualTime(p2 PathInfo) bool {
-	return p1.Sec == p2.Sec && p1.Nsec == p2.Nsec
+	return p1.Mtim.Equal(p2.Mtim)
 }
 
 func (p1 PathInfo) EqualMode(p2 PathInfo) bool {

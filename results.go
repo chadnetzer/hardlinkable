@@ -168,7 +168,7 @@ func (r *Results) addMismatchedTotalBytes(size uint64) {
 	r.MismatchedTotalBytes += size
 }
 
-func (r *Results) foundInode(n uint32) {
+func (r *Results) foundInode(n uint64) {
 	r.InodeCount += 1
 	r.NlinkCount += int64(n)
 }
