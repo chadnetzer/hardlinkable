@@ -568,6 +568,10 @@ func (r *Results) OutputRunStats() {
 		s = statStr(s, "Num live objects", m.Mallocs-m.Frees)
 	}
 	printSlices(s)
+
+	if r.Opts.DebugLevel > 2 {
+		fmt.Printf("\nOptions%+v\n", r.Opts)
+	}
 }
 
 // OutputJSONResults outputs a JSON formatted object with all the information
