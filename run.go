@@ -96,10 +96,14 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 		}
 
 		ls.Progress.Show()
-		di, err := inode.LStatInfo(pe.pathname)
-		if err != nil {
-			log.Printf("Couldn't stat(\"%v\"). Skipping...", pe.pathname)
-			continue
+		di, statErr := inode.LStatInfo(pe.pathname)
+		if statErr != nil {
+			if ls.Options.IgnoreWalkErrors {
+				log.Printf("Couldn't stat(\"%v\"). Skipping...", pe.pathname)
+				continue
+			} else {
+				return statErr
+			}
 		}
 
 		// Ignore files with setuid/setgid bits.  Linking them could
