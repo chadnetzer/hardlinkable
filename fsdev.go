@@ -65,7 +65,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 	panicIf(f.Dev != di.Dev, "Mismatched Dev %d for %s\n", f.Dev, pathname)
 	curPath := P.Split(pathname, f.pool)
-	curPathStat := I.PathInfo{Pathsplit: curPath, StatInfo: di.StatInfo}
+	curPS := I.PathInfo{Pathsplit: curPath, StatInfo: di.StatInfo}
 	ino := di.StatInfo.Ino
 
 	if _, ok := f.inoStatInfo[ino]; !ok {
@@ -101,16 +101,16 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) {
 		foundLinkableHashedInos := len(linkableHashedInos) > 0
 		if !foundLinkableHashedInos {
 			// Get a list of previously seen inodes that may be linkable
-			cachedSeq, useDigest := f.cachedInos(H, curPathStat)
+			cachedSeq, useDigest := f.cachedInos(H, curPS)
 
 			// Search the list of potential inodes, looking for a match
 			f.Results.searchedInoSeq()
 			foundLinkable := false
 			for _, cachedIno := range cachedSeq {
 				f.Results.incInoSeqIterations()
-				cachedPathStat := f.PathInfoFromIno(cachedIno)
-				if f.areFilesLinkable(cachedPathStat, curPathStat, useDigest) {
-					f.LinkableInos.Add(cachedPathStat.Ino, ino)
+				cachedPS := f.PathInfoFromIno(cachedIno)
+				if f.areFilesLinkable(cachedPS, curPS, useDigest) {
+					f.LinkableInos.Add(cachedPS.Ino, ino)
 					foundLinkable = true
 					break
 				}
