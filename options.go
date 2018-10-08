@@ -112,6 +112,11 @@ type Options struct {
 
 	// IgnoreLinkingErrors allows Run to continue when linking fails
 	IgnoreLinkingErrors bool
+
+	// IgnoreFileErrors allows Run to continue when file errors occur, such
+	// as not being able to walk into a directory, or being unable to read
+	// a file for comparision, due to permission errors.
+	IgnoreFileErrors bool
 }
 
 // SetupOptions returns a Options struct with the defaults initialized and the

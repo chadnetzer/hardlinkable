@@ -88,11 +88,17 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	// permission, ownership, etc.)
 	ls.Results.Phase = WalkPhase
 	c := matchedPathnames(*ls.Options, ls.Results, dirs, files)
-	for pathname := range c {
+	for pe := range c {
+		// Handle early termination of the directory walk.  If
+		// IgnoreFileErrors is set, we won't get any errors here.
+		if pe.err != nil {
+			return pe.err
+		}
+
 		ls.Progress.Show()
-		di, err := inode.LStatInfo(pathname)
+		di, err := inode.LStatInfo(pe.pathname)
 		if err != nil {
-			log.Printf("Couldn't stat(\"%v\"). Skipping...", pathname)
+			log.Printf("Couldn't stat(\"%v\"). Skipping...", pe.pathname)
 			continue
 		}
 
@@ -127,8 +133,8 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 		// point, add it to the found count
 		ls.Results.foundFile()
 
-		fsdev := ls.dev(di, pathname)
-		fsdev.FindIdenticalFiles(di, pathname)
+		fsdev := ls.dev(di, pe.pathname)
+		fsdev.FindIdenticalFiles(di, pe.pathname)
 	}
 
 	ls.Progress.Clear()

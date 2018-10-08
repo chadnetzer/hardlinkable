@@ -21,17 +21,22 @@
 package hardlinkable
 
 import (
-	"log"
 	"path/filepath"
 	"regexp"
 
 	"github.com/karrick/godirwalk"
 )
 
-// Return allowed pathnames through the given channel.
-func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <-chan string {
+type pathErr struct {
+	pathname string
+	err      error
+}
+
+// Return allowed pathnames through the given channel.  An empty pathname
+// indicates the walk returned before completion.
+func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <-chan pathErr {
 	// Options is a copy to prevent being changed during walk.
-	out := make(chan string)
+	out := make(chan pathErr)
 	go func() {
 		defer close(out)
 		for _, dir := range dirs {
@@ -47,21 +52,37 @@ func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <
 						}
 					} else if de.ModeType().IsRegular() {
 						if isFileIncluded(de.Name(), &opts, r) {
-							out <- osPathname
+							out <- pathErr{pathname: osPathname, err: nil}
 						}
 					}
 					return nil
 				},
+				ErrorCallback: func(osPathname string, err error) godirwalk.ErrorAction {
+					r.SkippedDirErrCount++
+					if osPathname == dir {
+						// Halt when we can't walk the top level directory, so
+						// that it gets reported as an error (even if we are
+						// ignoring file errors)
+						return godirwalk.Halt
+					}
+					if opts.IgnoreFileErrors {
+						return godirwalk.SkipNode
+					}
+					return godirwalk.Halt
+				},
 			})
 			if err != nil {
-				log.Printf("Couldn't walk \"%v\" dir: %v. Skipping...", dir, err)
+				if !opts.IgnoreFileErrors {
+					out <- pathErr{pathname: "", err: err}
+					return
+				}
 			}
 		}
 		// Also pass back some or all (depending on includes and
 		// excludes) of the passed in file pathnames.
 		for _, pathname := range files {
 			if isFileIncluded(pathname, &opts, r) {
-				out <- pathname
+				out <- pathErr{pathname: pathname, err: nil}
 			}
 		}
 	}()

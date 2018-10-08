@@ -75,6 +75,7 @@ type RunStats struct {
 	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
 
 	// Counts of file I/O errors (reading, linking, etc.)
+	SkippedDirErrCount  int64 `json:"skippedDirErrCount"`
 	SkippedLinkErrCount int64 `json:"skippedLinkErrCount"`
 
 	// Counts of files and dirs excluded by the Regex matches
@@ -544,6 +545,9 @@ func (r *Results) OutputRunStats() {
 		}
 		if r.SkippedNonPermBitCount > 0 {
 			s = statStr(s, "Skipped files with non-perm bits set", r.SkippedNonPermBitCount)
+		}
+		if r.SkippedDirErrCount > 0 {
+			s = statStr(s, "Dir errors this run", r.SkippedDirErrCount)
 		}
 		if r.SkippedLinkErrCount > 0 {
 			s = statStr(s, "Link errors this run", r.SkippedLinkErrCount)
