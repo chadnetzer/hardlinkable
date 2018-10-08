@@ -201,3 +201,26 @@ func DebugLevel(debugLevel uint) func(*Options) {
 		o.DebugLevel = debugLevel
 	}
 }
+
+// ShowExtendedRunStats enabled prints more in OutputRunStats()
+func ShowExtendedRunStats(o *Options) {
+	o.ShowExtendedRunStats = true
+}
+
+// IgnoreWalkErrors allows the Run to continue during Walk phase errors (such
+// as permission errors reading dirs or files)
+func IgnoreWalkErrors(o *Options) {
+	o.IgnoreWalkErrors = true
+}
+
+// IgnoreLinkErrors allows the Run to continue during Link phase errors
+// (typically the actual linking itself)
+func IgnoreLinkErrors(o *Options) {
+	o.IgnoreLinkErrors = true
+}
+
+// CheckQuiescence enables quiescence checking which can detect changes to the
+// filesystem during the file/directory walk.
+func CheckQuiescence(o *Options) {
+	o.CheckQuiescence = true
+}
