@@ -137,6 +137,11 @@ func SetupOptions(args ...func(*Options)) Options {
 	return o
 }
 
+// Not all the settable Options are represented as SetupOptions() funcs, just
+// some common ones that user's might typically want to change from the
+// default.  Option members can still be set directly, after the call to
+// SetupOptions().
+
 // SameName requires linked files to have equal filenames
 func SameName(o *Options) {
 	o.SameName = true
