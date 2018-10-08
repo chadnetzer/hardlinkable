@@ -164,7 +164,7 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 				var linkingErr error
 				if f.Options.LinkingEnabled {
 					linkingErr = f.hardlinkFiles(srcPathInfo, dstPathInfo)
-					if !f.Options.IgnoreLinkingErrors && linkingErr != nil {
+					if !f.Options.IgnoreLinkErrors && linkingErr != nil {
 						return linkingErr
 					}
 				}

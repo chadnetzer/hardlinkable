@@ -110,8 +110,9 @@ type Options struct {
 	// during walk.  Always enabled when LinkingEnabled is true.
 	CheckQuiescence bool
 
-	// IgnoreLinkingErrors allows Run to continue when linking fails
-	IgnoreLinkingErrors bool
+	// IgnoreLinkErrors allows Run to continue when linking fails (or any
+	// errors during the Link phase)
+	IgnoreLinkErrors bool
 
 	// IgnoreFileErrors allows Run to continue when file errors occur, such
 	// as not being able to walk into a directory, or being unable to read
