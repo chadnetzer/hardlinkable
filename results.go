@@ -114,7 +114,7 @@ type Results struct {
 
 	// Record which 'phase' we've gotten to in the algorithms, in case of
 	// early termination of the run.
-	Phase RunPhases
+	Phase RunPhases `json:"phase"`
 }
 
 func newResults(o *Options) *Results {
@@ -424,6 +424,20 @@ func (r *Results) OutputRunStats() {
 	s := make([][]string, 0)
 	s = statStr(s, "Hard linking statistics")
 	s = statStr(s, "-----------------------")
+	if !r.RunSuccessful {
+		var phase string
+		switch r.Phase {
+		case StartPhase:
+			phase = "Start"
+		case WalkPhase:
+			phase = "File walk"
+		case LinkPhase:
+			phase = "Linking"
+		default:
+			phase = "End"
+		}
+		s = statStr(s, "Run stopped early in phase", phase)
+	}
 	s = statStr(s, "Directories", r.DirCount)
 	s = statStr(s, "Files", r.FileCount)
 	if r.Opts.LinkingEnabled {
