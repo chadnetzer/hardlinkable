@@ -76,6 +76,7 @@ type RunStats struct {
 
 	// Counts of file I/O errors (reading, linking, etc.)
 	SkippedDirErrCount  int64 `json:"skippedDirErrCount"`
+	SkippedFileErrCount int64 `json:"skippedFileErrCount"`
 	SkippedLinkErrCount int64 `json:"skippedLinkErrCount"`
 
 	// Counts of files and dirs excluded by the Regex matches
@@ -548,6 +549,9 @@ func (r *Results) OutputRunStats() {
 		}
 		if r.SkippedDirErrCount > 0 {
 			s = statStr(s, "Dir errors this run", r.SkippedDirErrCount)
+		}
+		if r.SkippedFileErrCount > 0 {
+			s = statStr(s, "File errors this run", r.SkippedFileErrCount)
 		}
 		if r.SkippedLinkErrCount > 0 {
 			s = statStr(s, "Link errors this run", r.SkippedLinkErrCount)
