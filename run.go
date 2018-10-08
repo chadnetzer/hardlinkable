@@ -134,7 +134,14 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 		ls.Results.foundFile()
 
 		fsdev := ls.dev(di, pe.pathname)
-		fsdev.FindIdenticalFiles(di, pe.pathname)
+		cmpErr := fsdev.FindIdenticalFiles(di, pe.pathname)
+		if cmpErr != nil {
+			if !ls.Options.IgnoreWalkErrors {
+				return cmpErr
+			} else {
+				ls.Results.SkippedFileErrCount++
+			}
+		}
 	}
 
 	ls.Progress.Clear()
