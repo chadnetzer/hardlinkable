@@ -99,7 +99,10 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 		di, statErr := inode.LStatInfo(pe.pathname)
 		if statErr != nil {
 			if ls.Options.IgnoreWalkErrors {
-				log.Printf("Couldn't stat(\"%v\"). Skipping...", pe.pathname)
+				ls.Results.SkippedFileErrCount++
+				if ls.Options.DebugLevel > 0 {
+					log.Printf("\r%v  Skipping...", statErr)
+				}
 				continue
 			} else {
 				return statErr
@@ -140,10 +143,13 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 		fsdev := ls.dev(di, pe.pathname)
 		cmpErr := fsdev.FindIdenticalFiles(di, pe.pathname)
 		if cmpErr != nil {
-			if !ls.Options.IgnoreWalkErrors {
-				return cmpErr
-			} else {
+			if ls.Options.IgnoreWalkErrors {
 				ls.Results.SkippedFileErrCount++
+				if ls.Options.DebugLevel > 0 {
+					log.Printf("\r%v  Skipping...", cmpErr)
+				}
+			} else {
+				return cmpErr
 			}
 		}
 	}

@@ -21,6 +21,7 @@
 package hardlinkable
 
 import (
+	"log"
 	"path/filepath"
 	"regexp"
 
@@ -63,12 +64,18 @@ func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <
 				ErrorCallback: func(osPathname string, err error) godirwalk.ErrorAction {
 					r.SkippedDirErrCount++
 					if osPathname == dir {
+						if opts.IgnoreWalkErrors && opts.DebugLevel > 0 {
+							log.Printf("\r%v  Skipping...", err)
+						}
 						// Halt when we can't walk the top level directory, so
 						// that it gets reported as an error (even if we are
 						// ignoring file errors)
 						return godirwalk.Halt
 					}
 					if opts.IgnoreWalkErrors {
+						if opts.DebugLevel > 0 {
+							log.Printf("\r%v  Skipping...", err)
+						}
 						return godirwalk.SkipNode
 					}
 					return godirwalk.Halt
