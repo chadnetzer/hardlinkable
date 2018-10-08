@@ -50,6 +50,9 @@ func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <
 							r.ExcludedDirCount++ // Only updated in this goroutine
 							return filepath.SkipDir
 						}
+						// Update the DirCount as an estimate in case of error
+						// exit.  Doesn't race w/ other goroutines.
+						r.DirCount++
 					} else if de.ModeType().IsRegular() {
 						if isFileIncluded(de.Name(), &opts, r) {
 							out <- pathErr{pathname: osPathname, err: nil}
