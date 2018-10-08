@@ -65,14 +65,14 @@ func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <
 						// ignoring file errors)
 						return godirwalk.Halt
 					}
-					if opts.IgnoreFileErrors {
+					if opts.IgnoreWalkErrors {
 						return godirwalk.SkipNode
 					}
 					return godirwalk.Halt
 				},
 			})
 			if err != nil {
-				if !opts.IgnoreFileErrors {
+				if !opts.IgnoreWalkErrors {
 					out <- pathErr{pathname: "", err: err}
 					return
 				}

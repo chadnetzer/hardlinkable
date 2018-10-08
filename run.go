@@ -90,7 +90,7 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	c := matchedPathnames(*ls.Options, ls.Results, dirs, files)
 	for pe := range c {
 		// Handle early termination of the directory walk.  If
-		// IgnoreFileErrors is set, we won't get any errors here.
+		// IgnoreWalkErrors is set, we won't get any errors here.
 		if pe.err != nil {
 			return pe.err
 		}
