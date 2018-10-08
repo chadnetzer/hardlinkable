@@ -372,8 +372,12 @@ func (r *Results) OutputExistingLinks() {
 		totalSaved := size * uint64(len(dsts)) // Can overflow
 		s = append(s, fmt.Sprintf("Filesize: %v  Total saved: %v",
 			humanize(size), humanize(totalSaved)))
+		fmt.Println(strings.Join(s, "\n"))
+		s = []string{}
 	}
-	fmt.Println(strings.Join(s, "\n"))
+	if len(s) > 0 {
+		fmt.Println(strings.Join(s, "\n"))
+	}
 }
 
 // OutputNewLinks shows in text form the pathnames that were discovered to be
@@ -416,8 +420,12 @@ func outputLinkPaths(s []string, lp [][]string) {
 				s = append(s, "  to: "+path)
 			}
 		}
+		fmt.Println(strings.Join(s, "\n"))
+		s = []string{}
 	}
-	fmt.Println(strings.Join(s, "\n"))
+	if len(s) > 0 {
+		fmt.Println(strings.Join(s, "\n"))
+	}
 }
 
 // OutputRunStats show information about how many files could be linked, how
