@@ -75,13 +75,13 @@ type RunStats struct {
 	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
 
 	// Count of how many setuid and setgid files were encountered (and skipped)
-	SkippedSetuidCount uint64 `json:"skippedSetuidCount"`
-	SkippedSetgidCount uint64 `json:"skippedSetgidCount"`
+	SkippedSetuidCount int64 `json:"skippedSetuidCount"`
+	SkippedSetgidCount int64 `json:"skippedSetgidCount"`
 
 	// Also keep track of files with bits other than the permission bits
 	// set (other than setuid/setgid and bits already excluded by "regular"
 	// file bits)
-	SkippedNonPermBitCount uint64 `json:"skippedNonPermBitCount"`
+	SkippedNonPermBitCount int64 `json:"skippedNonPermBitCount"`
 
 	// Debugging counts
 	SkippedNewLinkCount  int64 `json:"skippedNewLinkCount"` // skipped due to errors
