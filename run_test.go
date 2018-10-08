@@ -585,11 +585,11 @@ func TestRunLinkedFileOutsideOfWalk(t *testing.T) {
 	verifyInodeCounts(name, t, result, 0, 0, 2, "A/f1")
 	m["B/f2"] = "X"
 	verifyContents(name, t, m)
-	if result.PrevLinkCount != 0 {
-		t.Errorf("Out of tree links counted, expected 0, got %v\n", result.PrevLinkCount)
+	if result.ExistingLinkCount != 0 {
+		t.Errorf("Out of tree links counted, expected 0, got %v\n", result.ExistingLinkCount)
 	}
-	if result.PrevLinkedByteAmount != 0 {
-		t.Errorf("Out of tree linked bytes, expected 0, got %v\n", result.PrevLinkedByteAmount)
+	if result.ExistingLinkByteAmount != 0 {
+		t.Errorf("Out of tree linked bytes, expected 0, got %v\n", result.ExistingLinkByteAmount)
 	}
 }
 
@@ -974,19 +974,19 @@ func (c Clusters) addToCluster(prevPath, newPath string) {
 }
 
 type randTestVals struct {
-	minSize         int
-	maxSize         int
-	numDirs         int64
-	numFiles        int64
-	numNewLinks     int64
-	numPrevLinks    int64
-	numInodes       int64
-	numNlinks       int64
-	linkPathsBytes  uint64
-	prevLinksBytes  uint64
-	pc              pathContents        // pathname:contents map
-	contentPaths    map[string][]string // contents:[]pathname map
-	contentClusters map[string]Clusters // contents:Clusters
+	minSize            int
+	maxSize            int
+	numDirs            int64
+	numFiles           int64
+	numNewLinks        int64
+	numExistingLinks   int64
+	numInodes          int64
+	numNlinks          int64
+	linkPathsBytes     uint64
+	existingLinksBytes uint64
+	pc                 pathContents        // pathname:contents map
+	contentPaths       map[string][]string // contents:[]pathname map
+	contentClusters    map[string]Clusters // contents:Clusters
 
 	// A set of all the file contents we've used, and their usage count
 	contents map[string]int // contents:fileCount
@@ -1184,28 +1184,34 @@ func checkRunStats(t *testing.T, r *randTestVals, result *Results) {
 			// Also count the prev links using the cluster information.
 			// Clusters of more than 1 pathname are pre-existing.
 			if len(m) > 1 {
-				r.numPrevLinks += int64(len(m) - 1)
-				r.prevLinksBytes += uint64(len(co) * (len(m) - 1))
+				r.numExistingLinks += int64(len(m) - 1)
+				r.existingLinksBytes += uint64(len(co) * (len(m) - 1))
 			}
 		}
 	}
 	if r.numInodes != result.InodeCount {
-		t.Errorf("Expected %v inodes, got: %v", r.numInodes, result.InodeCount)
+		t.Errorf("Expected %v inodes, got: %v",
+			r.numInodes, result.InodeCount)
 	}
 	if r.numNlinks != result.NlinkCount {
-		t.Errorf("Expected %v nlinks, got: %v", r.numNlinks, result.NlinkCount)
+		t.Errorf("Expected %v nlinks, got: %v",
+			r.numNlinks, result.NlinkCount)
 	}
 	if r.numNewLinks != result.NewLinkCount {
-		t.Errorf("Expected %v NewLinkCount, got: %v", r.numNewLinks, result.NewLinkCount)
+		t.Errorf("Expected %v NewLinkCount, got: %v",
+			r.numNewLinks, result.NewLinkCount)
 	}
-	if r.numPrevLinks != result.PrevLinkCount {
-		t.Errorf("Expected %v PrevLinkCount, got: %v", r.numPrevLinks, result.PrevLinkCount)
+	if r.numExistingLinks != result.ExistingLinkCount {
+		t.Errorf("Expected %v ExistingLinkCount, got: %v",
+			r.numExistingLinks, result.ExistingLinkCount)
 	}
 	if r.linkPathsBytes != result.InodeRemovedByteAmount {
-		t.Errorf("Expected %v InodeRemovedByteAmount, got: %v", r.linkPathsBytes, result.InodeRemovedByteAmount)
+		t.Errorf("Expected %v InodeRemovedByteAmount, got: %v",
+			r.linkPathsBytes, result.InodeRemovedByteAmount)
 	}
-	if r.prevLinksBytes != result.PrevLinkedByteAmount {
-		t.Errorf("Expected %v PrevLinkedByteAmount, got: %v", r.prevLinksBytes, result.PrevLinkedByteAmount)
+	if r.existingLinksBytes != result.ExistingLinkByteAmount {
+		t.Errorf("Expected %v ExistingLinkedByteAmount, got: %v",
+			r.existingLinksBytes, result.ExistingLinkByteAmount)
 	}
 }
 

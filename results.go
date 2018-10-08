@@ -52,9 +52,9 @@ type RunStats struct {
 	InodeCount             int64  `json:"inodeCount"`
 	InodeRemovedCount      int64  `json:"inodeRemovedCount"`
 	NlinkCount             int64  `json:"nlinkCount"`
-	PrevLinkCount          int64  `json:"prevLinkCount"`
+	ExistingLinkCount      int64  `json:"existingLinkCount"`
 	NewLinkCount           int64  `json:"newLinkCount"`
-	PrevLinkedByteAmount   uint64 `json:"prevLinkedByteAmount"`
+	ExistingLinkByteAmount uint64 `json:"existingLinkByteAmount"`
 	InodeRemovedByteAmount uint64 `json:"inodeRemovedByteAmount"`
 	BytesCompared          uint64 `json:"bytesCompared"`
 
@@ -276,8 +276,8 @@ func (r *Results) foundNewLink(srcP, dstP P.Pathsplit) {
 // Track count of existing links found during walk, and optionally keep a list
 // of them and their sizes for later output.
 func (r *Results) foundExistingLink(srcP P.Pathsplit, dstP P.Pathsplit, size uint64) {
-	r.PrevLinkCount++
-	r.PrevLinkedByteAmount += size
+	r.ExistingLinkCount++
+	r.ExistingLinkByteAmount += size
 	if !r.Opts.StoreExistingLinkResults {
 		return
 	}
@@ -433,8 +433,8 @@ func (r *Results) OutputRunStats() {
 		s = statStr(s, "Hardlinkable this run", r.NewLinkCount)
 		s = statStr(s, "Removable inodes", r.InodeRemovedCount)
 	}
-	s = statStr(s, "Currently linked bytes", r.PrevLinkedByteAmount, humanizeParens(r.PrevLinkedByteAmount))
-	totalBytes := r.PrevLinkedByteAmount + r.InodeRemovedByteAmount
+	s = statStr(s, "Currently linked bytes", r.ExistingLinkByteAmount, humanizeParens(r.ExistingLinkByteAmount))
+	totalBytes := r.ExistingLinkByteAmount + r.InodeRemovedByteAmount
 	var s1, s2 string
 	if r.Opts.LinkingEnabled {
 		s1 = "Additional saved bytes"
@@ -449,7 +449,7 @@ func (r *Results) OutputRunStats() {
 
 	s = statStr(s, "Total run time", r.RunTime)
 
-	totalLinks := r.PrevLinkCount + r.NewLinkCount
+	totalLinks := r.ExistingLinkCount + r.NewLinkCount
 	if r.Opts.ShowExtendedRunStats || r.Opts.DebugLevel > 0 {
 		s = statStr(s, "Comparisons", r.ComparisonCount)
 		s = statStr(s, "Inodes", r.InodeCount)
@@ -458,7 +458,7 @@ func (r *Results) OutputRunStats() {
 			unwalkedNlinkStr := fmt.Sprintf("(Unwalked Nlinks: %v)", unwalkedNlinks)
 			s = statStr(s, "Inode total nlinks", r.NlinkCount, unwalkedNlinkStr)
 		}
-		s = statStr(s, "Existing links", r.PrevLinkCount)
+		s = statStr(s, "Existing links", r.ExistingLinkCount)
 		s = statStr(s, "Total old + new links", totalLinks)
 		if r.FileTooLargeCount > 0 {
 			s = statStr(s, "Total too large files", r.FileTooLargeCount)
