@@ -54,6 +54,7 @@ type CLIOptions struct {
 	CLIFileExcludes        RegexArray
 	CLIDirExcludes         RegexArray
 	CLISearchThresh        intN
+	CLIDebugLevel          int
 
 	// Verbosity controls the level of output when calling the output
 	// options.  Verbosity 0 prints a short summary of results (space
@@ -75,6 +76,7 @@ func (c CLIOptions) ToOptions() hardlinkable.Options {
 	o.FileExcludes = c.CLIFileExcludes.vals
 	o.DirExcludes = c.CLIDirExcludes.vals
 	o.SearchThresh = c.CLISearchThresh.n
+	o.DebugLevel = uint(c.CLIDebugLevel)
 	if c.CLIContentOnly {
 		o.IgnoreTime = true
 		o.IgnorePerm = true
@@ -300,7 +302,7 @@ by hard linking identical files.  It can also perform the linking.`,
 	flg.VarP(&co.CLIFileIncludes, "include", "i", "Regex(es) used to include files (overrides excludes)")
 	flg.VarP(&co.CLIFileExcludes, "exclude", "e", "Regex(es) used to exclude files")
 	flg.VarP(&co.CLIDirExcludes, "exclude-dir", "E", "Regex(es) used to exclude dirs")
-	flg.CountVarP(&co.DebugLevel, "debug", "d", "``Increase debugging level")
+	flg.CountVarP(&co.CLIDebugLevel, "debug", "d", "``Increase debugging level")
 
 	co.CLISearchThresh.n = hardlinkable.DefaultSearchThresh
 	flg.VarP(&co.CLISearchThresh, "search-thresh", "", "Ino search length before enabling digests")

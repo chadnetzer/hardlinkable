@@ -56,7 +56,7 @@ type Options struct {
 
 	// DebugLevel controls the amount of debug information reported in the
 	// results output, as well as debug logging.
-	DebugLevel int
+	DebugLevel uint
 
 	// SearchThresh determines the length that the lists of files with
 	// equivalent inode hashes can grow to, before also enabling content
@@ -192,5 +192,12 @@ func MinFileSize(size uint64) func(*Options) {
 func MaxFileSize(size uint64) func(*Options) {
 	return func(o *Options) {
 		o.MaxFileSize = size
+	}
+}
+
+// DebugLevel sets the debugging level (1,2,or 3)
+func DebugLevel(debugLevel uint) func(*Options) {
+	return func(o *Options) {
+		o.DebugLevel = debugLevel
 	}
 }
