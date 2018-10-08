@@ -74,6 +74,11 @@ type RunStats struct {
 	MismatchedXattrBytes uint64 `json:"mismatchedXattrBytes"`
 	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
 
+	// Counts of files and dirs excluded by the Regex matches
+	ExcludedDirCount  int64 `json:"excludedDirCount"`
+	ExcludedFileCount int64 `json:"excludedFileCount"`
+	IncludedFileCount int64 `json:"includedFileCount"`
+
 	// Count of how many setuid and setgid files were encountered (and skipped)
 	SkippedSetuidCount int64 `json:"skippedSetuidCount"`
 	SkippedSetgidCount int64 `json:"skippedSetgidCount"`
@@ -479,6 +484,15 @@ func (r *Results) OutputRunStats() {
 		}
 		if r.FileTooSmallCount > 0 {
 			s = statStr(s, "Total too small files", r.FileTooSmallCount)
+		}
+		if r.ExcludedDirCount > 0 {
+			s = statStr(s, "Total excluded dirs", r.ExcludedDirCount)
+		}
+		if r.ExcludedFileCount > 0 {
+			s = statStr(s, "Total excluded files", r.ExcludedFileCount)
+		}
+		if r.IncludedFileCount > 0 {
+			s = statStr(s, "Total included files", r.IncludedFileCount)
 		}
 		if r.MismatchedMtimeCount > 0 {
 			s = statStr(s, "Equal files w/ unequal time", r.MismatchedMtimeCount,

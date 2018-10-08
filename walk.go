@@ -42,10 +42,11 @@ func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <
 						dirExcludes := opts.DirExcludes
 						// Do not exclude dirs provided explicitly by the user
 						if dir != osPathname && isMatched(de.Name(), dirExcludes) {
+							r.ExcludedDirCount++ // Only updated in this goroutine
 							return filepath.SkipDir
 						}
 					} else if de.ModeType().IsRegular() {
-						if isFileIncluded(de.Name(), &opts) {
+						if isFileIncluded(de.Name(), &opts, r) {
 							out <- osPathname
 						}
 					}
@@ -59,7 +60,7 @@ func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <
 		// Also pass back some or all (depending on includes and
 		// excludes) of the passed in file pathnames.
 		for _, pathname := range files {
-			if isFileIncluded(pathname, &opts) {
+			if isFileIncluded(pathname, &opts, r) {
 				out <- pathname
 			}
 		}
@@ -81,17 +82,22 @@ func isMatched(name string, pattern []string) bool {
 
 // isFileIncluded returns true if the given pathname is not excluded, or is
 // specifically included by the command line options.
-func isFileIncluded(name string, opts *Options) bool {
+//
+// Result counts are only updated in the walk goroutine, so should be safe from
+// races.
+func isFileIncluded(name string, opts *Options, r *Results) bool {
 	inc := opts.FileIncludes
 	exc := opts.FileExcludes
 	if len(exc) == 0 && len(inc) == 0 {
 		return true
 	}
 	if len(inc) > 0 && isMatched(name, inc) {
+		r.IncludedFileCount++
 		return true
 	}
 	if len(exc) > 0 && !isMatched(name, exc) {
 		return true
 	}
+	r.ExcludedFileCount++
 	return false
 }
