@@ -51,7 +51,7 @@ func readerContentsEqual(s status, r1, r2 io.Reader) (bool, error) {
 
 	for {
 		n1, err1 := r1.Read(buf1)
-		_, err2 := r2.Read(buf2)
+		n2, err2 := r2.Read(buf2)
 		if err1 != nil || err2 != nil {
 			if err1 == io.EOF && err2 == io.EOF {
 				return true, nil
@@ -65,7 +65,7 @@ func readerContentsEqual(s status, r1, r2 io.Reader) (bool, error) {
 		if !bytes.Equal(buf1, buf2) {
 			return false, nil
 		}
-		s.Results.addBytesCompared(uint64(n1))
+		s.Results.addBytesCompared(uint64(n1 + n2))
 		s.Progress.Show()
 	}
 }
