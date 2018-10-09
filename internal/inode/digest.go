@@ -79,7 +79,7 @@ func digestHelper(id *InoDigests, pi PathInfo, digest Digest) {
 // saving the digest to help quickly reduce the set of possibly equal inodes
 // later (ie. reducing the length of the repeated linear searches).
 func ContentDigest(pathname string) (Digest, error) {
-	const bufSize = 8192
+	const bufSize = 4096
 
 	f, err := os.Open(pathname)
 	if err != nil {
