@@ -57,6 +57,7 @@ func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
 		if dstTime.After(src.Mtim) {
 			err := os.Chtimes(src.Pathsplit.Join(), dstTime, dstTime)
 			if err != nil {
+				fs.Results.FailedLinkChtimesCount++
 				// Ignore this error, and just return early, as we
 				// don't want to abort the Run().
 				return nil
@@ -69,6 +70,7 @@ func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
 			// Change uid/gid if possible
 			err = os.Lchown(src.Pathsplit.Join(), int(src.Uid), int(src.Gid))
 			if err != nil {
+				fs.Results.FailedLinkChownCount++
 				return nil
 			}
 			// Chown succeeded, so update the cached stat structures
