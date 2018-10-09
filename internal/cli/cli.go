@@ -218,7 +218,7 @@ func CLIRun(dirs []string, files []string, co CLIOptions) {
 	}
 
 	if err != nil {
-		log.Printf("%v", err)
+		log.Printf("\r%v", err)
 	}
 	if err != nil || !results.RunSuccessful {
 		var s string
