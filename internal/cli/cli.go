@@ -306,13 +306,13 @@ by hard linking identical files.  It can also perform the linking.`,
 	flg.VarP(&co.CLIDirExcludes, "exclude-dir", "E", "Regex(es) used to exclude dirs")
 	flg.CountVarP(&co.CLIDebugLevel, "debug", "d", "``Increase debugging level")
 
-	co.CLISearchThresh.n = hardlinkable.DefaultSearchThresh
-	flg.VarP(&co.CLISearchThresh, "search-thresh", "", "Ino search length before enabling digests")
-
 	flg.BoolVar(&co.IgnoreWalkErrors, "ignore-walkerr", false, "Continue on file/dir read errs")
 	flg.BoolVar(&co.IgnoreLinkErrors, "ignore-linkerr", false, "Continue when linking fails")
 	flg.BoolVar(&co.CheckQuiescence, "quiescence", false, "Abort if filesystem is being modified")
 	flg.BoolVar(&co.UseNewLinkDisabled, "disable-newest", false, "Disable using newest link mtime/uid/gid")
+
+	co.CLISearchThresh.n = hardlinkable.DefaultSearchThresh
+	flg.VarP(&co.CLISearchThresh, "search-thresh", "", "Ino search length before enabling digests")
 
 	flg.SortFlags = false
 }
