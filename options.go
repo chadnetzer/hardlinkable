@@ -110,8 +110,14 @@ type Options struct {
 	// during walk.  Always enabled when LinkingEnabled is true.
 	CheckQuiescence bool
 
-	// IgnoreLinkingErrors allows Run to continue when linking fails
-	IgnoreLinkingErrors bool
+	// IgnoreLinkErrors allows Run to continue when linking fails (or any
+	// errors during the Link phase)
+	IgnoreLinkErrors bool
+
+	// IgnoreWalkErrors allows Run to continue when errors occur during the
+	// walk phase, such as not having permission to walk a directory, or
+	// being unable to read a file for comparision.
+	IgnoreWalkErrors bool
 }
 
 // SetupOptions returns a Options struct with the defaults initialized and the

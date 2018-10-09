@@ -84,9 +84,9 @@ func TestWalkFileIncludes(t *testing.T) {
 		n := 0
 		var filenames []string
 		foundMatch := false
-		for pathname := range c {
+		for pe := range c {
 			n++
-			_, filename := path.Split(pathname)
+			_, filename := path.Split(pe.pathname)
 			filenames = append(filenames, filename)
 			if strings.Contains(filename, v.match) {
 				foundMatch = true

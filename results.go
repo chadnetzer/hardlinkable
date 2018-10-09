@@ -74,6 +74,11 @@ type RunStats struct {
 	MismatchedXattrBytes uint64 `json:"mismatchedXattrBytes"`
 	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
 
+	// Counts of file I/O errors (reading, linking, etc.)
+	SkippedDirErrCount  int64 `json:"skippedDirErrCount"`
+	SkippedFileErrCount int64 `json:"skippedFileErrCount"`
+	SkippedLinkErrCount int64 `json:"skippedLinkErrCount"`
+
 	// Counts of files and dirs excluded by the Regex matches
 	ExcludedDirCount  int64 `json:"excludedDirCount"`
 	ExcludedFileCount int64 `json:"excludedFileCount"`
@@ -89,7 +94,6 @@ type RunStats struct {
 	SkippedNonPermBitCount int64 `json:"skippedNonPermBitCount"`
 
 	// Debugging counts
-	SkippedNewLinkCount  int64 `json:"skippedNewLinkCount"` // skipped due to errors
 	EqualComparisonCount int64 `json:"equalComparisonCount"`
 	FoundHashCount       int64 `json:"foundHashCount"`
 	MissedHashCount      int64 `json:"missedHashCount"`
@@ -306,7 +310,7 @@ func (r *Results) foundExistingLink(srcP P.Pathsplit, dstP P.Pathsplit, size uin
 // but failed), and optionally keep a list of linkable or linked pathnames for
 // later output.
 func (r *Results) skippedNewLink(srcP, dstP P.Pathsplit) {
-	r.SkippedNewLinkCount++
+	r.SkippedLinkErrCount++
 	if !r.Opts.StoreNewLinkResults {
 		return
 	}
@@ -543,8 +547,14 @@ func (r *Results) OutputRunStats() {
 		if r.SkippedNonPermBitCount > 0 {
 			s = statStr(s, "Skipped files with non-perm bits set", r.SkippedNonPermBitCount)
 		}
-		if r.SkippedNewLinkCount > 0 {
-			s = statStr(s, "Link errors this run", r.SkippedNewLinkCount)
+		if r.SkippedDirErrCount > 0 {
+			s = statStr(s, "Dir errors this run", r.SkippedDirErrCount)
+		}
+		if r.SkippedFileErrCount > 0 {
+			s = statStr(s, "File errors this run", r.SkippedFileErrCount)
+		}
+		if r.SkippedLinkErrCount > 0 {
+			s = statStr(s, "Link errors this run", r.SkippedLinkErrCount)
 		}
 	}
 

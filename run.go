@@ -88,12 +88,25 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	// permission, ownership, etc.)
 	ls.Results.Phase = WalkPhase
 	c := matchedPathnames(*ls.Options, ls.Results, dirs, files)
-	for pathname := range c {
+	for pe := range c {
+		// Handle early termination of the directory walk.  If
+		// IgnoreWalkErrors is set, we won't get any errors here.
+		if pe.err != nil {
+			return pe.err
+		}
+
 		ls.Progress.Show()
-		di, err := inode.LStatInfo(pathname)
-		if err != nil {
-			log.Printf("Couldn't stat(\"%v\"). Skipping...", pathname)
-			continue
+		di, statErr := inode.LStatInfo(pe.pathname)
+		if statErr != nil {
+			if ls.Options.IgnoreWalkErrors {
+				ls.Results.SkippedFileErrCount++
+				if ls.Options.DebugLevel > 0 {
+					log.Printf("\r%v  Skipping...", statErr)
+				}
+				continue
+			} else {
+				return statErr
+			}
 		}
 
 		// Ignore files with setuid/setgid bits.  Linking them could
@@ -127,8 +140,18 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 		// point, add it to the found count
 		ls.Results.foundFile()
 
-		fsdev := ls.dev(di, pathname)
-		fsdev.FindIdenticalFiles(di, pathname)
+		fsdev := ls.dev(di, pe.pathname)
+		cmpErr := fsdev.FindIdenticalFiles(di, pe.pathname)
+		if cmpErr != nil {
+			if ls.Options.IgnoreWalkErrors {
+				ls.Results.SkippedFileErrCount++
+				if ls.Options.DebugLevel > 0 {
+					log.Printf("\r%v  Skipping...", cmpErr)
+				}
+			} else {
+				return cmpErr
+			}
+		}
 	}
 
 	ls.Progress.Clear()

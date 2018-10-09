@@ -23,6 +23,7 @@ package hardlinkable
 import (
 	I "hardlinkable/internal/inode"
 	P "hardlinkable/internal/pathpool"
+	"log"
 	"sort"
 )
 
@@ -164,8 +165,12 @@ func (f *fsDev) genLinksHelper(sortedInos []I.Ino) error {
 				var linkingErr error
 				if f.Options.LinkingEnabled {
 					linkingErr = f.hardlinkFiles(srcPathInfo, dstPathInfo)
-					if !f.Options.IgnoreLinkingErrors && linkingErr != nil {
-						return linkingErr
+					if linkingErr != nil {
+						if !f.Options.IgnoreLinkErrors {
+							return linkingErr
+						} else if f.Options.DebugLevel > 0 {
+							log.Printf("\r%v  Skipping...", linkingErr)
+						}
 					}
 				}
 

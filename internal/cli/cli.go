@@ -218,7 +218,7 @@ func CLIRun(dirs []string, files []string, co CLIOptions) {
 	}
 
 	if err != nil {
-		log.Printf("%v", err)
+		log.Printf("\r%v", err)
 	}
 	if err != nil || !results.RunSuccessful {
 		var s string
@@ -305,7 +305,8 @@ by hard linking identical files.  It can also perform the linking.`,
 	co.CLISearchThresh.n = hardlinkable.DefaultSearchThresh
 	flg.VarP(&co.CLISearchThresh, "search-thresh", "", "Ino search length before enabling digests")
 
-	flg.BoolVar(&co.IgnoreLinkingErrors, "ignore-linkerr", false, "Continue even if linking fails")
+	flg.BoolVar(&co.IgnoreWalkErrors, "ignore-walkerr", false, "Continue on file/dir read errs")
+	flg.BoolVar(&co.IgnoreLinkErrors, "ignore-linkerr", false, "Continue when linking fails")
 	flg.BoolVar(&co.CheckQuiescence, "quiescence", false, "Abort if filesystem is being modified")
 
 	flg.SortFlags = false
