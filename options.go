@@ -22,6 +22,7 @@ package hardlinkable
 
 const DefaultSearchThresh = 1
 const DefaultMinFileSize = 1
+const DefaultUseNewestLink = true
 const DefaultStoreExistingLinkResults = true // Non-cli default
 const DefaultStoreNewLinkResults = true      // Non-cli default
 const DefaultShowExtendedRunStats = false    // Non-cli default
@@ -65,6 +66,10 @@ type Options struct {
 	// DebugLevel controls the amount of debug information reported in the
 	// results output, as well as debug logging.
 	DebugLevel uint
+
+	// UseNewestLink requests setting the inode to the mtime and uid/gid of
+	// the more recent inode when files are linked.
+	UseNewestLink bool
 
 	// FileIncludes is a slice of regex expressions that control what
 	// filenames will be considered for linking.  If given without any
@@ -126,6 +131,7 @@ func SetupOptions(args ...func(*Options)) Options {
 	o := Options{
 		SearchThresh:             DefaultSearchThresh,
 		MinFileSize:              DefaultMinFileSize,
+		UseNewestLink:            DefaultUseNewestLink,
 		StoreExistingLinkResults: DefaultStoreExistingLinkResults,
 		StoreNewLinkResults:      DefaultStoreNewLinkResults,
 		ShowExtendedRunStats:     DefaultShowExtendedRunStats,
