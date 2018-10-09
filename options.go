@@ -54,19 +54,6 @@ type Options struct {
 	// LinkingEnabled causes the Run to perform the linking step
 	LinkingEnabled bool
 
-	// DebugLevel controls the amount of debug information reported in the
-	// results output, as well as debug logging.
-	DebugLevel int
-
-	// SearchThresh determines the length that the lists of files with
-	// equivalent inode hashes can grow to, before also enabling content
-	// digests (which can drastically reduce the number of compared files
-	// when there are many with the same hash, but differing content at the
-	// start of the file).  Can be disabled with -1.  May save a small
-	// amount of memory, but potentially at greatly increased runtime in
-	// worst case scenarios with many, many files.
-	SearchThresh int
-
 	// MinFileSize controls the minimum size of files that are eligible to
 	// be considered for linking.
 	MinFileSize uint64
@@ -74,6 +61,10 @@ type Options struct {
 	// MaxFileSize controls the maximum size of files that are eligible to
 	// be considered for linking.
 	MaxFileSize uint64
+
+	// DebugLevel controls the amount of debug information reported in the
+	// results output, as well as debug logging.
+	DebugLevel uint
 
 	// FileIncludes is a slice of regex expressions that control what
 	// filenames will be considered for linking.  If given without any
@@ -106,18 +97,27 @@ type Options struct {
 	// ShowRunStats enabled displays Result stats output.
 	ShowRunStats bool
 
-	// CheckQuiescence enabled looks for signs of the filesystems changing
-	// during walk.  Always enabled when LinkingEnabled is true.
-	CheckQuiescence bool
+	// IgnoreWalkErrors allows Run to continue when errors occur during the
+	// walk phase, such as not having permission to walk a directory, or
+	// being unable to read a file for comparision.
+	IgnoreWalkErrors bool
 
 	// IgnoreLinkErrors allows Run to continue when linking fails (or any
 	// errors during the Link phase)
 	IgnoreLinkErrors bool
 
-	// IgnoreWalkErrors allows Run to continue when errors occur during the
-	// walk phase, such as not having permission to walk a directory, or
-	// being unable to read a file for comparision.
-	IgnoreWalkErrors bool
+	// CheckQuiescence enabled looks for signs of the filesystems changing
+	// during walk.  Always enabled when LinkingEnabled is true.
+	CheckQuiescence bool
+
+	// SearchThresh determines the length that the lists of files with
+	// equivalent inode hashes can grow to, before also enabling content
+	// digests (which can drastically reduce the number of compared files
+	// when there are many with the same hash, but differing content at the
+	// start of the file).  Can be disabled with -1.  May save a small
+	// amount of memory, but potentially at greatly increased runtime in
+	// worst case scenarios with many, many files.
+	SearchThresh int
 }
 
 // SetupOptions returns a Options struct with the defaults initialized and the
@@ -136,6 +136,11 @@ func SetupOptions(args ...func(*Options)) Options {
 	}
 	return o
 }
+
+// Not all the settable Options are represented as SetupOptions() funcs, just
+// some common ones that user's might typically want to change from the
+// default.  Option members can still be set directly, after the call to
+// SetupOptions().
 
 // SameName requires linked files to have equal filenames
 func SameName(o *Options) {
@@ -193,4 +198,34 @@ func MaxFileSize(size uint64) func(*Options) {
 	return func(o *Options) {
 		o.MaxFileSize = size
 	}
+}
+
+// DebugLevel sets the debugging level (1,2,or 3)
+func DebugLevel(debugLevel uint) func(*Options) {
+	return func(o *Options) {
+		o.DebugLevel = debugLevel
+	}
+}
+
+// ShowExtendedRunStats enabled prints more in OutputRunStats()
+func ShowExtendedRunStats(o *Options) {
+	o.ShowExtendedRunStats = true
+}
+
+// IgnoreWalkErrors allows the Run to continue during Walk phase errors (such
+// as permission errors reading dirs or files)
+func IgnoreWalkErrors(o *Options) {
+	o.IgnoreWalkErrors = true
+}
+
+// IgnoreLinkErrors allows the Run to continue during Link phase errors
+// (typically the actual linking itself)
+func IgnoreLinkErrors(o *Options) {
+	o.IgnoreLinkErrors = true
+}
+
+// CheckQuiescence enables quiescence checking which can detect changes to the
+// filesystem during the file/directory walk.
+func CheckQuiescence(o *Options) {
+	o.CheckQuiescence = true
 }
