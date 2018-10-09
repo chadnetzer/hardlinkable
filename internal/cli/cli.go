@@ -47,6 +47,7 @@ import (
 type CLIOptions struct {
 	JSONOutputEnabled      bool
 	ProgressOutputDisabled bool
+	UseNewLinkDisabled     bool
 	CLIContentOnly         bool
 	CLIMinFileSize         uintN
 	CLIMaxFileSize         uintN
@@ -69,7 +70,8 @@ type CLIOptions struct {
 
 func (c CLIOptions) ToOptions() hardlinkable.Options {
 	o := c.Options
-	o.ShowRunStats = true // Default for cli
+	o.ShowRunStats = true                   // Default for cli
+	o.UseNewestLink = !c.UseNewLinkDisabled // Opposite of cli option value
 	o.MinFileSize = c.CLIMinFileSize.n
 	o.MaxFileSize = c.CLIMaxFileSize.n
 	o.FileIncludes = c.CLIFileIncludes.vals
@@ -310,6 +312,7 @@ by hard linking identical files.  It can also perform the linking.`,
 	flg.BoolVar(&co.IgnoreWalkErrors, "ignore-walkerr", false, "Continue on file/dir read errs")
 	flg.BoolVar(&co.IgnoreLinkErrors, "ignore-linkerr", false, "Continue when linking fails")
 	flg.BoolVar(&co.CheckQuiescence, "quiescence", false, "Abort if filesystem is being modified")
+	flg.BoolVar(&co.UseNewLinkDisabled, "disable-newest", false, "Disable using newest link mtime/uid/gid")
 
 	flg.SortFlags = false
 }
