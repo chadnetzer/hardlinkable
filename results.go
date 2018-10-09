@@ -101,6 +101,13 @@ type RunStats struct {
 	InoSeqSearchCount    int64 `json:"inoSeqSearchCount"`
 	InoSeqIterationCount int64 `json:"inoSeqIterationCount"`
 	DigestComputedCount  int64 `json:"digestComputedCount"`
+
+	// Counts of how many times the hardlinkFiles() func wasn't able to
+	// successfully change inode times and/or uid/gid.  Since we ignore
+	// such errors and continue anyway (ie. it's a best-effort attempt,
+	// rather than a guarantee), the counts are debugging info.
+	FailedLinkChtimesCount int64 `json:"failedLinkChtimesCount"`
+	FailedLinkChownCount   int64 `json:"failedLinkChownCount"`
 }
 
 // Results contains the RunStats information, as well as the found existing and
@@ -575,6 +582,12 @@ func (r *Results) OutputRunStats() {
 			fmt.Sprintf("(avg per search: %v)", avgItersPerSearch))
 		s = statStr(s, "Total equal comparisons", r.EqualComparisonCount)
 		s = statStr(s, "Total digests computed", r.DigestComputedCount)
+		if r.FailedLinkChtimesCount > 0 {
+			s = statStr(s, "Failed link Chtimes", r.FailedLinkChtimesCount)
+		}
+		if r.FailedLinkChownCount > 0 {
+			s = statStr(s, "Failed link Chown", r.FailedLinkChownCount)
+		}
 	}
 
 	if r.Opts.DebugLevel > 1 {

@@ -51,23 +51,28 @@ func (fs *fsDev) hardlinkFiles(src, dst I.PathInfo) error {
 		return err
 	}
 
-	// Use destination file times if it's most recently modified
-	dstTime := dst.Mtim
-	if dstTime.After(src.Mtim) {
-		err := os.Chtimes(src.Pathsplit.Join(), dstTime, dstTime)
-		if err != nil {
-			// Ignore this error, and just return early, as we
-			// don't want to abort the Run().  Any error returned
-			// from this function is considered fatal.
-			return nil
-		}
+	if fs.Options.UseNewestLink {
+		// Use destination file times if it's most recently modified
+		dstTime := dst.Mtim
+		if dstTime.After(src.Mtim) {
+			err := os.Chtimes(src.Pathsplit.Join(), dstTime, dstTime)
+			if err != nil {
+				fs.Results.FailedLinkChtimesCount++
+				// Ignore this error, and just return early, as we
+				// don't want to abort the Run().
+				return nil
+			}
 
-		// Keep cached inode.StatInfo time updated
-		si := fs.inoStatInfo[src.Ino]
-		si.Mtim = dst.Mtim
+			// Keep cached inode.StatInfo time updated
+			si := fs.inoStatInfo[src.Ino]
+			si.Mtim = dst.Mtim
 
-		err = os.Lchown(src.Pathsplit.Join(), int(src.Uid), int(src.Gid))
-		if err == nil {
+			// Change uid/gid if possible
+			err = os.Lchown(src.Pathsplit.Join(), int(src.Uid), int(src.Gid))
+			if err != nil {
+				fs.Results.FailedLinkChownCount++
+				return nil
+			}
 			// Chown succeeded, so update the cached stat structures
 			si.Uid = dst.Uid
 			si.Gid = dst.Gid

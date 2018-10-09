@@ -47,6 +47,7 @@ import (
 type CLIOptions struct {
 	JSONOutputEnabled      bool
 	ProgressOutputDisabled bool
+	UseNewLinkDisabled     bool
 	CLIContentOnly         bool
 	CLIMinFileSize         uintN
 	CLIMaxFileSize         uintN
@@ -69,7 +70,8 @@ type CLIOptions struct {
 
 func (c CLIOptions) ToOptions() hardlinkable.Options {
 	o := c.Options
-	o.ShowRunStats = true // Default for cli
+	o.ShowRunStats = true                   // Default for cli
+	o.UseNewestLink = !c.UseNewLinkDisabled // Opposite of cli option value
 	o.MinFileSize = c.CLIMinFileSize.n
 	o.MaxFileSize = c.CLIMaxFileSize.n
 	o.FileIncludes = c.CLIFileIncludes.vals
@@ -257,7 +259,7 @@ func init() {
 		Version: "0.9 alpha - 2018-09-05 (Sep 5 2018)",
 		Short:   "A tool to save space by hardlinking identical files",
 		Long: `A tool to scan directories and report on the space that could be saved
-by hard linking identical files.  It can also perform the linking.`,
+by hardlinking identical files.  It can also perform the linking.`,
 		Args: cobra.MinimumNArgs(1),
 		DisableFlagsInUseLine: true,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -304,12 +306,13 @@ by hard linking identical files.  It can also perform the linking.`,
 	flg.VarP(&co.CLIDirExcludes, "exclude-dir", "E", "Regex(es) used to exclude dirs")
 	flg.CountVarP(&co.CLIDebugLevel, "debug", "d", "``Increase debugging level")
 
-	co.CLISearchThresh.n = hardlinkable.DefaultSearchThresh
-	flg.VarP(&co.CLISearchThresh, "search-thresh", "", "Ino search length before enabling digests")
-
 	flg.BoolVar(&co.IgnoreWalkErrors, "ignore-walkerr", false, "Continue on file/dir read errs")
 	flg.BoolVar(&co.IgnoreLinkErrors, "ignore-linkerr", false, "Continue when linking fails")
 	flg.BoolVar(&co.CheckQuiescence, "quiescence", false, "Abort if filesystem is being modified")
+	flg.BoolVar(&co.UseNewLinkDisabled, "disable-newest", false, "Disable using newest link mtime/uid/gid")
+
+	co.CLISearchThresh.n = hardlinkable.DefaultSearchThresh
+	flg.VarP(&co.CLISearchThresh, "search-thresh", "", "Ino search length before enabling digests")
 
 	flg.SortFlags = false
 }
