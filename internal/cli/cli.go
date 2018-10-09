@@ -31,9 +31,7 @@ import (
 	"strconv"
 	"strings"
 
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // Because the pflags (and flags) boolean options don't toggle the default, but
@@ -174,7 +172,6 @@ type argPaths struct {
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd *cobra.Command
-var cfgFile string
 
 // separateArgs will remove duplicate args and separate into dirs and files
 func separateArgs(args []string) (argPaths, error) {
@@ -277,9 +274,6 @@ by hardlinking identical files.  It can also perform the linking.`,
 			CLIRun(argP.dirs, argP.files, co)
 		},
 	}
-	cobra.OnInitialize(initConfig)
-
-	//rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.hardlinkable.yaml)")
 
 	// Local flags
 	flg := rootCmd.Flags()
@@ -315,32 +309,6 @@ by hardlinking identical files.  It can also perform the linking.`,
 	flg.VarP(&co.CLISearchThresh, "search-thresh", "", "Ino search length before enabling digests")
 
 	flg.SortFlags = false
-}
-
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		// Search config in home directory with name ".hardlinkable" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".hardlinkable")
-	}
-
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
-	}
 }
 
 // humanizedUint64 converts humanized size strings like "1k" into an unsigned
