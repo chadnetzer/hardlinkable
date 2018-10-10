@@ -184,13 +184,13 @@ func CLIRun(args []string, co CLIOptions) {
 	}
 
 	if err != nil {
-		log.Printf("\r%v", err)
+		fmt.Fprintln(os.Stderr, err)
 	}
 	if err != nil || !results.RunSuccessful {
 		var s string
 		switch results.Phase {
 		case hardlinkable.StartPhase:
-			s = "Stopped before directory walk started.  Results are incomplete..."
+			s = ""
 		case hardlinkable.WalkPhase:
 			s = "Stopped during directory walk.  Results are incomplete..."
 		case hardlinkable.LinkPhase:
@@ -202,13 +202,17 @@ func CLIRun(args []string, co CLIOptions) {
 		default:
 			s = "Stopped early.  Results may be incomplete..."
 		}
-		fmt.Println(s)
+		if len(s) > 0 {
+			fmt.Fprintln(os.Stderr, s)
+		}
 	}
 
-	if co.JSONOutputEnabled {
-		results.OutputJSONResults()
-	} else {
-		results.OutputResults()
+	if results.Phase != hardlinkable.StartPhase {
+		if co.JSONOutputEnabled {
+			results.OutputJSONResults()
+		} else {
+			results.OutputResults()
+		}
 	}
 }
 
