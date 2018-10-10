@@ -45,6 +45,7 @@ func areFileContentsEqual(s status, pathname1, pathname2 string) (bool, error) {
 
 // Return true if r1 and r2 have identical contents. Otherwise return false.
 func readerContentsEqual(s status, r1, r2 io.Reader) (bool, error) {
+	var atEnd bool
 	bufSize := minCmpBufSize
 
 	for {
@@ -60,6 +61,17 @@ func readerContentsEqual(s status, r1, r2 io.Reader) (bool, error) {
 			}
 		}
 
+		// If buf lengths are longer than what we read, re-slice to new
+		// read length
+		if n1 < len(s.cmpBuf1) {
+			s.cmpBuf1 = s.cmpBuf1[:n1]
+			atEnd = true
+		}
+		if n2 < len(s.cmpBuf2) {
+			s.cmpBuf2 = s.cmpBuf2[:n2]
+			atEnd = true
+		}
+
 		if !bytes.Equal(s.cmpBuf1, s.cmpBuf2) {
 			return false, nil
 		}
@@ -70,7 +82,7 @@ func readerContentsEqual(s status, r1, r2 io.Reader) (bool, error) {
 		// Basically, start with a smaller buffer to reduce IO when files are
 		// definitely unequal.  As files are found to be equal, increase the
 		// buffer size, to speed up comparisons of large equal files.
-		if bufSize < maxCmpBufSize {
+		if !atEnd && bufSize < maxCmpBufSize {
 			bufSize *= 2
 			if bufSize > maxCmpBufSize {
 				bufSize = maxCmpBufSize
