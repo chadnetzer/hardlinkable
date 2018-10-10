@@ -31,9 +31,8 @@ import (
 
 func TestDoLink(t *testing.T) {
 	options := &Options{}
-	results := newResults(options)
-	ws := status{options, results, nil}
-	fs := newFSDev(ws, 10000, 10000) // Arbitrary args
+	ls := newLinkableState(options)
+	fs := newFSDev(ls.status, 10000, 10000) // Arbitrary args
 	topdir, err := ioutil.TempDir("", "hardlinkable")
 	if err != nil {
 		t.Fatalf("Couldn't create temp dir for doLink tests: %v", err)
