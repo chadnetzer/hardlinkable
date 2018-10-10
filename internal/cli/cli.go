@@ -21,15 +21,12 @@
 package cli
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"hardlinkable"
 	"log"
-	"math"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -134,7 +131,7 @@ func (u *uintN) String() string {
 // Implement Uint64 humanized Value Set() semantics
 func (u *uintN) Set(num string) error {
 	var err error
-	u.n, err = humanizedUint64(num)
+	u.n, err = hardlinkable.HumanizedUint64(num)
 	return err
 }
 
@@ -309,33 +306,4 @@ by hardlinking identical files.  It can also perform the linking.`,
 	flg.VarP(&co.CLISearchThresh, "search-thresh", "", "Ino search length before enabling digests")
 
 	flg.SortFlags = false
-}
-
-// humanizedUint64 converts humanized size strings like "1k" into an unsigned
-// in (ie. 1024)
-func humanizedUint64(s string) (uint64, error) {
-	s = strings.ToLower(s)
-	mult := map[string]uint64{
-		"k": 1 << 10, // 1024
-		"m": 1 << 20, // 1024**2
-		"g": 1 << 30, // 1024**3
-		"t": 1 << 40, // 1024**4
-		"p": 1 << 50, // 1024**5
-	}
-	// If the last character is not one of the multiplier letters, try
-	// parsing as a normal number string
-	c := s[len(s)-1:] // last char
-	if _, ok := mult[c]; !ok {
-		n, err := strconv.ParseUint(s, 10, 64)
-		return n, err
-	}
-	// Otherwise, parse the prefix digits and apply the multiplier
-	n, err := strconv.ParseUint(s[:len(s)-1], 10, 64)
-	if err != nil {
-		return n, err
-	}
-	if n > (math.MaxUint64 / mult[c]) {
-		return 0, errors.New("Size value is too large for 64 bits")
-	}
-	return n * mult[c], nil
 }
