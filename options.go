@@ -20,6 +20,8 @@
 
 package hardlinkable
 
+import "fmt"
+
 const DefaultSearchThresh = 1
 const DefaultMinFileSize = 1
 const DefaultUseNewestLink = true
@@ -234,4 +236,23 @@ func IgnoreLinkErrors(o *Options) {
 // filesystem during the file/directory walk.
 func CheckQuiescence(o *Options) {
 	o.CheckQuiescence = true
+}
+
+// Validate will ensure that contradictory Options aren't set, and that
+// dependent Options are set.  An error will be returned if Options is invalid.
+func (o *Options) Validate() error {
+	if o.MaxFileSize > 0 && o.MaxFileSize < o.MinFileSize {
+		return fmt.Errorf("minFileSize (%v) cannot be larger than maxFileSize (%v)",
+			o.MinFileSize, o.MaxFileSize)
+	}
+
+	if o.ShowExtendedRunStats {
+		o.ShowRunStats = true
+	}
+
+	if o.LinkingEnabled {
+		o.CheckQuiescence = true
+	}
+
+	return nil
 }

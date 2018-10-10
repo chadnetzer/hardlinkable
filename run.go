@@ -40,7 +40,8 @@ import (
 func RunWithProgress(dirs []string, files []string, opts Options) (Results, error) {
 	var ls *linkableState = newLinkableState(&opts)
 
-	if err := validateOptions(opts); err != nil {
+	var err error
+	if err = opts.Validate(); err != nil {
 		return *ls.Results, err
 	}
 
@@ -60,7 +61,7 @@ func RunWithProgress(dirs []string, files []string, opts Options) (Results, erro
 func Run(dirs []string, files []string, opts Options) (Results, error) {
 	var ls *linkableState = newLinkableState(&opts)
 
-	if err := validateOptions(opts); err != nil {
+	if err := opts.Validate(); err != nil {
 		return *ls.Results, err
 	}
 
@@ -183,19 +184,4 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	return nil
 }
 
-func validateOptions(opts Options) error {
-	if opts.MaxFileSize > 0 && opts.MaxFileSize < opts.MinFileSize {
-		return fmt.Errorf("minFileSize (%v) cannot be larger than maxFileSize (%v)",
-			opts.MinFileSize, opts.MaxFileSize)
-	}
-
-	if opts.ShowExtendedRunStats {
-		opts.ShowRunStats = true
-	}
-
-	if opts.LinkingEnabled {
-		opts.CheckQuiescence = true
-	}
-
-	return nil
 }
