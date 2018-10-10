@@ -130,10 +130,10 @@ func (p *ttyProgress) Show() {
 
 	fmtStr := "\r%d files in %s (%.0f/sec)  compared %v"
 	s := fmt.Sprintf(fmtStr, numFiles, durStr, fps,
-		humanizeWithPrecision(p.bytesCompared, 3))
+		HumanizeWithPrecision(p.bytesCompared, 3))
 
 	if p.options.DebugLevel > 1 {
-		s += fmt.Sprintf("  Allocs %v", humanize(p.m.Alloc))
+		s += fmt.Sprintf("  Allocs %v", Humanize(p.m.Alloc))
 	}
 	p.line(s)
 }

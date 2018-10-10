@@ -39,8 +39,8 @@ func TestHumanize(t *testing.T) {
 		4 * 1024 * 1024 * 1024 * 1024 * 1024: "4 PiB",
 	}
 	for n, s := range h {
-		if humanize(n) != s {
-			t.Errorf("humanize(%d) gives incorrect result: %v instead of %v", n, humanize(n), s)
+		if Humanize(n) != s {
+			t.Errorf("Humanize(%d) gives incorrect result: %v instead of %v", n, Humanize(n), s)
 		}
 	}
 }

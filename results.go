@@ -22,6 +22,7 @@ package hardlinkable
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	P "hardlinkable/internal/pathpool"
 	"math"
@@ -382,7 +383,7 @@ func (r *Results) OutputExistingLinks() {
 		size := r.ExistingLinkSizes[src]
 		totalSaved := size * uint64(len(dsts)) // Can overflow
 		s = append(s, fmt.Sprintf("Filesize: %v  Total saved: %v",
-			humanize(size), humanize(totalSaved)))
+			Humanize(size), Humanize(totalSaved)))
 		fmt.Println(strings.Join(s, "\n"))
 		s = []string{}
 	}
@@ -594,8 +595,8 @@ func (r *Results) OutputRunStats() {
 		runtime.GC()
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
-		s = statStr(s, "Mem Alloc", humanize(m.Alloc))
-		s = statStr(s, "Mem Sys", humanize(m.Sys))
+		s = statStr(s, "Mem Alloc", Humanize(m.Alloc))
+		s = statStr(s, "Mem Sys", Humanize(m.Sys))
 		s = statStr(s, "Num live objects", m.Mallocs-m.Frees)
 	}
 	printSlices(s)
@@ -658,13 +659,13 @@ func printSlices(a [][]string) {
 }
 
 // Return a string with bytecount "humanized" to a shortened amount
-func humanize(n uint64) string {
+func Humanize(n uint64) string {
 	// -1 precision removes trailing zeros
-	return humanizeWithPrecision(n, -1)
+	return HumanizeWithPrecision(n, -1)
 }
 
-// humanizeWithPrecision allows providing FormatFloat precision value
-func humanizeWithPrecision(n uint64, prec int) string {
+// HumanizeWithPrecision allows providing FormatFloat precision value
+func HumanizeWithPrecision(n uint64, prec int) string {
 	var s string
 	var m string
 	F := func(N uint64, div float64) string {
@@ -698,5 +699,34 @@ func humanizeWithPrecision(n uint64, prec int) string {
 
 // Return the humanized number count as a string surrounded by parens
 func humanizeParens(n uint64) string {
-	return fmt.Sprintf("(%v)", humanize(n))
+	return fmt.Sprintf("(%v)", Humanize(n))
+}
+
+// HumanizedUint64 converts humanized size strings like "1k" into an unsigned
+// int64 (ie. "1k" -> 1024)
+func HumanizedUint64(s string) (uint64, error) {
+	s = strings.ToLower(s)
+	mult := map[string]uint64{
+		"k": 1 << 10, // 1024
+		"m": 1 << 20, // 1024**2
+		"g": 1 << 30, // 1024**3
+		"t": 1 << 40, // 1024**4
+		"p": 1 << 50, // 1024**5
+	}
+	// If the last character is not one of the multiplier letters, try
+	// parsing as a normal number string
+	c := s[len(s)-1:] // last char
+	if _, ok := mult[c]; !ok {
+		n, err := strconv.ParseUint(s, 10, 64)
+		return n, err
+	}
+	// Otherwise, parse the prefix digits and apply the multiplier
+	n, err := strconv.ParseUint(s[:len(s)-1], 10, 64)
+	if err != nil {
+		return n, err
+	}
+	if n > (math.MaxUint64 / mult[c]) {
+		return 0, errors.New("Size value is too large for 64 bits")
+	}
+	return n * mult[c], nil
 }
