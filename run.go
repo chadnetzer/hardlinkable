@@ -29,6 +29,8 @@ import (
 	"hardlinkable/internal/inode"
 	"log"
 	"os"
+	"path"
+	"syscall"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -37,10 +39,11 @@ import (
 // the given Options, and outputs information on which files could be linked to
 // save space.  If stdout is a terminal/tty, a progress line is continually
 // updated as the directories and files are scanned.
-func RunWithProgress(dirs []string, files []string, opts Options) (Results, error) {
+func RunWithProgress(dirsAndFiles []string, opts Options) (Results, error) {
 	var ls *linkableState = newLinkableState(&opts)
 
-	if err := validateOptions(opts); err != nil {
+	var err error
+	if err = opts.Validate(); err != nil {
 		return *ls.Results, err
 	}
 
@@ -50,29 +53,34 @@ func RunWithProgress(dirs []string, files []string, opts Options) (Results, erro
 		ls.Progress = &disabledProgress{}
 	}
 
-	err := runHelper(dirs, files, ls)
+	err = runHelper(dirsAndFiles, ls)
 	return *ls.Results, err
 }
 
 // Run performs a scan of the supplied directories and files, with the given
 // Options, and outputs information on which files could be linked to save
 // space.
-func Run(dirs []string, files []string, opts Options) (Results, error) {
+func Run(dirsAndFiles []string, opts Options) (Results, error) {
 	var ls *linkableState = newLinkableState(&opts)
 
-	if err := validateOptions(opts); err != nil {
+	if err := opts.Validate(); err != nil {
 		return *ls.Results, err
 	}
 
 	ls.Progress = &disabledProgress{}
 
-	err := runHelper(dirs, files, ls)
+	err := runHelper(dirsAndFiles, ls)
 	return *ls.Results, err
 }
 
 // runHelper is called by the public Run funcs, with an already initialized
 // options, to complete the scanning and result gathering.
-func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
+func runHelper(dirsAndFiles []string, ls *linkableState) (err error) {
+	dirs, files, err := ValidateDirsAndFiles(dirsAndFiles)
+	if err != nil {
+		return err
+	}
+
 	ls.Results.start()
 	defer func() {
 		if r := recover(); r != nil {
@@ -183,19 +191,50 @@ func runHelper(dirs []string, files []string, ls *linkableState) (err error) {
 	return nil
 }
 
-func validateOptions(opts Options) error {
-	if opts.MaxFileSize > 0 && opts.MaxFileSize < opts.MinFileSize {
-		return fmt.Errorf("minFileSize (%v) cannot be larger than maxFileSize (%v)",
-			opts.MinFileSize, opts.MaxFileSize)
-	}
+type devIno struct {
+	dev uint64
+	ino uint64
+}
 
-	if opts.ShowExtendedRunStats {
-		opts.ShowRunStats = true
-	}
+// ValidateDirs will ensure only dirs are provided, and remove duplicates.  It
+// is called by Run() to check the 'dirs' arg.
+func ValidateDirsAndFiles(dirsAndFiles []string) (dirs []string, files []string, err error) {
+	dirs = []string{}
+	files = []string{}
+	seenDirs := make(map[devIno]struct{})
+	seenFiles := make(map[string]struct{})
+	for _, name := range dirsAndFiles {
+		var fi os.FileInfo
+		fi, err = os.Lstat(name)
+		if err != nil {
+			return
+		}
+		if fi.IsDir() {
+			stat_t, ok := fi.Sys().(*syscall.Stat_t)
+			if !ok {
+				err = fmt.Errorf("Couldn't convert Stat_t for pathname: %s", name)
+				return
+			}
+			di := devIno{dev: uint64(stat_t.Dev), ino: uint64(stat_t.Ino)}
+			if _, ok := seenDirs[di]; ok {
+				continue
+			}
+			seenDirs[di] = struct{}{}
+			dirs = append(dirs, name)
+			continue
+		}
+		if fi.Mode().IsRegular() {
+			name = path.Clean(name)
+			if _, ok := seenFiles[name]; ok {
+				continue
+			}
+			seenFiles[name] = struct{}{}
+			files = append(files, name)
+			continue
+		}
 
-	if opts.LinkingEnabled {
-		opts.CheckQuiescence = true
+		err = fmt.Errorf("'%v' is not a directory or a 'regular' file", name)
+		return
 	}
-
-	return nil
+	return
 }

@@ -24,7 +24,6 @@ import (
 	"flag"
 	"fmt"
 	"hardlinkable"
-	"log"
 	"os"
 	"strconv"
 
@@ -162,39 +161,8 @@ func (i *intN) Set(num string) error {
 // Return "N" instead of "int" for usage text
 func (i *intN) Type() string { return "N" }
 
-type argPaths struct {
-	dirs  []string
-	files []string
-}
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd *cobra.Command
-
-// separateArgs will remove duplicate args and separate into dirs and files
-func separateArgs(args []string) (argPaths, error) {
-	a := argPaths{make([]string, 0), make([]string, 0)}
-	seenPaths := make(map[string]struct{}) // key = pathname
-	for _, name := range args {
-		if _, ok := seenPaths[name]; ok {
-			continue
-		}
-		fi, err := os.Lstat(name)
-		if err != nil {
-			return a, err
-		}
-		seenPaths[name] = struct{}{}
-		if fi.IsDir() {
-			a.dirs = append(a.dirs, name)
-			continue
-		}
-		if fi.Mode().IsRegular() {
-			a.files = append(a.files, name)
-			continue
-		}
-		return a, fmt.Errorf("'%v' is neither a directory or a regular file", name)
-	}
-	return a, nil
-}
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
@@ -204,25 +172,25 @@ func Execute() {
 	}
 }
 
-func CLIRun(dirs []string, files []string, co CLIOptions) {
+func CLIRun(args []string, co CLIOptions) {
 	var results hardlinkable.Results
 	var err error
 
 	opts := co.ToOptions()
 	if co.ProgressOutputDisabled {
-		results, err = hardlinkable.Run(dirs, files, opts)
+		results, err = hardlinkable.Run(args, opts)
 	} else {
-		results, err = hardlinkable.RunWithProgress(dirs, files, opts)
+		results, err = hardlinkable.RunWithProgress(args, opts)
 	}
 
 	if err != nil {
-		log.Printf("\r%v", err)
+		fmt.Fprintln(os.Stderr, err)
 	}
 	if err != nil || !results.RunSuccessful {
 		var s string
 		switch results.Phase {
 		case hardlinkable.StartPhase:
-			s = "Stopped before directory walk started.  Results are incomplete..."
+			s = ""
 		case hardlinkable.WalkPhase:
 			s = "Stopped during directory walk.  Results are incomplete..."
 		case hardlinkable.LinkPhase:
@@ -234,13 +202,17 @@ func CLIRun(dirs []string, files []string, co CLIOptions) {
 		default:
 			s = "Stopped early.  Results may be incomplete..."
 		}
-		fmt.Println(s)
+		if len(s) > 0 {
+			fmt.Fprintln(os.Stderr, s)
+		}
 	}
 
-	if co.JSONOutputEnabled {
-		results.OutputJSONResults()
-	} else {
-		results.OutputResults()
+	if results.Phase != hardlinkable.StartPhase {
+		if co.JSONOutputEnabled {
+			results.OutputJSONResults()
+		} else {
+			results.OutputResults()
+		}
 	}
 }
 
@@ -257,18 +229,7 @@ by hardlinking identical files.  It can also perform the linking.`,
 		Args: cobra.MinimumNArgs(1),
 		DisableFlagsInUseLine: true,
 		Run: func(cmd *cobra.Command, args []string) {
-			argP, err := separateArgs(args)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(2)
-			}
-			if co.CLIMaxFileSize.n > 0 && co.CLIMaxFileSize.n < co.CLIMinFileSize.n {
-				fmt.Fprintf(os.Stderr,
-					"min-size (%v) cannot be larger than max-size (%v)\n",
-					co.CLIMinFileSize.n, co.CLIMaxFileSize.n)
-				os.Exit(2)
-			}
-			CLIRun(argP.dirs, argP.files, co)
+			CLIRun(args, co)
 		},
 	}
 
