@@ -26,6 +26,7 @@ import (
 	"hardlinkable"
 	"log"
 	"os"
+	"path"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -175,6 +176,7 @@ func separateArgs(args []string) (argPaths, error) {
 	a := argPaths{make([]string, 0), make([]string, 0)}
 	seenPaths := make(map[string]struct{}) // key = pathname
 	for _, name := range args {
+		name = path.Clean(name)
 		if _, ok := seenPaths[name]; ok {
 			continue
 		}
