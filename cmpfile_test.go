@@ -25,11 +25,30 @@ import (
 	"testing"
 )
 
+func initDifferentBufs(t *testing.T, b1, b2 []byte) {
+	if cap(b1) != cap(b2) {
+		t.Fatalf("different capacities for byte buffers: %v %v", cap(b1), cap(b2))
+	}
+	// reslice to full capacity, and initialize byte buffers with different
+	// content
+	b1 = b1[:cap(b1)]
+	b2 = b2[:cap(b2)]
+	for i := 0; i < cap(b1); i++ {
+		b1[i] = 1
+		b2[i] = 2
+	}
+}
+
 func TestFileContentComparison(t *testing.T) {
 	R := strings.NewReader
-	s := status{}
-	s.Results = &Results{}
+	ls := newLinkableState(&Options{})
+	s := ls.status
 	s.Progress = &disabledProgress{}
+
+	// Initialize buffers with different content, to test that the funcs
+	// don't use unread bytes in their comparisons (particularly when not
+	// Read returns less than the full slice len)
+	initDifferentBufs(t, s.cmpBuf1, s.cmpBuf2)
 
 	eq, err := readerContentsEqual(s, R(""), R(""))
 	if !eq || err != nil {

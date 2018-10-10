@@ -148,7 +148,7 @@ func (f *fsDev) cachedInos(H I.Hash, ps I.PathInfo) ([]I.Ino, bool) {
 	thresh := f.Options.SearchThresh
 	useDigest := thresh >= 0 && len(cachedSet) > thresh
 	if useDigest {
-		digest, err := I.ContentDigest(ps.Pathsplit.Join())
+		digest, err := I.ContentDigest(ps.Pathsplit.Join(), f.digestBuf)
 		if err == nil {
 			// With digests, we take the (potentially long) set of cached inodes (ie.
 			// those inodes that all have the same InoHash), and remove the inodes that
@@ -206,10 +206,10 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 	}
 
 	if useDigest {
-		if wasComputed := f.InoDigests.NewDigest(pi1); wasComputed {
+		if f.InoDigests.NewDigest(pi1, f.digestBuf) {
 			f.Results.computedDigest()
 		}
-		if wasComputed := f.InoDigests.NewDigest(pi2); wasComputed {
+		if f.InoDigests.NewDigest(pi2, f.digestBuf) {
 			f.Results.computedDigest()
 		}
 	}
