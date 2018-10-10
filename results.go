@@ -22,7 +22,6 @@ package hardlinkable
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	P "hardlinkable/internal/pathpool"
 	"math"
@@ -726,7 +725,7 @@ func HumanizedUint64(s string) (uint64, error) {
 		return n, err
 	}
 	if n > (math.MaxUint64 / mult[c]) {
-		return 0, errors.New("Size value is too large for 64 bits")
+		return 0, fmt.Errorf("Size value (%v) is too large for 64 bits", s)
 	}
 	return n * mult[c], nil
 }
