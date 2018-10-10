@@ -21,7 +21,6 @@
 package inode
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"syscall"
@@ -55,8 +54,8 @@ func LStatInfo(pathname string) (DevStatInfo, error) {
 	}
 	stat_t, ok := fi.Sys().(*syscall.Stat_t)
 	if !ok {
-		errString := fmt.Sprintf("Couldn't convert Stat_t for pathname: %s", pathname)
-		return DevStatInfo{}, errors.New(errString)
+		errString := fmt.Errorf("Couldn't convert Stat_t for pathname: %s", pathname)
+		return DevStatInfo{}, errString
 	}
 	di := DevStatInfo{
 		Dev: uint64(stat_t.Dev),
