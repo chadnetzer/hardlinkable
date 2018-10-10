@@ -59,6 +59,9 @@ type disabledProgress struct{}
 
 // Initialize TTYProgress and return pointer to it
 func newTTYProgress(results *Results, options *Options) *ttyProgress {
+	if options.LinkingEnabled {
+		fmt.Println(" -- Linking enabled. Filesystem will be modified. CTRL-C to abort --")
+	}
 	now := time.Now()
 	p := ttyProgress{
 		lastFPSTime:    now,
