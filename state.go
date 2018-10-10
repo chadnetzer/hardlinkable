@@ -24,10 +24,17 @@ import (
 	"hardlinkable/internal/inode"
 )
 
+const minCmpBufSize = 4 * 1024
+const maxCmpBufSize = 32 * 1024
+const digestBufSize = 4 * 1024
+
 type status struct {
-	Options  *Options
-	Results  *Results
-	Progress progress
+	Options   *Options
+	Results   *Results
+	Progress  progress
+	cmpBuf1   []byte
+	cmpBuf2   []byte
+	digestBuf []byte
 }
 
 type linkableState struct {
@@ -40,6 +47,9 @@ func newLinkableState(opts *Options) *linkableState {
 	results := newResults(opts)
 	ls.status = status{Options: opts, Results: results}
 	ls.fsDevs = make(map[uint64]fsDev)
+	ls.cmpBuf1 = make([]byte, minCmpBufSize, maxCmpBufSize)
+	ls.cmpBuf2 = make([]byte, minCmpBufSize, maxCmpBufSize)
+	ls.digestBuf = make([]byte, digestBufSize)
 	return &ls
 }
 
