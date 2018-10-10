@@ -273,7 +273,7 @@ func (s stringSet) asSlice() []string {
 }
 
 func simpleRun(name string, t *testing.T, opts Options, numLinkPaths int, dirs ...string) *Results {
-	result, err := Run(dirs, []string{}, opts)
+	result, err := Run(dirs, opts)
 	if err != nil {
 		t.Errorf("%v: Run() returned error: %v\n", name, err)
 	}
@@ -782,7 +782,7 @@ func TestRunCrossedMinMaxSize(t *testing.T) {
 	const max = 1
 	opts := SetupOptions(LinkingEnabled, MinFileSize(min), MaxFileSize(max))
 
-	result, err := Run([]string{"."}, []string{}, opts)
+	result, err := Run([]string{"."}, opts)
 	if err == nil {
 		t.Errorf("Run succeeded with incorrect min(%v) and max(%v) size options\n", min, max)
 	}
@@ -1132,7 +1132,7 @@ func setupRandTestFiles(t *testing.T, topdir string, samename bool) *randTestVal
 func runAndCheckFileCounts(t *testing.T, opts Options, r *randTestVals) *Results {
 	opts.MaxFileSize = uint64(r.maxSize)
 	opts.MinFileSize = uint64(r.minSize)
-	result, err := Run([]string{"."}, []string{}, opts)
+	result, err := Run([]string{"."}, opts)
 	if err != nil {
 		t.Errorf("Error with Run() on random test files: %v", err)
 	}

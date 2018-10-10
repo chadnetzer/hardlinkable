@@ -242,7 +242,7 @@ func CheckQuiescence(o *Options) {
 // dependent Options are set.  An error will be returned if Options is invalid.
 func (o *Options) Validate() error {
 	if o.MaxFileSize > 0 && o.MaxFileSize < o.MinFileSize {
-		return fmt.Errorf("minFileSize (%v) cannot be larger than maxFileSize (%v)",
+		return fmt.Errorf("MinFileSize (%v) cannot be larger than MaxFileSize (%v)",
 			o.MinFileSize, o.MaxFileSize)
 	}
 
