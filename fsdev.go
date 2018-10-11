@@ -229,7 +229,7 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 		// Add some debugging statistics for files that are found to be
 		// equal, but which have some mismatched inode parameters.
 		addMismatchTotalBytes := false
-		if !(pi1.EqualTime(pi2)) {
+		if !pi1.EqualTime(pi2) {
 			f.Results.addMismatchedMtimeBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
