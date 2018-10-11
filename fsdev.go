@@ -233,7 +233,7 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 			f.Results.addMismatchedMtimeBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
-		if pi1.EqualMode(pi2) {
+		if !pi1.EqualMode(pi2) {
 			f.Results.addMismatchedModeBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
