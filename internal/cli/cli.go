@@ -236,7 +236,7 @@ by hardlinking identical files.  It can also perform the linking.`,
 	// Local flags
 	flg := rootCmd.Flags()
 
-	flg.CountVarP(&co.Verbosity, "verbose", "v", "``Increase verbosity level (up to 4 times)")
+	flg.CountVarP(&co.Verbosity, "verbose", "v", "``Increase verbosity level (up to 3 times)")
 	flg.BoolVar(&co.ProgressOutputDisabled, "no-progress", false, "Disable progress output while processing")
 	flg.BoolVar(&co.JSONOutputEnabled, "json", false, "Output results as JSON")
 
