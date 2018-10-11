@@ -28,17 +28,20 @@ type InoHashes map[Hash]Set
 // Inode metadata (size, time, etc.).  Content still has to be verified for
 // equality (but unequal hashes indicate files that definitely need not be
 // compared)
-func HashIno(i StatInfo, ignoreTime bool) Hash {
-	var h Hash
-	size := Hash(i.Size)
+func HashIno(si StatInfo, ignoreTime, ignorePerm, ignoreOwner bool) Hash {
+	h := uint64(si.Size)
 	// The main requirement is that files that could be equal have equal
 	// hashes.  It's less important if unequal files also have the same
 	// hash value, since we will still compare the actual file content
 	// later.
-	if ignoreTime {
-		h = size
-	} else {
-		h = size ^ Hash(i.Mtim.UnixNano())
+	if !ignoreTime {
+		h ^= uint64(si.Mtim.UnixNano())
 	}
-	return h
+	if !ignorePerm {
+		h ^= uint64(si.Mode.Perm())
+	}
+	if !ignoreOwner {
+		h ^= (uint64(si.Uid)<<32 | uint64(si.Gid))
+	}
+	return Hash(h)
 }

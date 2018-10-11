@@ -78,7 +78,8 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) (err error
 	// Compute a "hash" from inode stat info, and store it if new.  If it's
 	// a previously seen inode hash, check to see if one of the previously
 	// seen inodes with that hash also has identical file contents.
-	H := I.HashIno(di.StatInfo, f.Options.IgnoreTime)
+	o := f.Options
+	H := I.HashIno(di.StatInfo, o.IgnoreTime, o.IgnorePerm, o.IgnoreOwner)
 	if _, ok := f.inoHashes[H]; !ok {
 		// Setup for a newly seen hash value
 		f.Results.missedHash()
