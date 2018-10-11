@@ -52,6 +52,7 @@ func RunWithProgress(dirsAndFiles []string, opts Options) (Results, error) {
 	} else {
 		ls.Progress = &disabledProgress{}
 	}
+	defer ls.Progress.Done()
 
 	err = runHelper(dirsAndFiles, ls)
 	return *ls.Results, err
@@ -68,6 +69,7 @@ func Run(dirsAndFiles []string, opts Options) (Results, error) {
 	}
 
 	ls.Progress = &disabledProgress{}
+	defer ls.Progress.Done()
 
 	err := runHelper(dirsAndFiles, ls)
 	return *ls.Results, err
@@ -88,7 +90,6 @@ func runHelper(dirsAndFiles []string, ls *linkableState) (err error) {
 		}
 	}()
 	defer ls.Results.end()
-	defer ls.Progress.Done()
 
 	// Phase 1: Gather path and inode information by walking the dirs and
 	// files, looking for files that can be linked due to identical
