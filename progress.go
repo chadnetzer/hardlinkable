@@ -151,8 +151,10 @@ func (p *ttyProgress) Clear() {
 
 // Done indicates that the use of the progress interface is over
 func (p *ttyProgress) Done() {
-	p.showsOver = true
-	close(p.done) // done
+	if !p.showsOver {
+		p.showsOver = true
+		close(p.done) // done
+	}
 	p.Clear()
 }
 
