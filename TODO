@@ -1,0 +1,53 @@
+- Add sizes output for linkedPairs (at least for JSON)
+- Maybe add bytes saved per linkpair output (verbosity > 2)
+- Output data to determine if samename saves space, or just shuffles paths
+- Use viper config files
+- enable IgnoreWalkErr when !LinkingEnabled (?)
+- include/exclude using shell globs
+
+Done:
+- Reuse prev src path if new src path has the same ino
+- Humanize size input
+- Allow files on CLI (along with dirs)
+- Report nodes with paths outside walked trees
+- Report bytes compared
+- Sort by ino number (tie breaker for nlink)
+- Count files and dirs from walked paths (ie. eliminate duplicates from count)
+- Progress with separate func ("RunWithProgress"?)
+- Rename StatInfo to Info (done and undone)
+- Run() returns errors
+- File content comparison error handling
+- Check min/max file sizes are ordered correctly
+- AllPaths as closure (iterating directly over dict copy) instead of goroutine
+ - Not possible(?) due to map iteration not being possible to capture in a closure
+ - Do AllPaths without cloning FilepathsMap instead?
+ - Removed copy, but must use sync.Map or locking due to iteration/update in separate goroutines
+ - Iterate over slice of patnames, rather than PathsMap or it's copy
+- Using "LinkableInos" or "MatchedInos" naming rather than "LinkedInos", to not
+  imply that these Inos are not already hardlinked together.
+- Audit goroutines used as generators for race conditions (due to common receiver struct access)
+  - Return closures instead of computed values?
+- Randomize powersetPerms for directory/file test walk ordering
+- Keep track of what has actually been linked during run
+- SameName testing (randomized, and w/ existing links)
+- Test linking of "clusters" (ie. groups of equal already-linked files)
+- "ExistingLinkCount" instead of "PrevLinkCount"?
+- Report in text output if Results are incomplete
+- Output ignored patterns in results (debug?)
+- Use less memory (during text output, shorten in-memory slices?)
+- Skip (option) when read permissions errors (and count permissions errors)
+- log (more/less)?  Failed stat log, or count? Log skipped dirs/files when ignoring
+- Indicate cmpBytes are divided by 2 (/2); report actual compared bytes
+- Allow whether to update time/owner to dst (when newer)
+- Adaptive file comparison buffer size
+- Preallocate cmp and digest bufs
+- Test to verify correctness of short reads (use different buf initialization)
+- Export "humanize" funcs (?)
+- Message when linking is enabled
+- Check for repeated dirs by dev/inode comparison
+- Verify proper reporting of mismatch results
+- Explain results in README (in particular, oddness of results when not all inode paths are found, etc)
+- Make Ino Hashes with Mode and Owner information (not just time and size)
+- Show more humanized decimals when progress sizes get large (?)
+ - Basically to improve 'liveliness' of the updates, and show values changing
+- go mod
