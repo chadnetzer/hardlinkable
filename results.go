@@ -667,9 +667,13 @@ func Humanize(n uint64) string {
 func HumanizeWithPrecision(n uint64, prec int) string {
 	var s string
 	var m string
+	var decimals float64 = 1000.0
+	if prec > -1 {
+		decimals = math.Pow10(prec)
+	}
 	F := func(N uint64, div float64) string {
 		reduced := float64(N) / div
-		rounded := math.Round(reduced*1000) / 1000.0
+		rounded := math.Round(reduced*decimals) / decimals
 		s = strconv.FormatFloat(rounded, 'f', prec, 64)
 		return s
 	}
