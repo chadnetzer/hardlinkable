@@ -131,9 +131,14 @@ func (p *ttyProgress) Show() {
 		fps = p.lastFPS
 	}
 
+	decimals := 3
+	if p.bytesCompared > 1024*1024*1024*1024 { // 1 TiB
+		decimals = 6
+	}
+
 	fmtStr := "\r%d files in %s (%.0f/sec)  compared %v"
 	s := fmt.Sprintf(fmtStr, numFiles, durStr, fps,
-		HumanizeWithPrecision(p.bytesCompared, 3))
+		HumanizeWithPrecision(p.bytesCompared, decimals))
 
 	if p.options.DebugLevel > 1 {
 		s += fmt.Sprintf("  Allocs %v", Humanize(p.m.Alloc))
