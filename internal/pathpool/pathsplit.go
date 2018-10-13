@@ -27,7 +27,7 @@ type Pathsplit struct {
 	Filename string
 }
 
-func Split(pathname string, pool StringPool) Pathsplit {
+func Split(pathname string, pool *StringPool) Pathsplit {
 	dirname, filename := path.Split(pathname)
 	if pool != nil {
 		dirname = pool.Intern(dirname)

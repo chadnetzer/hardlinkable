@@ -34,7 +34,7 @@ type fsDev struct {
 	InoPaths     I.PathsMap
 	LinkableInos I.LinkableInoSets
 	I.InoDigests
-	pool P.StringPool
+	pool *P.StringPool
 }
 
 func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
