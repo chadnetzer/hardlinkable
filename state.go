@@ -22,6 +22,7 @@ package hardlinkable
 
 import (
 	"hardlinkable/internal/inode"
+	P "hardlinkable/internal/pathpool"
 )
 
 const minCmpBufSize = 4 * 1024
@@ -35,6 +36,7 @@ type status struct {
 	cmpBuf1   []byte
 	cmpBuf2   []byte
 	digestBuf []byte
+	pool      *P.StringPool
 }
 
 type linkableState struct {
@@ -43,14 +45,17 @@ type linkableState struct {
 }
 
 func newLinkableState(opts *Options) *linkableState {
-	var ls linkableState
-	results := newResults(opts)
-	ls.status = status{Options: opts, Results: results}
-	ls.fsDevs = make(map[uint64]fsDev)
-	ls.cmpBuf1 = make([]byte, minCmpBufSize, maxCmpBufSize)
-	ls.cmpBuf2 = make([]byte, minCmpBufSize, maxCmpBufSize)
-	ls.digestBuf = make([]byte, digestBufSize)
-	return &ls
+	return &linkableState{
+		status: status{
+			Options:   opts,
+			Results:   newResults(opts),
+			cmpBuf1:   make([]byte, minCmpBufSize, maxCmpBufSize),
+			cmpBuf2:   make([]byte, minCmpBufSize, maxCmpBufSize),
+			digestBuf: make([]byte, digestBufSize),
+			pool:      P.NewPool(),
+		},
+		fsDevs: make(map[uint64]fsDev),
+	}
 }
 
 func (ls *linkableState) dev(di inode.DevStatInfo, pathname string) fsDev {
