@@ -21,6 +21,7 @@
 package hardlinkable
 
 import (
+	P "hardlinkable/internal/pathpool"
 	"io/ioutil"
 	"os"
 	"path"
@@ -76,11 +77,12 @@ func TestWalkFileIncludes(t *testing.T) {
 	s := status{}
 	s.Options = &Options{}
 	s.Results = newResults(s.Options)
+	s.pool = P.NewPool()
 	for _, v := range incExSlice {
 		s.Options.FileIncludes = v.in
 		s.Options.FileExcludes = v.ex
 
-		c := matchedPathnames(*s.Options, s.Results, dirs, []string{})
+		c := matchedPathnames(*s.Options, s.Results, s.pool, dirs, []string{})
 		n := 0
 		var filenames []string
 		foundMatch := false
