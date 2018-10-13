@@ -40,20 +40,26 @@ func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <
 	out := make(chan pathErr)
 	go func() {
 		defer close(out)
+		uniqueDirs := make(map[string]struct{})
 		for _, dir := range dirs {
 			err := godirwalk.Walk(dir, &godirwalk.Options{
 				Unsorted: true,
 				Callback: func(osPathname string, de *godirwalk.Dirent) error {
 					if de.ModeType().IsDir() {
-						dirExcludes := opts.DirExcludes
-						// Do not exclude dirs provided explicitly by the user
-						if dir != osPathname && isMatched(de.Name(), dirExcludes) {
-							r.ExcludedDirCount++ // Only updated in this goroutine
+						// DirCount updated here only, so doesn't race w/ other goroutines.
+						if _, ok := uniqueDirs[osPathname]; !ok {
+							uniqueDirs[osPathname] = struct{}{}
+
+							// Do not exclude dirs provided explicitly by the user
+							if dir != osPathname && isMatched(de.Name(), opts.DirExcludes) {
+								r.ExcludedDirCount++ // Only updated in this goroutine
+								return filepath.SkipDir
+							}
+							r.DirCount++
+						} else {
+							// Skip already walked directories
 							return filepath.SkipDir
 						}
-						// Update the DirCount as an estimate in case of error
-						// exit.  Doesn't race w/ other goroutines.
-						r.DirCount++
 					} else if de.ModeType().IsRegular() {
 						if isFileIncluded(de.Name(), &opts, r) {
 							out <- pathErr{pathname: osPathname, err: nil}
