@@ -96,7 +96,7 @@ func runHelper(dirsAndFiles []string, ls *linkableState) (err error) {
 	// contents, and optionally equivalent inode parameters (time,
 	// permission, ownership, etc.)
 	ls.Results.Phase = WalkPhase
-	c := matchedPathnames(*ls.Options, ls.Results, dirs, files)
+	c := matchedPathnames(*ls.Options, ls.Results, ls.pool, dirs, files)
 	for pe := range c {
 		// Handle early termination of the directory walk.  If
 		// IgnoreWalkErrors is set, we won't get any errors here.

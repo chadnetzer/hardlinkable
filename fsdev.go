@@ -34,11 +34,11 @@ type fsDev struct {
 	InoPaths     I.PathsMap
 	LinkableInos I.LinkableInoSets
 	I.InoDigests
-	pool P.StringPool
+	pool *P.StringPool
 }
 
 func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
-	var w = fsDev{
+	return fsDev{
 		status:       lstatus,
 		Dev:          dev,
 		MaxNLinks:    maxNLinks,
@@ -47,10 +47,7 @@ func newFSDev(lstatus status, dev, maxNLinks uint64) fsDev {
 		InoPaths:     make(I.PathsMap),
 		LinkableInos: make(I.LinkableInoSets),
 		InoDigests:   I.NewInoDigests(),
-		pool:         P.NewPool(),
 	}
-
-	return w
 }
 
 // For a given pathname, determine which inode it is linked to, and how that

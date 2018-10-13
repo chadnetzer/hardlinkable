@@ -21,6 +21,7 @@
 package hardlinkable
 
 import (
+	P "hardlinkable/internal/pathpool"
 	"log"
 	"path/filepath"
 	"regexp"
@@ -35,7 +36,7 @@ type pathErr struct {
 
 // Return allowed pathnames through the given channel.  An empty pathname
 // indicates the walk returned before completion.
-func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <-chan pathErr {
+func matchedPathnames(opts Options, r *Results, pool *P.StringPool, dirs []string, files []string) <-chan pathErr {
 	// Options is a copy to prevent being changed during walk.
 	out := make(chan pathErr)
 	go func() {
@@ -48,7 +49,8 @@ func matchedPathnames(opts Options, r *Results, dirs []string, files []string) <
 					if de.ModeType().IsDir() {
 						// DirCount updated here only, so doesn't race w/ other goroutines.
 						if _, ok := uniqueDirs[osPathname]; !ok {
-							uniqueDirs[osPathname] = struct{}{}
+							dirname := pool.Intern(osPathname)
+							uniqueDirs[dirname] = struct{}{}
 
 							// Do not exclude dirs provided explicitly by the user
 							if dir != osPathname && isMatched(de.Name(), opts.DirExcludes) {
