@@ -165,16 +165,16 @@ func runHelper(dirsAndFiles []string, ls *linkableState) (err error) {
 
 	ls.Progress.Clear()
 
-	// Calculate and store the number of unique paths and directories
-	// encountered by the walk, overwriting the less accurate counts
-	// gathered during the walk.
-	var numPaths, numDirs int64
+	// Calculate and store the number of unique paths encountered by the
+	// walk, overwriting the possibly less accurate counts gathered during
+	// the walk (if files specified twice, for example, they will only be
+	// counted once here)
+	var numPaths int64
 	for _, fsdev := range ls.fsDevs {
-		p, d := fsdev.InoPaths.PathCount()
+		p, _ := fsdev.InoPaths.PathCount()
 		numPaths += p
-		numDirs += d
 	}
-	ls.Results.fileAndDirectoryCount(numPaths, numDirs)
+	ls.Results.FileCount = numPaths
 
 	// Phase 2: Link generation - with all the path and inode information
 	// collected, iterate over all the inode links sorted from highest
