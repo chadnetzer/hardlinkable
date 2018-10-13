@@ -1116,13 +1116,13 @@ func setupRandTestFiles(t *testing.T, topdir string, samename bool) *randTestVal
 				}
 			}
 
+			if newDir {
+				r.numDirs++
+				newDir = false
+			}
 			if len(s) >= r.minSize && (r.maxSize == 0 || len(s) <= r.maxSize) {
 				r.pc[pathname] = s
 				r.numFiles++
-				if newDir {
-					r.numDirs++
-					newDir = false
-				}
 			}
 		}
 	}
