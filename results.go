@@ -150,11 +150,6 @@ func (r *Results) foundFile() {
 	r.FileCount++
 }
 
-func (r *Results) fileAndDirectoryCount(fileCount, dirCount int64) {
-	r.FileCount = fileCount
-	r.DirCount = dirCount
-}
-
 func (r *Results) foundFileTooSmall() {
 	r.FileTooSmallCount++
 }
