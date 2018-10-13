@@ -73,8 +73,8 @@ func TestDoLink(t *testing.T) {
 	fs.inoStatInfo[dsi1.Ino] = &dsi1.StatInfo
 	fs.inoStatInfo[dsi2.Ino] = &dsi2.StatInfo
 
-	ps1 := I.PathInfo{P.Split(f1.Name(), nil), dsi1.StatInfo}
-	ps2 := I.PathInfo{P.Split(f2.Name(), nil), dsi2.StatInfo}
+	ps1 := I.PathInfo{Pathsplit: P.Split(f1.Name(), nil), StatInfo: dsi1.StatInfo}
+	ps2 := I.PathInfo{Pathsplit: P.Split(f2.Name(), nil), StatInfo: dsi2.StatInfo}
 	err = fs.hardlinkFiles(ps1, ps2)
 	if err != nil {
 		t.Errorf("Linking ps1 and ps2 failed: %v %v", dsi1, dsi2)
@@ -104,7 +104,7 @@ func TestDoLink(t *testing.T) {
 	// stored stat info
 	dsi3.Mtim = dsi3.Mtim.Add(-999 * time.Second)
 	fs.inoStatInfo[dsi3.Ino] = &dsi3.StatInfo
-	ps3 := I.PathInfo{P.Split(f3.Name(), nil), dsi3.StatInfo}
+	ps3 := I.PathInfo{Pathsplit: P.Split(f3.Name(), nil), StatInfo: dsi3.StatInfo}
 
 	err = fs.haveNotBeenModified(ps1, ps3)
 	if err == nil {
@@ -125,7 +125,7 @@ func TestHasBeenModified(t *testing.T) {
 
 	// Create single byte file
 	filename := "f1"
-	if err := ioutil.WriteFile(filename, []byte{'X'}, 0644); err != nil {
+	if err = ioutil.WriteFile(filename, []byte{'X'}, 0644); err != nil {
 		t.Fatalf("Couldn't create test file '%v'", filename)
 	}
 
@@ -134,8 +134,8 @@ func TestHasBeenModified(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't stat test file '%v'", filename)
 	}
-	p := P.Pathsplit{".", filename}
-	pi := I.PathInfo{p, dsi.StatInfo}
+	p := P.Pathsplit{Dirname: ".", Filename: filename}
+	pi := I.PathInfo{Pathsplit: p, StatInfo: dsi.StatInfo}
 
 	// Change Dev so that hasBeenModified() returns true
 	if !hasBeenModified(pi, dsi.Dev+1) {
