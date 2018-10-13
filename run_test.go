@@ -1126,6 +1126,7 @@ func setupRandTestFiles(t *testing.T, topdir string, samename bool) *randTestVal
 			}
 		}
 	}
+	r.numDirs++ // Add in top level directory
 	return r
 }
 
