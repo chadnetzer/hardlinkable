@@ -98,9 +98,7 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) (err error
 		// the work of linking it again.
 		li := f.LinkableInos.Containing(ino)
 		hi := f.inoHashes[H]
-		linkableHashedInos := li.Intersection(hi)
-		foundLinkableHashedInos := len(linkableHashedInos) > 0
-		if !foundLinkableHashedInos {
+		if !li.Overlaps(hi) {
 			// Get a list of previously seen inodes that may be linkable
 			cachedSeq, useDigest := f.cachedInos(H, curPS)
 

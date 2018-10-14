@@ -57,7 +57,7 @@ func TestSetAdd(t *testing.T) {
 	}
 }
 
-func TestSetIntersection(t *testing.T) {
+func TestSetIntersectionAndOverlaps(t *testing.T) {
 	s1 := NewSet(1)
 	s2 := NewSet(2)
 
@@ -80,6 +80,9 @@ func TestSetIntersection(t *testing.T) {
 	if !reflect.DeepEqual(in2, NewSet(Ino(1))) {
 		t.Errorf("Set intersection doesn't contain only 1: %v", in2)
 	}
+	if !s1.Overlaps(s2) {
+		t.Errorf("Sets were expected to overlap: %v %v", s1, s2)
+	}
 
 	s1.Add(Ino(2))
 	in1 = s1.Intersection(s2)
@@ -92,6 +95,9 @@ func TestSetIntersection(t *testing.T) {
 	}
 	if !reflect.DeepEqual(in2, NewSet(Ino(1), Ino(2))) {
 		t.Errorf("Set intersection isn't {1,2}: %v", in2)
+	}
+	if !s1.Overlaps(s2) {
+		t.Errorf("Sets were expected to overlap: %v %v", s1, s2)
 	}
 
 	s1 = NewSet(Ino(1))

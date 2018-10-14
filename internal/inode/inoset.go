@@ -93,6 +93,23 @@ func (s Set) Intersection(set2 Set) Set {
 	return resultSet
 }
 
+// Overlaps returns true if there is any overlap in the two sets
+func (s Set) Overlaps(set2 Set) bool {
+	var little, big *Set
+	// Iterate over smaller set
+	if len(s) <= len(set2) {
+		little, big = &s, &set2
+	} else {
+		little, big = &set2, &s
+	}
+	for k := range *little {
+		if _, ok := (*big)[k]; ok {
+			return true
+		}
+	}
+	return false
+}
+
 // Return an intersection of multiple Sets
 func SetIntersections(sets ...Set) Set {
 	if len(sets) == 0 {
