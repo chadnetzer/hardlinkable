@@ -126,7 +126,8 @@ func SetIntersections(sets ...Set) Set {
 func (s Set) Difference(other Set) Set {
 	var resultSet Set
 	if len(s) <= len(other) {
-		resultSet = NewSet()
+		// Pre-allocate an empty map large enough to hold result
+		resultSet = make(Set, len(s))
 		for k := range s {
 			if _, ok := other[k]; !ok {
 				resultSet.Add(k)
