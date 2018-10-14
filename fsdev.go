@@ -105,8 +105,10 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) (err error
 			cachedSeq, useDigest := f.cachedInos(H, curPS)
 
 			// Search the list of potential inodes, looking for a match
-			f.Results.searchedInoSeq()
 			foundLinkable := false
+			if len(cachedSeq) > 0 {
+				f.Results.searchedInoSeq()
+			}
 			for _, cachedIno := range cachedSeq {
 				f.Results.incInoSeqIterations()
 				cachedPS := f.PathInfoFromIno(cachedIno)
