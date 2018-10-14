@@ -159,12 +159,7 @@ func (f *fsDev) cachedInos(H I.Hash, ps I.PathInfo) ([]I.Ino, bool) {
 			f.InoDigests.Add(ps, digest)
 			noDigests := cachedSet.Difference(f.InosWithDigest)
 			sameDigests := cachedSet.Intersection(f.InoDigests.GetInos(digest))
-			differentDigests := cachedSet.Difference(sameDigests).Difference(noDigests)
 			cachedSeq = append(sameDigests.AsSlice(), noDigests.AsSlice()...)
-
-			panicIf(noDigests.Has(ps.StatInfo.Ino), "New Ino found in noDigests\n")
-			panicIf(len(I.SetIntersections(sameDigests, differentDigests, noDigests)) > 0,
-				"Overlapping digest sets\n")
 		}
 	} else {
 		cachedSeq = cachedSet.AsSlice()
