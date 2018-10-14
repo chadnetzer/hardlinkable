@@ -26,20 +26,18 @@ type Ino = uint64
 
 type Set map[Ino]struct{}
 
-var exists = struct{}{}
-
 // Return a non-nil Set with the optional inos in it
 func NewSet(inos ...Ino) Set {
 	set := make(map[Ino]struct{}, len(inos))
 	for _, ino := range inos {
-		set[ino] = exists
+		set[ino] = struct{}{}
 	}
 	return set
 }
 
 // Add an Ino to the Set
 func (s Set) Add(ino Ino) {
-	s[ino] = exists
+	s[ino] = struct{}{}
 }
 
 // Remove an Ino to the Set
@@ -70,7 +68,7 @@ func (s Set) HasAll(inos ...Ino) bool {
 func (s Set) Copy() Set {
 	newSet := make(map[Ino]struct{}, len(s))
 	for k := range s {
-		newSet[k] = exists
+		newSet[k] = struct{}{}
 	}
 	return newSet
 }
@@ -87,7 +85,7 @@ func (s Set) Intersection(other Set) Set {
 	}
 	for k := range *little {
 		if _, ok := (*big)[k]; ok {
-			resultSet[k] = exists
+			resultSet[k] = struct{}{}
 		}
 	}
 	return resultSet
