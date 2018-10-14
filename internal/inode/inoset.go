@@ -76,14 +76,14 @@ func (s Set) Copy() Set {
 }
 
 // Return an intersection of the receiver with a Set
-func (s Set) Intersection(set2 Set) Set {
+func (s Set) Intersection(other Set) Set {
 	resultSet := NewSet()
+
 	var little, big *Set
-	// Iterate over smaller set
-	if len(s) <= len(set2) {
-		little, big = &s, &set2
+	if len(s) <= len(other) {
+		little, big = &s, &other
 	} else {
-		little, big = &set2, &s
+		little, big = &other, &s
 	}
 	for k := range *little {
 		if _, ok := (*big)[k]; ok {
@@ -94,13 +94,12 @@ func (s Set) Intersection(set2 Set) Set {
 }
 
 // Overlaps returns true if there is any overlap in the two sets
-func (s Set) Overlaps(set2 Set) bool {
+func (s Set) Overlaps(other Set) bool {
 	var little, big *Set
-	// Iterate over smaller set
-	if len(s) <= len(set2) {
-		little, big = &s, &set2
+	if len(s) <= len(other) {
+		little, big = &s, &other
 	} else {
-		little, big = &set2, &s
+		little, big = &other, &s
 	}
 	for k := range *little {
 		if _, ok := (*big)[k]; ok {
