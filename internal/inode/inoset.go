@@ -127,11 +127,18 @@ func SetIntersections(sets ...Set) Set {
 
 // Return a difference of the other Set from the receiver
 func (s Set) Difference(other Set) Set {
-	// Iterate over smaller set
-	resultSet := NewSet()
-	for k := range s {
-		if _, ok := other[k]; !ok {
-			resultSet.Add(k)
+	var resultSet Set
+	if len(s) <= len(other) {
+		resultSet = NewSet()
+		for k := range s {
+			if _, ok := other[k]; !ok {
+				resultSet.Add(k)
+			}
+		}
+	} else {
+		resultSet = s.Copy()
+		for k := range other {
+			delete(resultSet, k)
 		}
 	}
 	return resultSet
