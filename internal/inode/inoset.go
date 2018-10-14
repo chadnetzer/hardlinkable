@@ -28,7 +28,7 @@ type Set map[Ino]struct{}
 
 // Return a non-nil Set with the optional inos in it
 func NewSet(inos ...Ino) Set {
-	set := make(map[Ino]struct{}, len(inos))
+	set := make(Set, len(inos))
 	for _, ino := range inos {
 		set[ino] = struct{}{}
 	}
@@ -66,7 +66,7 @@ func (s Set) HasAll(inos ...Ino) bool {
 
 // Return a duplicate of the Set
 func (s Set) Copy() Set {
-	newSet := make(map[Ino]struct{}, len(s))
+	newSet := make(Set, len(s))
 	for k := range s {
 		newSet[k] = struct{}{}
 	}
