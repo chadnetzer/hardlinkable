@@ -567,7 +567,7 @@ func (r *Results) OutputRunStats() {
 				r.FoundHashCount+r.MissedHashCount))
 		s = statStr(s, "Total hash mismatches", r.HashMismatchCount,
 			fmt.Sprintf("(+ total links: %v)", r.HashMismatchCount+totalLinks))
-		s = statStr(s, "Total hash searches", r.InoSeqSearchCount)
+		s = statStr(s, "Total hash list searches", r.InoSeqSearchCount)
 		avgItersPerSearch := "N/A"
 		if r.InoSeqIterationCount > 0 {
 			avg := float64(r.InoSeqIterationCount) / float64(r.InoSeqSearchCount)
