@@ -22,7 +22,7 @@ package inode
 
 import "sort"
 
-type Ino = uint64
+type Ino uint64
 
 type Set map[Ino]struct{}
 
