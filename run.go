@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// hardlinkable determines which files in the given directories have equal
-// content and compatible inode properties, and returns information on the
-// space that would be saved by hardlinking them all together.  It can also,
-// optionally, perform the hardlinking.
+// Package hardlinkable determines which files in the given directories have
+// equal content and compatible inode properties, and returns information on
+// the space that would be saved by hardlinking them all together.  It can
+// also, optionally, perform the hardlinking.
 package hardlinkable
 
 import (
