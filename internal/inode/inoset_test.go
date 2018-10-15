@@ -200,30 +200,30 @@ func TestLinkableInoSets(t *testing.T) {
 
 	// Create a list of cumulative linkable ino tests
 	var tests = []struct {
-		pairs [2]uint64
-		get   uint64
-		has   []uint64
+		pairs [2]Ino
+		get   Ino
+		has   []Ino
 	}{
 		// A pair of linkable inos
-		{[2]uint64{1, 2}, 1, []uint64{1, 2}},
-		{[2]uint64{2, 1}, 2, []uint64{1, 2}},
+		{[2]Ino{1, 2}, 1, []Ino{1, 2}},
+		{[2]Ino{2, 1}, 2, []Ino{1, 2}},
 
 		// Another group of linkable inos
-		{[2]uint64{3, 4}, 3, []uint64{4, 3}},
-		{[2]uint64{4, 3}, 4, []uint64{3, 4}},
-		{[2]uint64{3, 5}, 5, []uint64{3, 4, 5}},
-		{[2]uint64{4, 5}, 4, []uint64{3, 4, 5}},
-		{[2]uint64{5, 4}, 3, []uint64{3, 4, 5}},
-		{[2]uint64{5, 3}, 3, []uint64{3, 4, 5}},
+		{[2]Ino{3, 4}, 3, []Ino{4, 3}},
+		{[2]Ino{4, 3}, 4, []Ino{3, 4}},
+		{[2]Ino{3, 5}, 5, []Ino{3, 4, 5}},
+		{[2]Ino{4, 5}, 4, []Ino{3, 4, 5}},
+		{[2]Ino{5, 4}, 3, []Ino{3, 4, 5}},
+		{[2]Ino{5, 3}, 3, []Ino{3, 4, 5}},
 
 		// Link the two separate groups
-		{[2]uint64{2, 3}, 1, []uint64{1, 2, 3, 4, 5}},
+		{[2]Ino{2, 3}, 1, []Ino{1, 2, 3, 4, 5}},
 
 		// Make 3 overlapping pairs, then link all groups
-		{[2]uint64{6, 7}, 6, []uint64{6, 7}},
-		{[2]uint64{7, 8}, 7, []uint64{6, 7, 8}},
-		{[2]uint64{8, 9}, 8, []uint64{6, 7, 8, 9}},
-		{[2]uint64{5, 6}, 6, []uint64{1, 2, 3, 4, 5, 6, 7, 8, 9}},
+		{[2]Ino{6, 7}, 6, []Ino{6, 7}},
+		{[2]Ino{7, 8}, 7, []Ino{6, 7, 8}},
+		{[2]Ino{8, 9}, 8, []Ino{6, 7, 8, 9}},
+		{[2]Ino{5, 6}, 6, []Ino{1, 2, 3, 4, 5, 6, 7, 8, 9}},
 	}
 
 	for _, v := range tests {
@@ -251,18 +251,18 @@ func TestLinkableInoSets(t *testing.T) {
 
 	// Table test for number of sets returned by All()
 	var tests2 = []struct {
-		pairs   [2]uint64
+		pairs   [2]Ino
 		numSets int
 	}{
 		// A pair of linkable inos
-		{[2]uint64{1, 2}, 1},
+		{[2]Ino{1, 2}, 1},
 
 		// Another group of linkable inos
-		{[2]uint64{3, 4}, 2},
-		{[2]uint64{3, 5}, 2},
+		{[2]Ino{3, 4}, 2},
+		{[2]Ino{3, 5}, 2},
 
 		// Link the two separate groups
-		{[2]uint64{2, 3}, 1},
+		{[2]Ino{2, 3}, 1},
 	}
 
 	// Simple test that All() returns correct number of sets (ignoring contents)

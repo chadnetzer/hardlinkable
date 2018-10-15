@@ -51,8 +51,8 @@ type Options struct {
 	// linked
 	IgnoreOwner bool
 
-	// IgnoreXattr enabled allows files with different xattrs can be linked
-	IgnoreXattr bool
+	// IgnoreXAttr enabled allows files with different xattrs can be linked
+	IgnoreXAttr bool
 
 	// LinkingEnabled causes the Run to perform the linking step
 	LinkingEnabled bool
@@ -170,9 +170,9 @@ func IgnoreOwner(o *Options) {
 	o.IgnoreOwner = true
 }
 
-// IgnoreXattr allows linked files to have unequal xattrs
-func IgnoreXattr(o *Options) {
-	o.IgnoreXattr = true
+// IgnoreXAttr allows linked files to have unequal xattrs
+func IgnoreXAttr(o *Options) {
+	o.IgnoreXAttr = true
 }
 
 // ContentOnly uses only file content to determine equality (not inode
@@ -181,7 +181,7 @@ func ContentOnly(o *Options) {
 	o.IgnoreTime = true
 	o.IgnorePerm = true
 	o.IgnoreOwner = true
-	o.IgnoreXattr = true
+	o.IgnoreXAttr = true
 }
 
 // LinkingEnabled allows Run() to actually perform linking of files
@@ -201,7 +201,7 @@ func MinFileSize(size uint64) func(*Options) {
 	}
 }
 
-// MinFileSize sets the maximum size of files that can be linked
+// MaxFileSize sets the maximum size of files that can be linked
 func MaxFileSize(size uint64) func(*Options) {
 	return func(o *Options) {
 		o.MaxFileSize = size

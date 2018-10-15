@@ -79,7 +79,7 @@ func TestHumanizedUint64(t *testing.T) {
 		"aK": 0,
 		"bp": 0,
 	}
-	for s, _ := range h {
+	for s := range h {
 		v, err := HumanizedUint64(s)
 		if err == nil {
 			t.Errorf("HumanizedUint64(%s) should give error result, got: %v", s, v)

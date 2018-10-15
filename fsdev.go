@@ -192,7 +192,7 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 	if !f.Options.IgnoreOwner && !pi1.EqualOwnership(pi2) {
 		return false, nil
 	}
-	if !f.Options.IgnoreXattr {
+	if !f.Options.IgnoreXAttr {
 		if eq, _ := I.EqualXAttrs(pi1.Join(), pi2.Join()); !eq {
 			return false, nil
 		}
@@ -231,16 +231,16 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 			addMismatchTotalBytes = true
 		}
 		if pi1.Uid != pi2.Uid {
-			f.Results.addMismatchedUidBytes(pi1.Size)
+			f.Results.addMismatchedUIDBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
 		if pi1.Gid != pi2.Gid {
-			f.Results.addMismatchedGidBytes(pi1.Size)
+			f.Results.addMismatchedGIDBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
 		eqX, err := I.EqualXAttrs(pi1.Join(), pi2.Join())
 		if err == nil && !eqX {
-			f.Results.addMismatchedXattrBytes(pi1.Size)
+			f.Results.addMismatchedXAttrBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
 		if addMismatchTotalBytes {

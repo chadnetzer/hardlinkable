@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// hardlinkable determines which files in the given directories have equal
-// content and compatible inode properties, and returns information on the
-// space that would be saved by hardlinking them all together.  It can also,
-// optionally, perform the hardlinking.
+// Package hardlinkable determines which files in the given directories have
+// equal content and compatible inode properties, and returns information on
+// the space that would be saved by hardlinking them all together.  It can
+// also, optionally, perform the hardlinking.
 package hardlinkable
 
 import (
@@ -40,7 +40,7 @@ import (
 // save space.  If stdout is a terminal/tty, a progress line is continually
 // updated as the directories and files are scanned.
 func RunWithProgress(dirsAndFiles []string, opts Options) (Results, error) {
-	var ls *linkableState = newLinkableState(&opts)
+	ls := newLinkableState(&opts)
 
 	var err error
 	if err = opts.Validate(); err != nil {
@@ -62,7 +62,7 @@ func RunWithProgress(dirsAndFiles []string, opts Options) (Results, error) {
 // Options, and outputs information on which files could be linked to save
 // space.
 func Run(dirsAndFiles []string, opts Options) (Results, error) {
-	var ls *linkableState = newLinkableState(&opts)
+	ls := newLinkableState(&opts)
 
 	if err := opts.Validate(); err != nil {
 		return *ls.Results, err
@@ -197,8 +197,8 @@ type devIno struct {
 	ino uint64
 }
 
-// ValidateDirs will ensure only dirs are provided, and remove duplicates.  It
-// is called by Run() to check the 'dirs' arg.
+// ValidateDirsAndFiles will ensure only dirs are provided, and remove
+// duplicates.  It is called by Run() to check the 'dirs' arg.
 func ValidateDirsAndFiles(dirsAndFiles []string) (dirs []string, files []string, err error) {
 	dirs = []string{}
 	files = []string{}
@@ -211,12 +211,12 @@ func ValidateDirsAndFiles(dirsAndFiles []string) (dirs []string, files []string,
 			return
 		}
 		if fi.IsDir() {
-			stat_t, ok := fi.Sys().(*syscall.Stat_t)
+			statT, ok := fi.Sys().(*syscall.Stat_t)
 			if !ok {
 				err = fmt.Errorf("Couldn't convert Stat_t for pathname: %s", name)
 				return
 			}
-			di := devIno{dev: uint64(stat_t.Dev), ino: uint64(stat_t.Ino)}
+			di := devIno{dev: uint64(statT.Dev), ino: uint64(statT.Ino)}
 			if _, ok := seenDirs[di]; ok {
 				continue
 			}

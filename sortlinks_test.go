@@ -34,7 +34,7 @@ func (s byIno) Less(i, j int) bool { return s[i] < s[j] }
 
 func InoSeqFromSet(set I.Set) []I.Ino {
 	seq := make([]I.Ino, 0)
-	for ino, _ := range set {
+	for ino := range set {
 		seq = append(seq, ino)
 	}
 	return seq
@@ -42,13 +42,13 @@ func InoSeqFromSet(set I.Set) []I.Ino {
 
 func setupInoStatInfo(fsdev *fsDev, inoSet I.Set) {
 	fsdev.inoStatInfo = make(I.InoStatInfo)
-	for ino, _ := range inoSet {
+	for ino := range inoSet {
 		// Using any old StatInfo is fine
 		di, _ := I.LStatInfo(".")
 		// Deliberately make it so that if Nlinks are sorted, Inos are
 		// sorted also (for easier testing of []I.Ino result)
 		di.Nlink = uint64(ino)*2 + 100
-		di.Ino = uint64(ino)
+		di.Ino = I.Ino(ino)
 		fsdev.inoStatInfo[I.Ino(ino)] = &di.StatInfo
 	}
 }

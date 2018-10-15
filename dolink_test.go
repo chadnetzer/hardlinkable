@@ -81,7 +81,13 @@ func TestDoLink(t *testing.T) {
 	}
 
 	dsi11, err := I.LStatInfo(f1.Name())
-	dsi12, err := I.LStatInfo(f1.Name())
+	if err != nil {
+		t.Fatalf("Error Stat()ing file: %v", f1.Name())
+	}
+	dsi12, err := I.LStatInfo(f2.Name())
+	if err != nil {
+		t.Fatalf("Error Stat()ing file: %v", f1.Name())
+	}
 
 	if dsi11 != dsi12 {
 		t.Errorf("Linked path inodes are unequal: %+v %+v", dsi11, dsi12)

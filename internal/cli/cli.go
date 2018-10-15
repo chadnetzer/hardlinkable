@@ -77,7 +77,7 @@ func (c CLIOptions) ToOptions() hardlinkable.Options {
 		o.IgnoreTime = true
 		o.IgnorePerm = true
 		o.IgnoreOwner = true
-		o.IgnoreXattr = true
+		o.IgnoreXAttr = true
 	}
 	// Verbosity level enables storing new and existing hardlink in
 	// Results, as well as the amount of stats output by Results
@@ -246,7 +246,7 @@ by hardlinking identical files.  It can also perform the linking.`,
 	flg.BoolVarP(&co.IgnoreTime, "ignore-time", "t", false, "File modification times need not match")
 	flg.BoolVarP(&co.IgnorePerm, "ignore-perm", "p", false, "File permission (mode) need not match")
 	flg.BoolVarP(&co.IgnoreOwner, "ignore-owner", "o", false, "File uid/gid need not match")
-	flg.BoolVarP(&co.IgnoreXattr, "ignore-xattr", "x", false, "Xattrs need not match")
+	flg.BoolVarP(&co.IgnoreXAttr, "ignore-xattr", "x", false, "Xattrs need not match")
 	flg.BoolVarP(&co.CLIContentOnly, "content-only", "c", false, "Only file contents have to match (ie. -potx)")
 
 	co.CLIMinFileSize.n = hardlinkable.DefaultMinFileSize

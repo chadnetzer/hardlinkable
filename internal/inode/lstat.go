@@ -32,7 +32,7 @@ type InoStatInfo map[Ino]*StatInfo
 // os.FileInfo and syscall.Stat_t fields that we care about
 type StatInfo struct {
 	Size  uint64
-	Ino   uint64
+	Ino   Ino
 	Nlink uint64
 	Uid   uint32
 	Gid   uint32
@@ -61,7 +61,7 @@ func LStatInfo(pathname string) (DevStatInfo, error) {
 		Dev: uint64(stat_t.Dev),
 		StatInfo: StatInfo{
 			Size:  uint64(stat_t.Size),
-			Ino:   uint64(stat_t.Ino),
+			Ino:   Ino(stat_t.Ino),
 			Nlink: uint64(stat_t.Nlink),
 			Uid:   uint32(stat_t.Uid),
 			Gid:   uint32(stat_t.Gid),

@@ -60,12 +60,11 @@ func permutations(a []string) <-chan []string {
 
 		if len(a) == 0 {
 			return
-		} else {
-			// Output initial (ie. non-permuted) ordering as first result
-			r := make([]string, len(a))
-			copy(r, a)
-			out <- r
 		}
+		// Output initial (ie. non-permuted) ordering as first result
+		r := make([]string, len(a))
+		copy(r, a)
+		out <- r
 
 		// Init permutation index array
 		N := len(a)
@@ -320,11 +319,11 @@ func nlinkVal(pathname string) uint32 {
 	if err != nil {
 		return 0
 	}
-	stat_t, ok := l.Sys().(*syscall.Stat_t)
+	statT, ok := l.Sys().(*syscall.Stat_t)
 	if !ok {
 		return 0
 	}
-	return uint32(stat_t.Nlink)
+	return uint32(statT.Nlink)
 }
 
 func inoVal(pathname string) uint64 {
@@ -332,11 +331,11 @@ func inoVal(pathname string) uint64 {
 	if err != nil {
 		return 0
 	}
-	stat_t, ok := l.Sys().(*syscall.Stat_t)
+	statT, ok := l.Sys().(*syscall.Stat_t)
 	if !ok {
 		return 0
 	}
-	return uint64(stat_t.Ino)
+	return uint64(statT.Ino)
 }
 
 func verifyLinkPaths(name string, t *testing.T, r *Results, paths []string) {
@@ -791,7 +790,7 @@ func TestRunCrossedMinMaxSize(t *testing.T) {
 	}
 }
 
-func TestRunEqualXattrs(t *testing.T) {
+func TestRunEqualXAttrs(t *testing.T) {
 	topdir := setUp("Run", t)
 	defer os.RemoveAll(topdir)
 
@@ -820,7 +819,7 @@ func TestRunEqualXattrs(t *testing.T) {
 	verifyContents(name, t, m)
 }
 
-func TestRunUnequalXattrs(t *testing.T) {
+func TestRunUnequalXAttrs(t *testing.T) {
 	topdir := setUp("Run", t)
 	defer os.RemoveAll(topdir)
 
@@ -843,11 +842,11 @@ func TestRunUnequalXattrs(t *testing.T) {
 	verifyContents(name, t, m)
 }
 
-func TestRunEqualXattrsIgnoreXattr(t *testing.T) {
+func TestRunEqualXAttrsIgnoreXAttr(t *testing.T) {
 	topdir := setUp("Run", t)
 	defer os.RemoveAll(topdir)
 
-	opts := SetupOptions(LinkingEnabled, IgnoreXattr)
+	opts := SetupOptions(LinkingEnabled, IgnoreXAttr)
 
 	name := "testname: 'Unequal Xattrs w/ IgnoreXattr'"
 

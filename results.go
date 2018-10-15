@@ -31,12 +31,18 @@ import (
 	"time"
 )
 
+// RunPhases is an enum that indicates which phase of the Run() algorithm is
+// being executed.
 type RunPhases int
 
 const (
-	StartPhase RunPhases = iota // nothing yet happened
+	// StartPhase indicates the Run() algorithm hasn't started
+	StartPhase RunPhases = iota
+	// WalkPhase indicates the directory/file walk which gathers info
 	WalkPhase
+	// LinkPhase indicates that the pathname link pairs are being computed
 	LinkPhase
+	// EndPhase indicates the Run() has finished
 	EndPhase
 )
 
@@ -63,15 +69,15 @@ type RunStats struct {
 	// command line options on subsequent runs.
 	MismatchedMtimeCount int64  `json:"mismatchedMtimeCount"`
 	MismatchedModeCount  int64  `json:"mismatchedModeCount"`
-	MismatchedUidCount   int64  `json:"mismatchedUidCount"`
-	MismatchedGidCount   int64  `json:"mismatchedGidCount"`
-	MismatchedXattrCount int64  `json:"mismatchedXattrCount"`
+	MismatchedUIDCount   int64  `json:"mismatchedUIDCount"`
+	MismatchedGIDCount   int64  `json:"mismatchedGIDCount"`
+	MismatchedXAttrCount int64  `json:"mismatchedXAttrCount"`
 	MismatchedTotalCount int64  `json:"mismatchedTotalCount"`
 	MismatchedMtimeBytes uint64 `json:"mismatchedMtimeBytes"`
 	MismatchedModeBytes  uint64 `json:"mismatchedModeBytes"`
-	MismatchedUidBytes   uint64 `json:"mismatchedUidBytes"`
-	MismatchedGidBytes   uint64 `json:"mismatchedGidBytes"`
-	MismatchedXattrBytes uint64 `json:"mismatchedXattrBytes"`
+	MismatchedUIDBytes   uint64 `json:"mismatchedUIDBytes"`
+	MismatchedGIDBytes   uint64 `json:"mismatchedGIDBytes"`
+	MismatchedXAttrBytes uint64 `json:"mismatchedXAttrBytes"`
 	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
 
 	// Counts of file I/O errors (reading, linking, etc.)
@@ -168,19 +174,19 @@ func (r *Results) addMismatchedModeBytes(size uint64) {
 	r.MismatchedModeBytes += size
 }
 
-func (r *Results) addMismatchedUidBytes(size uint64) {
-	r.MismatchedUidCount++
-	r.MismatchedUidBytes += size
+func (r *Results) addMismatchedUIDBytes(size uint64) {
+	r.MismatchedUIDCount++
+	r.MismatchedUIDBytes += size
 }
 
-func (r *Results) addMismatchedGidBytes(size uint64) {
-	r.MismatchedGidCount++
-	r.MismatchedGidBytes += size
+func (r *Results) addMismatchedGIDBytes(size uint64) {
+	r.MismatchedGIDCount++
+	r.MismatchedGIDBytes += size
 }
 
-func (r *Results) addMismatchedXattrBytes(size uint64) {
-	r.MismatchedXattrCount++
-	r.MismatchedXattrBytes += size
+func (r *Results) addMismatchedXAttrBytes(size uint64) {
+	r.MismatchedXAttrCount++
+	r.MismatchedXAttrBytes += size
 }
 
 func (r *Results) addMismatchedTotalBytes(size uint64) {
@@ -516,17 +522,17 @@ func (r *Results) OutputRunStats() {
 			s = statStr(s, "Equal files w/ unequal mode", r.MismatchedModeCount,
 				humanizeParens(r.MismatchedModeBytes))
 		}
-		if r.MismatchedUidCount > 0 {
-			s = statStr(s, "Equal files w/ unequal uid", r.MismatchedUidCount,
-				humanizeParens(r.MismatchedUidBytes))
+		if r.MismatchedUIDCount > 0 {
+			s = statStr(s, "Equal files w/ unequal uid", r.MismatchedUIDCount,
+				humanizeParens(r.MismatchedUIDBytes))
 		}
-		if r.MismatchedGidCount > 0 {
-			s = statStr(s, "Equal files w/ unequal gid", r.MismatchedGidCount,
-				humanizeParens(r.MismatchedGidBytes))
+		if r.MismatchedGIDCount > 0 {
+			s = statStr(s, "Equal files w/ unequal gid", r.MismatchedGIDCount,
+				humanizeParens(r.MismatchedGIDBytes))
 		}
-		if r.MismatchedXattrCount > 0 {
-			s = statStr(s, "Equal files w/ unequal xattr", r.MismatchedXattrCount,
-				humanizeParens(r.MismatchedXattrBytes))
+		if r.MismatchedXAttrCount > 0 {
+			s = statStr(s, "Equal files w/ unequal xattr", r.MismatchedXAttrCount,
+				humanizeParens(r.MismatchedXAttrBytes))
 		}
 		if r.MismatchedTotalBytes > 0 {
 			s = statStr(s, "Total equal file mismatches", r.MismatchedTotalCount,
@@ -652,7 +658,7 @@ func printSlices(a [][]string) {
 	}
 }
 
-// Return a string with bytecount "humanized" to a shortened amount
+// Humanize returns a string with bytecount "humanized" to a shortened amount
 func Humanize(n uint64) string {
 	// -1 precision removes trailing zeros
 	return HumanizeWithPrecision(n, -1)
@@ -662,7 +668,7 @@ func Humanize(n uint64) string {
 func HumanizeWithPrecision(n uint64, prec int) string {
 	var s string
 	var m string
-	var decimals float64 = 1000.0
+	decimals := 1000.0
 	if prec > -1 {
 		decimals = math.Pow10(prec)
 	}
@@ -695,7 +701,8 @@ func HumanizeWithPrecision(n uint64, prec int) string {
 	return s + m
 }
 
-// Return the humanized number count as a string surrounded by parens
+// humanizeParens returns the humanized number count as a string surrounded by
+// parens
 func humanizeParens(n uint64) string {
 	return fmt.Sprintf("(%v)", Humanize(n))
 }

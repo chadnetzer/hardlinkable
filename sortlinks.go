@@ -29,7 +29,7 @@ import (
 
 // Implement sorting from greatest NLink count to least
 type inoNlink struct {
-	Ino   uint64
+	Ino   I.Ino
 	Nlink uint64
 }
 type byNlink []inoNlink
@@ -43,7 +43,7 @@ func (a byNlink) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (f *fsDev) sortSetByNlink(inoSet I.Set) []I.Ino {
 	seq := make(byNlink, len(inoSet))
 	i := 0
-	for ino, _ := range inoSet {
+	for ino := range inoSet {
 		nlink := f.inoStatInfo[ino].Nlink
 		seq[i] = inoNlink{Ino: ino, Nlink: nlink}
 		i++

@@ -28,7 +28,7 @@ import (
 	"github.com/pkg/xattr"
 )
 
-func TestEqualXattrs(t *testing.T) {
+func TestEqualXAttrs(t *testing.T) {
 	useDefer := true
 
 	dir, err := ioutil.TempDir("", "hardlinkable")

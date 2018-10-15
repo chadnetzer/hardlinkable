@@ -22,24 +22,22 @@ package inode
 
 import "sort"
 
-type Ino = uint64
+type Ino uint64
 
 type Set map[Ino]struct{}
 
-var exists = struct{}{}
-
 // Return a non-nil Set with the optional inos in it
 func NewSet(inos ...Ino) Set {
-	set := make(map[Ino]struct{}, len(inos))
+	set := make(Set, len(inos))
 	for _, ino := range inos {
-		set[ino] = exists
+		set[ino] = struct{}{}
 	}
 	return set
 }
 
 // Add an Ino to the Set
 func (s Set) Add(ino Ino) {
-	s[ino] = exists
+	s[ino] = struct{}{}
 }
 
 // Remove an Ino to the Set
@@ -68,39 +66,38 @@ func (s Set) HasAll(inos ...Ino) bool {
 
 // Return a duplicate of the Set
 func (s Set) Copy() Set {
-	newSet := make(map[Ino]struct{}, len(s))
+	newSet := make(Set, len(s))
 	for k := range s {
-		newSet[k] = exists
+		newSet[k] = struct{}{}
 	}
 	return newSet
 }
 
 // Return an intersection of the receiver with a Set
-func (s Set) Intersection(set2 Set) Set {
+func (s Set) Intersection(other Set) Set {
 	resultSet := NewSet()
+
 	var little, big *Set
-	// Iterate over smaller set
-	if len(s) <= len(set2) {
-		little, big = &s, &set2
+	if len(s) <= len(other) {
+		little, big = &s, &other
 	} else {
-		little, big = &set2, &s
+		little, big = &other, &s
 	}
 	for k := range *little {
 		if _, ok := (*big)[k]; ok {
-			resultSet[k] = exists
+			resultSet[k] = struct{}{}
 		}
 	}
 	return resultSet
 }
 
 // Overlaps returns true if there is any overlap in the two sets
-func (s Set) Overlaps(set2 Set) bool {
+func (s Set) Overlaps(other Set) bool {
 	var little, big *Set
-	// Iterate over smaller set
-	if len(s) <= len(set2) {
-		little, big = &s, &set2
+	if len(s) <= len(other) {
+		little, big = &s, &other
 	} else {
-		little, big = &set2, &s
+		little, big = &other, &s
 	}
 	for k := range *little {
 		if _, ok := (*big)[k]; ok {
@@ -127,11 +124,19 @@ func SetIntersections(sets ...Set) Set {
 
 // Return a difference of the other Set from the receiver
 func (s Set) Difference(other Set) Set {
-	// Iterate over smaller set
-	resultSet := NewSet()
-	for k := range s {
-		if _, ok := other[k]; !ok {
-			resultSet.Add(k)
+	var resultSet Set
+	if len(s) <= len(other) {
+		// Pre-allocate an empty map large enough to hold result
+		resultSet = make(Set, len(s))
+		for k := range s {
+			if _, ok := other[k]; !ok {
+				resultSet.Add(k)
+			}
+		}
+	} else {
+		resultSet = s.Copy()
+		for k := range other {
+			delete(resultSet, k)
 		}
 	}
 	return resultSet
