@@ -658,7 +658,7 @@ func printSlices(a [][]string) {
 	}
 }
 
-// Return a string with bytecount "humanized" to a shortened amount
+// Humanize returns a string with bytecount "humanized" to a shortened amount
 func Humanize(n uint64) string {
 	// -1 precision removes trailing zeros
 	return HumanizeWithPrecision(n, -1)
@@ -701,7 +701,8 @@ func HumanizeWithPrecision(n uint64, prec int) string {
 	return s + m
 }
 
-// Return the humanized number count as a string surrounded by parens
+// humanizeParens returns the humanized number count as a string surrounded by
+// parens
 func humanizeParens(n uint64) string {
 	return fmt.Sprintf("(%v)", Humanize(n))
 }
