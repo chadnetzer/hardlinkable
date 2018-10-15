@@ -201,7 +201,7 @@ func MinFileSize(size uint64) func(*Options) {
 	}
 }
 
-// MinFileSize sets the maximum size of files that can be linked
+// MaxFileSize sets the maximum size of files that can be linked
 func MaxFileSize(size uint64) func(*Options) {
 	return func(o *Options) {
 		o.MaxFileSize = size

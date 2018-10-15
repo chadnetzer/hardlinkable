@@ -197,8 +197,8 @@ type devIno struct {
 	ino uint64
 }
 
-// ValidateDirs will ensure only dirs are provided, and remove duplicates.  It
-// is called by Run() to check the 'dirs' arg.
+// ValidateDirsAndFiles will ensure only dirs are provided, and remove
+// duplicates.  It is called by Run() to check the 'dirs' arg.
 func ValidateDirsAndFiles(dirsAndFiles []string) (dirs []string, files []string, err error) {
 	dirs = []string{}
 	files = []string{}
