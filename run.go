@@ -211,12 +211,12 @@ func ValidateDirsAndFiles(dirsAndFiles []string) (dirs []string, files []string,
 			return
 		}
 		if fi.IsDir() {
-			stat_t, ok := fi.Sys().(*syscall.Stat_t)
+			statT, ok := fi.Sys().(*syscall.Stat_t)
 			if !ok {
 				err = fmt.Errorf("Couldn't convert Stat_t for pathname: %s", name)
 				return
 			}
-			di := devIno{dev: uint64(stat_t.Dev), ino: uint64(stat_t.Ino)}
+			di := devIno{dev: uint64(statT.Dev), ino: uint64(statT.Ino)}
 			if _, ok := seenDirs[di]; ok {
 				continue
 			}

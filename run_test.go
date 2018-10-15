@@ -320,11 +320,11 @@ func nlinkVal(pathname string) uint32 {
 	if err != nil {
 		return 0
 	}
-	stat_t, ok := l.Sys().(*syscall.Stat_t)
+	statT, ok := l.Sys().(*syscall.Stat_t)
 	if !ok {
 		return 0
 	}
-	return uint32(stat_t.Nlink)
+	return uint32(statT.Nlink)
 }
 
 func inoVal(pathname string) uint64 {
@@ -332,11 +332,11 @@ func inoVal(pathname string) uint64 {
 	if err != nil {
 		return 0
 	}
-	stat_t, ok := l.Sys().(*syscall.Stat_t)
+	statT, ok := l.Sys().(*syscall.Stat_t)
 	if !ok {
 		return 0
 	}
-	return uint64(stat_t.Ino)
+	return uint64(statT.Ino)
 }
 
 func verifyLinkPaths(name string, t *testing.T, r *Results, paths []string) {
