@@ -40,7 +40,7 @@ import (
 // save space.  If stdout is a terminal/tty, a progress line is continually
 // updated as the directories and files are scanned.
 func RunWithProgress(dirsAndFiles []string, opts Options) (Results, error) {
-	var ls *linkableState = newLinkableState(&opts)
+	ls := newLinkableState(&opts)
 
 	var err error
 	if err = opts.Validate(); err != nil {
@@ -62,7 +62,7 @@ func RunWithProgress(dirsAndFiles []string, opts Options) (Results, error) {
 // Options, and outputs information on which files could be linked to save
 // space.
 func Run(dirsAndFiles []string, opts Options) (Results, error) {
-	var ls *linkableState = newLinkableState(&opts)
+	ls := newLinkableState(&opts)
 
 	if err := opts.Validate(); err != nil {
 		return *ls.Results, err

@@ -662,7 +662,7 @@ func Humanize(n uint64) string {
 func HumanizeWithPrecision(n uint64, prec int) string {
 	var s string
 	var m string
-	var decimals float64 = 1000.0
+	decimals := 1000.0
 	if prec > -1 {
 		decimals = math.Pow10(prec)
 	}
