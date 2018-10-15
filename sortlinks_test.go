@@ -48,7 +48,7 @@ func setupInoStatInfo(fsdev *fsDev, inoSet I.Set) {
 		// Deliberately make it so that if Nlinks are sorted, Inos are
 		// sorted also (for easier testing of []I.Ino result)
 		di.Nlink = uint64(ino)*2 + 100
-		di.Ino = uint64(ino)
+		di.Ino = I.Ino(ino)
 		fsdev.inoStatInfo[I.Ino(ino)] = &di.StatInfo
 	}
 }
