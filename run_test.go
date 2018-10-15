@@ -60,12 +60,11 @@ func permutations(a []string) <-chan []string {
 
 		if len(a) == 0 {
 			return
-		} else {
-			// Output initial (ie. non-permuted) ordering as first result
-			r := make([]string, len(a))
-			copy(r, a)
-			out <- r
 		}
+		// Output initial (ie. non-permuted) ordering as first result
+		r := make([]string, len(a))
+		copy(r, a)
+		out <- r
 
 		// Init permutation index array
 		N := len(a)

@@ -61,9 +61,8 @@ func newLinkableState(opts *Options) *linkableState {
 func (ls *linkableState) dev(di inode.DevStatInfo, pathname string) fsDev {
 	if fsdev, ok := ls.fsDevs[di.Dev]; ok {
 		return fsdev
-	} else {
-		fsdev = newFSDev(ls.status, di.Dev, inode.MaxNlinkVal(pathname))
-		ls.fsDevs[di.Dev] = fsdev
-		return fsdev
 	}
+	fsdev := newFSDev(ls.status, di.Dev, inode.MaxNlinkVal(pathname))
+	ls.fsDevs[di.Dev] = fsdev
+	return fsdev
 }
