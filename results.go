@@ -63,14 +63,14 @@ type RunStats struct {
 	// command line options on subsequent runs.
 	MismatchedMtimeCount int64  `json:"mismatchedMtimeCount"`
 	MismatchedModeCount  int64  `json:"mismatchedModeCount"`
-	MismatchedUidCount   int64  `json:"mismatchedUidCount"`
-	MismatchedGidCount   int64  `json:"mismatchedGidCount"`
+	MismatchedUIDCount   int64  `json:"mismatchedUIDCount"`
+	MismatchedGIDCount   int64  `json:"mismatchedGIDCount"`
 	MismatchedXAttrCount int64  `json:"mismatchedXAttrCount"`
 	MismatchedTotalCount int64  `json:"mismatchedTotalCount"`
 	MismatchedMtimeBytes uint64 `json:"mismatchedMtimeBytes"`
 	MismatchedModeBytes  uint64 `json:"mismatchedModeBytes"`
-	MismatchedUidBytes   uint64 `json:"mismatchedUidBytes"`
-	MismatchedGidBytes   uint64 `json:"mismatchedGidBytes"`
+	MismatchedUIDBytes   uint64 `json:"mismatchedUIDBytes"`
+	MismatchedGIDBytes   uint64 `json:"mismatchedGIDBytes"`
 	MismatchedXAttrBytes uint64 `json:"mismatchedXAttrBytes"`
 	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
 
@@ -168,14 +168,14 @@ func (r *Results) addMismatchedModeBytes(size uint64) {
 	r.MismatchedModeBytes += size
 }
 
-func (r *Results) addMismatchedUidBytes(size uint64) {
-	r.MismatchedUidCount++
-	r.MismatchedUidBytes += size
+func (r *Results) addMismatchedUIDBytes(size uint64) {
+	r.MismatchedUIDCount++
+	r.MismatchedUIDBytes += size
 }
 
-func (r *Results) addMismatchedGidBytes(size uint64) {
-	r.MismatchedGidCount++
-	r.MismatchedGidBytes += size
+func (r *Results) addMismatchedGIDBytes(size uint64) {
+	r.MismatchedGIDCount++
+	r.MismatchedGIDBytes += size
 }
 
 func (r *Results) addMismatchedXAttrBytes(size uint64) {
@@ -516,13 +516,13 @@ func (r *Results) OutputRunStats() {
 			s = statStr(s, "Equal files w/ unequal mode", r.MismatchedModeCount,
 				humanizeParens(r.MismatchedModeBytes))
 		}
-		if r.MismatchedUidCount > 0 {
-			s = statStr(s, "Equal files w/ unequal uid", r.MismatchedUidCount,
-				humanizeParens(r.MismatchedUidBytes))
+		if r.MismatchedUIDCount > 0 {
+			s = statStr(s, "Equal files w/ unequal uid", r.MismatchedUIDCount,
+				humanizeParens(r.MismatchedUIDBytes))
 		}
-		if r.MismatchedGidCount > 0 {
-			s = statStr(s, "Equal files w/ unequal gid", r.MismatchedGidCount,
-				humanizeParens(r.MismatchedGidBytes))
+		if r.MismatchedGIDCount > 0 {
+			s = statStr(s, "Equal files w/ unequal gid", r.MismatchedGIDCount,
+				humanizeParens(r.MismatchedGIDBytes))
 		}
 		if r.MismatchedXAttrCount > 0 {
 			s = statStr(s, "Equal files w/ unequal xattr", r.MismatchedXAttrCount,

@@ -231,11 +231,11 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 			addMismatchTotalBytes = true
 		}
 		if pi1.Uid != pi2.Uid {
-			f.Results.addMismatchedUidBytes(pi1.Size)
+			f.Results.addMismatchedUIDBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
 		if pi1.Gid != pi2.Gid {
-			f.Results.addMismatchedGidBytes(pi1.Size)
+			f.Results.addMismatchedGIDBytes(pi1.Size)
 			addMismatchTotalBytes = true
 		}
 		eqX, err := I.EqualXAttrs(pi1.Join(), pi2.Join())
