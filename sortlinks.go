@@ -43,7 +43,7 @@ func (a byNlink) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (f *fsDev) sortSetByNlink(inoSet I.Set) []I.Ino {
 	seq := make(byNlink, len(inoSet))
 	i := 0
-	for ino, _ := range inoSet {
+	for ino := range inoSet {
 		nlink := f.inoStatInfo[ino].Nlink
 		seq[i] = inoNlink{Ino: ino, Nlink: nlink}
 		i++

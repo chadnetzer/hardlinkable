@@ -54,7 +54,7 @@ func TestWalkFileIncludes(t *testing.T) {
 		"f4.*.raw": struct{}{},
 		"f5":       struct{}{},
 	}
-	for pattern, _ := range filenameMap {
+	for pattern := range filenameMap {
 		f, err := ioutil.TempFile(topdir, pattern)
 		if err != nil {
 			t.Fatalf("Couldn't create tempfile with pattern: '%v' in dir: '%v'", pattern, topdir)
