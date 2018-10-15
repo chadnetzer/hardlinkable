@@ -31,12 +31,18 @@ import (
 	"time"
 )
 
+// RunPhases is an enum that indicates which phase of the Run() algorithm is
+// being executed.
 type RunPhases int
 
 const (
-	StartPhase RunPhases = iota // nothing yet happened
+	// StartPhase indicates the Run() algorithm hasn't started
+	StartPhase RunPhases = iota
+	// WalkPhase indicates the directory/file walk which gathers info
 	WalkPhase
+	// LinkPhase indicates that the pathname link pairs are being computed
 	LinkPhase
+	// EndPhase indicates the Run() has finished
 	EndPhase
 )
 
