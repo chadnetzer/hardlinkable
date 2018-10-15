@@ -65,13 +65,13 @@ type RunStats struct {
 	MismatchedModeCount  int64  `json:"mismatchedModeCount"`
 	MismatchedUidCount   int64  `json:"mismatchedUidCount"`
 	MismatchedGidCount   int64  `json:"mismatchedGidCount"`
-	MismatchedXattrCount int64  `json:"mismatchedXattrCount"`
+	MismatchedXAttrCount int64  `json:"mismatchedXAttrCount"`
 	MismatchedTotalCount int64  `json:"mismatchedTotalCount"`
 	MismatchedMtimeBytes uint64 `json:"mismatchedMtimeBytes"`
 	MismatchedModeBytes  uint64 `json:"mismatchedModeBytes"`
 	MismatchedUidBytes   uint64 `json:"mismatchedUidBytes"`
 	MismatchedGidBytes   uint64 `json:"mismatchedGidBytes"`
-	MismatchedXattrBytes uint64 `json:"mismatchedXattrBytes"`
+	MismatchedXAttrBytes uint64 `json:"mismatchedXAttrBytes"`
 	MismatchedTotalBytes uint64 `json:"mismatchedTotalBytes"`
 
 	// Counts of file I/O errors (reading, linking, etc.)
@@ -178,9 +178,9 @@ func (r *Results) addMismatchedGidBytes(size uint64) {
 	r.MismatchedGidBytes += size
 }
 
-func (r *Results) addMismatchedXattrBytes(size uint64) {
-	r.MismatchedXattrCount++
-	r.MismatchedXattrBytes += size
+func (r *Results) addMismatchedXAttrBytes(size uint64) {
+	r.MismatchedXAttrCount++
+	r.MismatchedXAttrBytes += size
 }
 
 func (r *Results) addMismatchedTotalBytes(size uint64) {
@@ -524,9 +524,9 @@ func (r *Results) OutputRunStats() {
 			s = statStr(s, "Equal files w/ unequal gid", r.MismatchedGidCount,
 				humanizeParens(r.MismatchedGidBytes))
 		}
-		if r.MismatchedXattrCount > 0 {
-			s = statStr(s, "Equal files w/ unequal xattr", r.MismatchedXattrCount,
-				humanizeParens(r.MismatchedXattrBytes))
+		if r.MismatchedXAttrCount > 0 {
+			s = statStr(s, "Equal files w/ unequal xattr", r.MismatchedXAttrCount,
+				humanizeParens(r.MismatchedXAttrBytes))
 		}
 		if r.MismatchedTotalBytes > 0 {
 			s = statStr(s, "Total equal file mismatches", r.MismatchedTotalCount,

@@ -791,7 +791,7 @@ func TestRunCrossedMinMaxSize(t *testing.T) {
 	}
 }
 
-func TestRunEqualXattrs(t *testing.T) {
+func TestRunEqualXAttrs(t *testing.T) {
 	topdir := setUp("Run", t)
 	defer os.RemoveAll(topdir)
 
@@ -820,7 +820,7 @@ func TestRunEqualXattrs(t *testing.T) {
 	verifyContents(name, t, m)
 }
 
-func TestRunUnequalXattrs(t *testing.T) {
+func TestRunUnequalXAttrs(t *testing.T) {
 	topdir := setUp("Run", t)
 	defer os.RemoveAll(topdir)
 
@@ -843,11 +843,11 @@ func TestRunUnequalXattrs(t *testing.T) {
 	verifyContents(name, t, m)
 }
 
-func TestRunEqualXattrsIgnoreXattr(t *testing.T) {
+func TestRunEqualXAttrsIgnoreXAttr(t *testing.T) {
 	topdir := setUp("Run", t)
 	defer os.RemoveAll(topdir)
 
-	opts := SetupOptions(LinkingEnabled, IgnoreXattr)
+	opts := SetupOptions(LinkingEnabled, IgnoreXAttr)
 
 	name := "testname: 'Unequal Xattrs w/ IgnoreXattr'"
 
