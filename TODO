@@ -4,6 +4,16 @@
 - Use viper config files
 - enable IgnoreWalkErr when !LinkingEnabled (?)
 - include/exclude using shell globs
+- Progress for linking phase
+- Windows support
+ - Stat_t info (nlink, ino, dev) from ByHandleFileInformation (see
+   stat_windows.go and types_windows.go)
+ - Use SameFile(), Size() for compatibility.
+- Ensure protection against symlink races
+ - Probably only src links that could be affected (by making hardlink of symlink)?
+ - Use linkat() for initial hardlink creation?
+- Make progress a goroutine? (so that main goroutine doesn't need to call Show())
+ - Makes use of Results data racy, so may require additional Mutexing (and WaitGroup)
 
 Done:
 - Reuse prev src path if new src path has the same ino
@@ -51,3 +61,6 @@ Done:
 - Show more humanized decimals when progress sizes get large (?)
  - Basically to improve 'liveliness' of the updates, and show values changing
 - go mod
+ - Add full github.com/chadnetzer/hardlinkable import path naming to source files
+- Double check mode bits after Lstat() - Ensure it's a 'regular' file
+ - Some filesystems don't return full type info for readdir, and godirwalk may misreport it (fixed)
