@@ -31,14 +31,12 @@ import (
 	"os"
 	"path"
 	"syscall"
-
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 // RunWithProgress performs a scan of the supplied directories and files, with
 // the given Options, and outputs information on which files could be linked to
-// save space.  If stdout is a terminal/tty, a progress line is continually
-// updated as the directories and files are scanned.
+// save space.  A progress line is continually updated as the directories and
+// files are scanned.
 func RunWithProgress(dirsAndFiles []string, opts Options) (Results, error) {
 	ls := newLinkableState(&opts)
 
@@ -47,11 +45,7 @@ func RunWithProgress(dirsAndFiles []string, opts Options) (Results, error) {
 		return *ls.Results, err
 	}
 
-	if terminal.IsTerminal(int(os.Stdout.Fd())) {
-		ls.Progress = newTTYProgress(ls.Results, ls.Options)
-	} else {
-		ls.Progress = &disabledProgress{}
-	}
+	ls.Progress = newTTYProgress(ls.Results, ls.Options)
 	defer ls.Progress.Done()
 
 	err = runHelper(dirsAndFiles, ls)

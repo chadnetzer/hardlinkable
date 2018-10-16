@@ -28,6 +28,7 @@ import (
 	"strconv"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 // Because the pflags (and flags) boolean options don't toggle the default, but
@@ -180,7 +181,11 @@ func CLIRun(args []string, co CLIOptions) {
 	if co.ProgressOutputDisabled {
 		results, err = hardlinkable.Run(args, opts)
 	} else {
-		results, err = hardlinkable.RunWithProgress(args, opts)
+		if terminal.IsTerminal(int(os.Stdout.Fd())) {
+			results, err = hardlinkable.RunWithProgress(args, opts)
+		} else {
+			results, err = hardlinkable.Run(args, opts)
+		}
 	}
 
 	if err != nil {
