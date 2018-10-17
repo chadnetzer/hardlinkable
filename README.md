@@ -110,7 +110,7 @@ Total bytes compared        : 246099717  (234.699 MiB)
 Total remaining inodes      : 78200
 ```
 
-A more detailed breakdown of the various stats can be found in the [Results.md](Readme.md).
+A more detailed breakdown of the various stats can be found in the [Results.md](Results.md).
 
 ---
 ## Methodology
@@ -138,6 +138,8 @@ Contributions are welcome, including bug reports, suggestions, and code patches/
 ## Build
 
 ```
+go test -short ./...
+go test ./...  # Could take a minute
 go build cmd/hardlinkable.go
 ```
 
