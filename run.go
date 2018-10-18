@@ -101,6 +101,9 @@ func runHelper(dirsAndFiles []string, ls *linkableState) (err error) {
 		ls.Progress.Show()
 		di, statErr := inode.LStatInfo(pe.pathname)
 		if statErr != nil {
+			if !di.Mode.IsRegular() {
+				panic("godirwalk pkg returned non-regular file, which is a bug.")
+			}
 			if ls.Options.IgnoreWalkErrors {
 				ls.Results.SkippedFileErrCount++
 				if ls.Options.DebugLevel > 0 {
