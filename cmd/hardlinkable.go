@@ -20,7 +20,7 @@
 
 package main
 
-import "hardlinkable/internal/cli"
+import "github.com/chadnetzer/hardlinkable/internal/cli"
 
 func main() {
 	cli.Execute()

@@ -1,4 +1,4 @@
-module hardlinkable
+module github.com/chadnetzer/hardlinkable
 
 require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect

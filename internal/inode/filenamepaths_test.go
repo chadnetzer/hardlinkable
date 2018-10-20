@@ -21,9 +21,10 @@
 package inode
 
 import (
-	P "hardlinkable/internal/pathpool"
 	"reflect"
 	"testing"
+
+	P "github.com/chadnetzer/hardlinkable/internal/pathpool"
 )
 
 func SP(pathname string) P.Pathsplit {

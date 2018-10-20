@@ -23,12 +23,13 @@ package hardlinkable
 import (
 	"encoding/json"
 	"fmt"
-	P "hardlinkable/internal/pathpool"
 	"math"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
+
+	P "github.com/chadnetzer/hardlinkable/internal/pathpool"
 )
 
 // RunPhases is an enum that indicates which phase of the Run() algorithm is

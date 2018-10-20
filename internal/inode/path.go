@@ -21,7 +21,7 @@
 package inode
 
 import (
-	P "hardlinkable/internal/pathpool"
+	P "github.com/chadnetzer/hardlinkable/internal/pathpool"
 )
 
 type PathInfo struct {

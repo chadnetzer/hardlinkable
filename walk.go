@@ -21,10 +21,11 @@
 package hardlinkable
 
 import (
-	P "hardlinkable/internal/pathpool"
 	"log"
 	"path/filepath"
 	"regexp"
+
+	P "github.com/chadnetzer/hardlinkable/internal/pathpool"
 
 	"github.com/karrick/godirwalk"
 )

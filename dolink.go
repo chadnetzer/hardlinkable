@@ -22,10 +22,11 @@ package hardlinkable
 
 import (
 	"fmt"
-	I "hardlinkable/internal/inode"
 	"math/rand"
 	"os"
 	"strconv"
+
+	I "github.com/chadnetzer/hardlinkable/internal/inode"
 )
 
 // haveNotBeenModified returns an error if a given PathInfo has changed on disk

@@ -21,12 +21,13 @@
 package hardlinkable
 
 import (
-	P "hardlinkable/internal/pathpool"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
 	"testing"
+
+	P "github.com/chadnetzer/hardlinkable/internal/pathpool"
 )
 
 type testIncludesExcludes struct {

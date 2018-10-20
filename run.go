@@ -26,11 +26,12 @@ package hardlinkable
 
 import (
 	"fmt"
-	"hardlinkable/internal/inode"
 	"log"
 	"os"
 	"path"
 	"syscall"
+
+	"github.com/chadnetzer/hardlinkable/internal/inode"
 )
 
 // RunWithProgress performs a scan of the supplied directories and files, with

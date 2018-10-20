@@ -21,10 +21,11 @@
 package hardlinkable
 
 import (
-	I "hardlinkable/internal/inode"
-	P "hardlinkable/internal/pathpool"
 	"log"
 	"sort"
+
+	I "github.com/chadnetzer/hardlinkable/internal/inode"
+	P "github.com/chadnetzer/hardlinkable/internal/pathpool"
 )
 
 // Implement sorting from greatest NLink count to least

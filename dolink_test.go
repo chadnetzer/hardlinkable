@@ -21,12 +21,13 @@
 package hardlinkable
 
 import (
-	I "hardlinkable/internal/inode"
-	P "hardlinkable/internal/pathpool"
 	"io/ioutil"
 	"os"
 	"testing"
 	"time"
+
+	I "github.com/chadnetzer/hardlinkable/internal/inode"
+	P "github.com/chadnetzer/hardlinkable/internal/pathpool"
 )
 
 func TestDoLink(t *testing.T) {

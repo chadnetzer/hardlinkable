@@ -21,8 +21,8 @@
 package hardlinkable
 
 import (
-	"hardlinkable/internal/inode"
-	P "hardlinkable/internal/pathpool"
+	"github.com/chadnetzer/hardlinkable/internal/inode"
+	P "github.com/chadnetzer/hardlinkable/internal/pathpool"
 )
 
 const minCmpBufSize = 4 * 1024

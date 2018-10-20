@@ -23,9 +23,10 @@ package cli
 import (
 	"flag"
 	"fmt"
-	"hardlinkable"
 	"os"
 	"strconv"
+
+	"github.com/chadnetzer/hardlinkable"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"

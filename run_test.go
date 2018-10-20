@@ -22,7 +22,6 @@ package hardlinkable
 
 import (
 	"fmt"
-	"hardlinkable/internal/inode"
 	"io/ioutil"
 	"math/big"
 	"math/rand"
@@ -34,6 +33,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/chadnetzer/hardlinkable/internal/inode"
 
 	"github.com/pkg/xattr"
 )

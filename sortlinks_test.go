@@ -21,9 +21,10 @@
 package hardlinkable
 
 import (
-	I "hardlinkable/internal/inode"
 	"sort"
 	"testing"
+
+	I "github.com/chadnetzer/hardlinkable/internal/inode"
 )
 
 type byIno []I.Ino

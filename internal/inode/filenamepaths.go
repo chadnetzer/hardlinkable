@@ -20,7 +20,7 @@
 
 package inode
 
-import P "hardlinkable/internal/pathpool"
+import P "github.com/chadnetzer/hardlinkable/internal/pathpool"
 
 // Make a set for pathnames (instead of a slice)
 type pathsplitSet map[P.Pathsplit]struct{}
