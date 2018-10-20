@@ -75,8 +75,8 @@ func newTTYProgress(results *Results, options *Options) *ttyProgress {
 
 	// Send a message after delaying, controlling progress update rate
 	go func() {
+		defer close(p.timer)
 		for {
-			defer close(p.timer)
 			time.Sleep(p.updateDelay)
 			select {
 			case <-p.done:
