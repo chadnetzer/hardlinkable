@@ -51,6 +51,34 @@ func fileContentsEqual(s status, r1, r2 *os.File) (bool, error) {
 	for {
 		n1, err1 := r1.Read(s.cmpBuf1)
 		n2, err2 := r2.Read(s.cmpBuf2)
+
+		if n1 != n2 {
+			// For posix regular files, we expect to get the requested amount of
+			// bytes, or the remainder until EOF.  Unequal returned counts imply
+			// unequal files.  Even if not, it's fail-safe to return false which
+			// will just leave unlinked equal files as they are.
+			return false, nil
+		} else if n1 > 0 {
+			// If buf lengths are longer than what we read, re-slice to new
+			// read length.
+			if n1 < len(s.cmpBuf1) {
+				s.cmpBuf1 = s.cmpBuf1[:n1]
+				atEnd = true
+			}
+			if n2 < len(s.cmpBuf2) {
+				s.cmpBuf2 = s.cmpBuf2[:n2]
+				atEnd = true
+			}
+
+			eq := bytes.Equal(s.cmpBuf1, s.cmpBuf2)
+			s.Results.addBytesCompared(uint64(n1 + n2))
+			s.Progress.Show()
+			if !eq {
+				return false, nil
+			}
+		}
+
+		// Process errors after processing the read bytes
 		if err1 != nil || err2 != nil {
 			if err1 == io.EOF && err2 == io.EOF {
 				return true, nil
@@ -60,24 +88,6 @@ func fileContentsEqual(s status, r1, r2 *os.File) (bool, error) {
 				return false, err1
 			}
 		}
-
-		// If buf lengths are longer than what we read, re-slice to new
-		// read length
-		if n1 < len(s.cmpBuf1) {
-			s.cmpBuf1 = s.cmpBuf1[:n1]
-			atEnd = true
-		}
-		if n2 < len(s.cmpBuf2) {
-			s.cmpBuf2 = s.cmpBuf2[:n2]
-			atEnd = true
-		}
-
-		if !bytes.Equal(s.cmpBuf1, s.cmpBuf2) {
-			return false, nil
-		}
-		s.Results.addBytesCompared(uint64(n1 + n2))
-		s.Progress.Show()
-
 		// Re-slice buffer to increase length up to capacity.
 		// Basically, start with a smaller buffer to reduce IO when files are
 		// definitely unequal.  As files are found to be equal, increase the
