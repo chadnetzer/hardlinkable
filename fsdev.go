@@ -141,8 +141,8 @@ func (f *fsDev) FindIdenticalFiles(di I.DevStatInfo, pathname string) (err error
 func (f *fsDev) cachedInos(H I.Hash, ps I.PathInfo) ([]I.Ino, bool) {
 	var cachedSeq []I.Ino
 	cachedSet := f.inoHashes[H]
-	// If digests are enabled, and cached inode lists are
-	// long enough, then switch on the use of digests.
+	// If digest option is enabled, and cached inode lists are long enough,
+	// then use digests in the search.
 	thresh := f.Options.SearchThresh
 	useDigest := thresh >= 0 && len(cachedSet) > thresh
 	if useDigest {
@@ -158,6 +158,9 @@ func (f *fsDev) cachedInos(H I.Hash, ps I.PathInfo) ([]I.Ino, bool) {
 			noDigests := cachedSet.Difference(f.InosWithDigest)
 			sameDigests := cachedSet.Intersection(f.InoDigests.GetInos(digest))
 			cachedSeq = append(sameDigests.AsSlice(), noDigests.AsSlice()...)
+		} else {
+			// Resort to the non-digest search upon error
+			cachedSeq = cachedSet.AsSlice()
 		}
 	} else {
 		cachedSeq = cachedSet.AsSlice()
