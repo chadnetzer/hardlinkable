@@ -21,7 +21,7 @@
 package hardlinkable
 
 import (
-	"strings"
+	"os"
 	"testing"
 )
 
@@ -39,34 +39,73 @@ func initDifferentBufs(t *testing.T, b1, b2 []byte) {
 	}
 }
 
+// simple, inefficient repeated string maker
+func makeString(s string, length int) string {
+	for len(s) < length {
+		s += s
+	}
+	return s[:length]
+}
+
 func TestFileContentComparison(t *testing.T) {
-	R := strings.NewReader
+	topdir := setUp("Cmp", t)
+	defer os.RemoveAll(topdir)
+
 	ls := newLinkableState(&Options{})
 	s := ls.status
 	s.Progress = &disabledProgress{}
 
-	// Initialize buffers with different content, to test that the funcs
-	// don't use unread bytes in their comparisons (particularly when not
-	// Read returns less than the full slice len)
-	initDifferentBufs(t, s.cmpBuf1, s.cmpBuf2)
+	var tests = []struct {
+		content       [2]string
+		wants         bool
+		bytesCompared uint64
+		errStr        string
+	}{
+		{[2]string{"", ""}, true, 0, "Zero length cmpContents() compared unequal"},
+		{[2]string{"A", "A"}, true, 2, "Equal length 1 cmpContents() compared unequal"},
+		{[2]string{"ABC", "AB"}, false, 0, "Unequal length cmpContents() compared equal"},
+		{[2]string{"ABCD", ""}, false, 0, "Empty and non-empty cmpContents() compared equal"},
+		{[2]string{"A", "B"}, false, 2, "Unequal length 1 cmpContents() compared equal"},
 
-	eq, err := readerContentsEqual(s, R(""), R(""))
-	if !eq || err != nil {
-		t.Errorf("Zero length cmpContents() compared unequal")
+		{[2]string{makeString("X", minCmpBufSize), makeString("X", minCmpBufSize)},
+			true, 2 * minCmpBufSize,
+			"Equal length-4096 and content compared unequal"},
+		{[2]string{makeString("Y", minCmpBufSize), makeString("X", minCmpBufSize)},
+			false, 2 * minCmpBufSize,
+			"Equal length-4096 diff content compared equal"},
+
+		{[2]string{makeString("X", minCmpBufSize+1), makeString("X", minCmpBufSize+1)},
+			true, 2 * (minCmpBufSize + 1),
+			"Equal length-4097 and content compared unequal"},
+		{[2]string{makeString("Y", minCmpBufSize+1), makeString("X", minCmpBufSize+1)},
+			false, 2 * minCmpBufSize,
+			"Equal length-4097 diff contents compared equal"},
+
+		{[2]string{makeString("X", minCmpBufSize), makeString("X", minCmpBufSize+1)},
+			false, 2 * minCmpBufSize,
+			"Unequal lengths cmpContents() compared equal"},
+
+		{[2]string{makeString("X", 2*minCmpBufSize), makeString("X", 2*minCmpBufSize)},
+			true, 4 * minCmpBufSize,
+			"Equal lengths cmpContents() compared unequal"},
 	}
 
-	eq, err = readerContentsEqual(s, R("1"), R("1"))
-	if !eq || err != nil {
-		t.Errorf("Equal length 1 cmpContents() compared unequal")
-	}
+	for _, v := range tests {
+		// Initialize buffers with different content, to test that the funcs
+		// don't use unread bytes in their comparisons (particularly when not
+		// Read returns less than the full slice len)
+		initDifferentBufs(t, s.cmpBuf1, s.cmpBuf2)
 
-	eq, err = readerContentsEqual(s, R("1234"), R("123"))
-	if eq || err != nil {
-		t.Errorf("Unequal length cmpContents() compared equal")
-	}
-
-	eq, err = readerContentsEqual(s, R("A"), R("B"))
-	if eq || err != nil {
-		t.Errorf("Unequal length 1 cmpContents() compared equal")
+		s.Results.BytesCompared = 0 // Reset BytesCompared
+		simpleFileMaker(t, pathContents{"f1": v.content[0], "f2": v.content[1]})
+		got, err := areFileContentsEqual(s, "f1", "f2")
+		if v.wants != got || err != nil {
+			t.Errorf(v.errStr)
+		}
+		if v.bytesCompared != s.Results.BytesCompared {
+			t.Errorf("Incorrect BytesCompared. Expected %v, got %v", v.bytesCompared, s.Results.BytesCompared)
+		}
+		os.Remove("f1")
+		os.Remove("f2")
 	}
 }
