@@ -39,12 +39,12 @@ func areFileContentsEqual(s status, pathname1, pathname2 string) (bool, error) {
 	}
 	defer f2.Close()
 
-	eq, err := readerContentsEqual(s, f1, f2)
+	eq, err := fileContentsEqual(s, f1, f2)
 	return eq, err
 }
 
 // Return true if r1 and r2 have identical contents. Otherwise return false.
-func readerContentsEqual(s status, r1, r2 io.Reader) (bool, error) {
+func fileContentsEqual(s status, r1, r2 *os.File) (bool, error) {
 	var atEnd bool
 	bufSize := minCmpBufSize
 
