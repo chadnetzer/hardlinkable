@@ -38,9 +38,9 @@ func MaxNlinkVal(pathname string) uint64 {
 	var err error
 
 	returnVal = 8 // Minimum supported MAX_LINK
-	if cmdPath, err = exec.LookPath("/bin/getconf"); err == nil {
+	if _, err = exec.LookPath("/bin/getconf"); err == nil {
 		cmdPath = "/bin/getconf"
-	} else if cmdPath, err = exec.LookPath("/usr/bin/getconf"); err == nil {
+	} else if _, err = exec.LookPath("/usr/bin/getconf"); err == nil {
 		cmdPath = "/usr/bin/getconf"
 	} else {
 		// Try Pathconf()? on darwin/BSD before giving up?
