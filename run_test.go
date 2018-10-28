@@ -802,16 +802,16 @@ func TestRunEqualXAttrs(t *testing.T) {
 	m := pathContents{"f1": "X", "f2": "X"}
 	simpleFileMaker(t, m)
 	if err := xattr.Set("f1", "foo", []byte{'b', 'a', 'r'}); err != nil {
-		t.Fatalf("Couldn't set xattr on test file: 'f1', 'foo':'bar'\n")
+		t.Fatalf("Couldn't set xattr on test file: 'f1', 'foo':'bar'  %v\n", err)
 	}
 	if err := xattr.Set("f2", "foo", []byte{'b', 'a', 'r'}); err != nil {
-		t.Fatalf("Couldn't set xattr on test file: 'f2', 'foo':'bar'\n")
+		t.Fatalf("Couldn't set xattr on test file: 'f2', 'foo':'bar'  %v\n", err)
 	}
 	if err := xattr.Set("f1", "baz", []byte{'a', 'b', 'c'}); err != nil {
-		t.Fatalf("Couldn't set xattr on test file: 'f1', 'baz':'abc'\n")
+		t.Fatalf("Couldn't set xattr on test file: 'f1', 'baz':'abc'  %v\n", err)
 	}
 	if err := xattr.Set("f2", "baz", []byte{'a', 'b', 'c'}); err != nil {
-		t.Fatalf("Couldn't set xattr on test file: 'f2', 'baz':'abc'\n")
+		t.Fatalf("Couldn't set xattr on test file: 'f2', 'baz':'abc'  %v\n", err)
 	}
 
 	result := simpleRun(name, t, opts, 1, ".")
@@ -831,10 +831,10 @@ func TestRunUnequalXAttrs(t *testing.T) {
 	m := pathContents{"f1": "X", "f2": "X"}
 	simpleFileMaker(t, m)
 	if err := xattr.Set("f1", "foo", []byte{'b', 'a', 'r'}); err != nil {
-		t.Fatalf("Couldn't set xattr on test file: 'f1', 'foo':'bar'\n")
+		t.Fatalf("Couldn't set xattr on test file: 'f1', 'foo':'bar'  %v\n", err)
 	}
 	if err := xattr.Set("f2", "baz", []byte{'a', 'b', 'c'}); err != nil {
-		t.Fatalf("Couldn't set xattr on test file: 'f2', 'baz':'abc'\n")
+		t.Fatalf("Couldn't set xattr on test file: 'f2', 'baz':'abc'  %v\n", err)
 	}
 
 	result := simpleRun(name, t, opts, 0, ".")
@@ -854,13 +854,13 @@ func TestRunEqualXAttrsIgnoreXAttr(t *testing.T) {
 	m := pathContents{"f1": "X", "f2": "X"}
 	simpleFileMaker(t, m)
 	if err := xattr.Set("f1", "foo", []byte{'b', 'a', 'r'}); err != nil {
-		t.Fatalf("Couldn't set xattr on test file: 'f1', 'foo':'bar'\n")
+		t.Fatalf("Couldn't set xattr on test file: 'f1', 'foo':'bar'  %v\n", err)
 	}
 	if err := xattr.Set("f2", "foo", []byte{'x', 'y', 'z'}); err != nil {
-		t.Fatalf("Couldn't set xattr on test file: 'f2', 'foo':'xyz'\n")
+		t.Fatalf("Couldn't set xattr on test file: 'f2', 'foo':'xyz'  %v\n", err)
 	}
 	if err := xattr.Set("f2", "baz", []byte{'a', 'b', 'c'}); err != nil {
-		t.Fatalf("Couldn't set xattr on test file: 'f2', 'baz':'abc'\n")
+		t.Fatalf("Couldn't set xattr on test file: 'f2', 'baz':'abc'  %v\n", err)
 	}
 
 	result := simpleRun(name, t, opts, 1, ".")
