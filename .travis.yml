@@ -1,0 +1,24 @@
+language: go
+
+go:
+  - 1.11.x
+
+os:
+  - linux
+  - osx
+
+# Use container build, not VM build
+sudo: false
+
+before_script:
+  - env GO111MODULE=on go get ./...
+
+script:
+  - env GO111MODULE=on go test -race
+
+install:
+  - env GO111MODULE=on go install -i github.com/chadnetzer/hardlinkable/cmd/hardlinkable
+
+# Don't clone the whole history, just the recent commits
+git:
+  depth: 3
