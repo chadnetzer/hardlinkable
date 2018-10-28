@@ -32,8 +32,7 @@ func SP(pathname string) P.Pathsplit {
 }
 
 func TestPathsplitSet(t *testing.T) {
-	var s pathsplitSet
-	s = newPathsplitSet()
+	s := newPathsplitSet()
 	if len(s) != 0 {
 		t.Errorf("Empty pathsplitSet length isn't 0: %v", s)
 	}
@@ -71,8 +70,7 @@ func TestPathsplitSet(t *testing.T) {
 }
 
 func TestFilenamePaths(t *testing.T) {
-	var f *FilenamePaths
-	f = newFilenamePaths()
+	f := newFilenamePaths()
 	if len(f.FPMap) != 0 {
 		t.Errorf("Empty FilenamePaths length isn't 0: %v", f)
 	}
