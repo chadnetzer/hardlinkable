@@ -201,6 +201,8 @@ func (f *fsDev) areFilesLinkable(pi1 I.PathInfo, pi2 I.PathInfo, useDigest bool)
 		}
 	}
 
+	// Compute digest for both files, since they will have to be read in
+	// anyway for comparison.
 	if useDigest {
 		if f.InoDigests.NewDigest(pi1, f.digestBuf) {
 			f.Results.computedDigest()
