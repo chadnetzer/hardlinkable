@@ -295,7 +295,10 @@ func simpleFileMaker(t *testing.T, m pathContents) {
 	now := time.Now()
 	for name, content := range m {
 		dirname := path.Dir(name)
-		os.MkdirAll(dirname, 0755)
+		err := os.MkdirAll(dirname, 0755)
+		if err != nil {
+			t.Fatalf("Couldn't create test dir '%v': %v", name, err)
+		}
 		if err := ioutil.WriteFile(name, []byte(content), 0644); err != nil {
 			t.Fatalf("Couldn't create test file '%v'", name)
 		}
@@ -309,7 +312,10 @@ func simpleFileMaker(t *testing.T, m pathContents) {
 func simpleLinkMaker(t *testing.T, src string, dsts ...string) {
 	for _, dst := range dsts {
 		dirname := path.Dir(dst)
-		os.MkdirAll(dirname, 0755)
+		err := os.MkdirAll(dirname, 0755)
+		if err != nil {
+			t.Fatalf("Couldn't create test dir '%v': %v", dirname, err)
+		}
 		if err := os.Link(src, dst); err != nil {
 			t.Fatalf("Couldn't create test link '%v' to '%v'", src, dst)
 		}
