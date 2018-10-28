@@ -262,14 +262,6 @@ func intersection(a, b stringSet) stringSet {
 	return r
 }
 
-func (s stringSet) asSlice() []string {
-	r := make([]string, 0)
-	for k := range s {
-		r = append(r, k)
-	}
-	return r
-}
-
 func simpleRun(name string, t *testing.T, opts Options, numLinkPaths int, dirs ...string) *Results {
 	result, err := Run(dirs, opts)
 	if err != nil {
