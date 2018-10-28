@@ -24,6 +24,8 @@ import (
 	"bytes"
 	"io"
 	"os"
+
+	I "github.com/chadnetzer/hardlinkable/internal/inode"
 )
 
 func areFileContentsEqual(s status, pathname1, pathname2 string) (bool, error) {
@@ -43,22 +45,20 @@ func areFileContentsEqual(s status, pathname1, pathname2 string) (bool, error) {
 	return eq, err
 }
 
-// Return true if r1 and r2 have identical contents. Otherwise return false.
-func fileContentsEqual(s status, r1, r2 *os.File) (bool, error) {
+// Return true if f1 and f2 have identical contents. Otherwise return false.
+func fileContentsEqual(s status, f1, f2 *os.File) (bool, error) {
 	var atEnd bool
 	bufSize := minCmpBufSize
 
 	for {
-		n1, err1 := r1.Read(s.cmpBuf1)
-		n2, err2 := r2.Read(s.cmpBuf2)
+		n1, err1 := I.ReadChunk(f1, s.cmpBuf1)
+		n2, err2 := I.ReadChunk(f2, s.cmpBuf2)
 
 		if n1 != n2 {
-			// For posix regular files, we expect to get the requested amount of
-			// bytes, or the remainder until EOF.  Unequal returned counts imply
-			// unequal files.  Even if not, it's fail-safe to return false which
-			// will just leave unlinked equal files as they are.
 			return false, nil
-		} else if n1 > 0 {
+		}
+
+		if n1 > 0 {
 			// If buf lengths are longer than what we read, re-slice to new
 			// read length.
 			if n1 < len(s.cmpBuf1) {

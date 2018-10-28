@@ -86,7 +86,7 @@ func ContentDigest(pathname string, buf []byte) (Digest, error) {
 	}
 	defer f.Close()
 
-	n, err := f.Read(buf)
+	n, err := ReadChunk(f, buf)
 	if err != nil && err != io.EOF {
 		return 0, err
 	}
