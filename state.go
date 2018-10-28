@@ -25,9 +25,9 @@ import (
 	P "github.com/chadnetzer/hardlinkable/internal/pathpool"
 )
 
-const minCmpBufSize = 4 * 1024
-const maxCmpBufSize = 32 * 1024
-const digestBufSize = 4 * 1024
+const maxCmpBufSize = 8 * minCmpBufSize // Power of two multiplier
+const minCmpBufSize = 4096
+const digestBufSize = 4096
 
 type status struct {
 	Options   *Options

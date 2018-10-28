@@ -22,6 +22,7 @@ package inode
 
 import (
 	"hash/fnv"
+	"io"
 	"os"
 )
 
@@ -85,8 +86,8 @@ func ContentDigest(pathname string, buf []byte) (Digest, error) {
 	}
 	defer f.Close()
 
-	n, err := f.Read(buf)
-	if err != nil {
+	n, err := ReadChunk(f, buf)
+	if err != nil && err != io.EOF {
 		return 0, err
 	}
 	if n < len(buf) {

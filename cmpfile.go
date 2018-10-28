@@ -24,6 +24,8 @@ import (
 	"bytes"
 	"io"
 	"os"
+
+	I "github.com/chadnetzer/hardlinkable/internal/inode"
 )
 
 func areFileContentsEqual(s status, pathname1, pathname2 string) (bool, error) {
@@ -39,18 +41,44 @@ func areFileContentsEqual(s status, pathname1, pathname2 string) (bool, error) {
 	}
 	defer f2.Close()
 
-	eq, err := readerContentsEqual(s, f1, f2)
+	eq, err := fileContentsEqual(s, f1, f2)
 	return eq, err
 }
 
-// Return true if r1 and r2 have identical contents. Otherwise return false.
-func readerContentsEqual(s status, r1, r2 io.Reader) (bool, error) {
+// Return true if f1 and f2 have identical contents. Otherwise return false.
+func fileContentsEqual(s status, f1, f2 *os.File) (bool, error) {
 	var atEnd bool
 	bufSize := minCmpBufSize
 
 	for {
-		n1, err1 := r1.Read(s.cmpBuf1)
-		n2, err2 := r2.Read(s.cmpBuf2)
+		n1, err1 := I.ReadChunk(f1, s.cmpBuf1)
+		n2, err2 := I.ReadChunk(f2, s.cmpBuf2)
+
+		if n1 != n2 {
+			return false, nil
+		}
+
+		if n1 > 0 {
+			// If buf lengths are longer than what we read, re-slice to new
+			// read length.
+			if n1 < len(s.cmpBuf1) {
+				s.cmpBuf1 = s.cmpBuf1[:n1]
+				atEnd = true
+			}
+			if n2 < len(s.cmpBuf2) {
+				s.cmpBuf2 = s.cmpBuf2[:n2]
+				atEnd = true
+			}
+
+			eq := bytes.Equal(s.cmpBuf1, s.cmpBuf2)
+			s.Results.addBytesCompared(uint64(n1 + n2))
+			s.Progress.Show()
+			if !eq {
+				return false, nil
+			}
+		}
+
+		// Process errors after processing the read bytes
 		if err1 != nil || err2 != nil {
 			if err1 == io.EOF && err2 == io.EOF {
 				return true, nil
@@ -60,24 +88,6 @@ func readerContentsEqual(s status, r1, r2 io.Reader) (bool, error) {
 				return false, err1
 			}
 		}
-
-		// If buf lengths are longer than what we read, re-slice to new
-		// read length
-		if n1 < len(s.cmpBuf1) {
-			s.cmpBuf1 = s.cmpBuf1[:n1]
-			atEnd = true
-		}
-		if n2 < len(s.cmpBuf2) {
-			s.cmpBuf2 = s.cmpBuf2[:n2]
-			atEnd = true
-		}
-
-		if !bytes.Equal(s.cmpBuf1, s.cmpBuf2) {
-			return false, nil
-		}
-		s.Results.addBytesCompared(uint64(n1 + n2))
-		s.Progress.Show()
-
 		// Re-slice buffer to increase length up to capacity.
 		// Basically, start with a smaller buffer to reduce IO when files are
 		// definitely unequal.  As files are found to be equal, increase the
