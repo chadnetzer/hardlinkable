@@ -140,7 +140,16 @@ Contributions are welcome, including bug reports, suggestions, and code patches/
 ```
 go test -short ./...
 go test ./...  # Could take a minute
-go build cmd/hardlinkable.go
+go install ./...  # installs to GOPATH/bin
+
+or
+
+cd cmd/hardlinkable && go build  # builds in cmd/hardlinkable
+```
+
+## Install `hardlinkable` command
+```
+go get github.com/chadnetzer/hardlinkable/cmd/hardlinkable
 ```
 
 ## License
