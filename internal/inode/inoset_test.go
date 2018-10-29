@@ -26,8 +26,7 @@ import (
 )
 
 func TestSetAdd(t *testing.T) {
-	var s Set
-	s = NewSet()
+	s := NewSet()
 	if len(s) != 0 {
 		t.Errorf("Empty Set length isn't 0: %v", s)
 	}

@@ -95,6 +95,9 @@ func ContentDigest(pathname string, buf []byte) (Digest, error) {
 	}
 
 	hash := fnv.New32a()
-	hash.Write(buf)
+	_, err = hash.Write(buf)
+	if err != nil {
+		return 0, err
+	}
 	return Digest(hash.Sum32()), nil
 }

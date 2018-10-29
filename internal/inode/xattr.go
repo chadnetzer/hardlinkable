@@ -64,7 +64,7 @@ func EqualXAttrs(pathname1, pathname2 string) (bool, error) {
 		if err != nil {
 			return false, nil
 		}
-		if bytes.Compare(v1, v2) != 0 {
+		if !bytes.Equal(v1, v2) {
 			return false, nil
 		}
 	}
