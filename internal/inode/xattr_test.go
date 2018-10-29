@@ -62,27 +62,27 @@ func TestEqualXAttrs(t *testing.T) {
 		t.Errorf("Unexpected Xattr mismatch for files %s and %s.  Should have no attributes: %v", f1.Name(), f2.Name(), errX1)
 	}
 
-	err = xattr.LSet(f1.Name(), "a", []byte("a1"))
+	err = xattr.LSet(f1.Name(), "user.a", []byte("a1"))
 	if err != nil {
-		t.Fatalf("Couldn't LSet key 'a' to 'a1' on file1 %v: %v", f1, err)
+		t.Fatalf("Couldn't LSet key 'user.a' to 'a1' on file1 %v: %v", f1, err)
 	}
 
 	if eq, errX2 := EqualXAttrs(f1.Name(), f2.Name()); eq || errX2 != nil {
 		t.Errorf("Unexpected Xattr match or error for files %s and %s.: %v", f1.Name(), f2.Name(), errX2)
 	}
 
-	err = xattr.LSet(f2.Name(), "a", []byte("a1"))
+	err = xattr.LSet(f2.Name(), "user.a", []byte("a1"))
 	if err != nil {
-		t.Fatalf("Couldn't LSet key 'a' to 'a1' on file2 %v: %v", f1, err)
+		t.Fatalf("Couldn't LSet key 'user.a' to 'a1' on file2 %v: %v", f1, err)
 	}
 
 	if eq, errX3 := EqualXAttrs(f1.Name(), f2.Name()); !eq || errX3 != nil {
 		t.Errorf("Unexpected Xattr mismatch or error for files %s and %s.: %v", f1.Name(), f2.Name(), errX3)
 	}
 
-	err = xattr.LSet(f1.Name(), "b", []byte("b1"))
+	err = xattr.LSet(f1.Name(), "user.b", []byte("b1"))
 	if err != nil {
-		t.Fatalf("Couldn't LSet key 'b' to 'b1' on file %v: %v", f1, err)
+		t.Fatalf("Couldn't LSet key 'user.b' to 'b1' on file %v: %v", f1, err)
 	}
 
 	if eq, errX4 := EqualXAttrs(f1.Name(), f2.Name()); eq || errX4 != nil {
