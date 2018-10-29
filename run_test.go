@@ -286,8 +286,10 @@ func simpleRun(name string, t *testing.T, opts Options, numLinkPaths int, dirs .
 	return &result
 }
 
-type pathContents map[string]string    // pathname:contents
-type existingLinks map[string][]string // pathname:pathnames
+type paths []string
+type pathContents map[string]string // pathname:contents
+type existingLinks map[string]paths // pathname:pathnames
+type linkedPaths []paths
 
 // provided with a map of filenames:content, create the files
 func simpleFileMaker(t *testing.T, m pathContents) {
@@ -339,23 +341,23 @@ func inoVal(pathname string) uint64 {
 	return uint64(statT.Ino)
 }
 
-func verifyLinkPaths(name string, t *testing.T, r *Results, paths []string) {
-	if len(paths) == 0 && len(r.LinkPaths) > 0 {
+func verifyLinkPaths(name string, t *testing.T, r *Results, p paths) {
+	if len(p) == 0 && len(r.LinkPaths) > 0 {
 		t.Errorf("%v: Expected empty LinkPaths, got: %v\n", name, r.LinkPaths)
 		return
 	}
-	if len(paths) == 0 {
+	if len(p) == 0 {
 		return
 	}
-	pathsSet := newSet(paths...)
+	pathsSet := newSet(p...)
 	for _, l := range r.LinkPaths {
 		lSet := newSet(l...)
 		overlap := intersection(pathsSet, lSet)
-		if len(overlap) == len(paths) {
+		if len(overlap) == len(p) {
 			return
 		}
 	}
-	t.Errorf("%v: Couldn't find expected LinkPaths in results: %v\n", name, paths)
+	t.Errorf("%v: Couldn't find expected LinkPaths in results: %v\n", name, p)
 }
 
 func verifyInodeCounts(name string, t *testing.T, r *Results, inoRemovedCount int64, inoRemovedBytes uint64, nlinkCount uint32, filenames ...string) {
@@ -385,7 +387,7 @@ func verifyContents(name string, t *testing.T, m pathContents) {
 	}
 }
 
-func numNonEmpty(l [][]string) int {
+func numNonEmpty(l linkedPaths) int {
 	var count int
 	for _, s := range l {
 		if len(s) > 0 {
@@ -395,28 +397,28 @@ func numNonEmpty(l [][]string) int {
 	return count
 }
 
-func TestRunLinkingTableTests(t *testing.T) {
+func TestRunLinkingTable(t *testing.T) {
 	tsts := []struct {
 		name            string
 		opts            Options
 		c               pathContents
 		l               existingLinks
-		linkedPaths     [][]string
+		lp              linkedPaths
 		inoRemovedCount int
 		inoRemovedBytes int
-		nlinkCounts     map[int][]string
+		nlinkCounts     map[int]paths
 	}{
 		{
 			name:            "testname: 'Linking Disabled'",
 			opts:            SetupOptions(),
 			c:               pathContents{"f1": "X", "f2": "X"},
-			l:               existingLinks{"f2": []string{"f3"}},
-			linkedPaths:     [][]string{[]string{"f1", "f2"}},
+			l:               existingLinks{"f2": paths{"f3"}},
+			lp:              linkedPaths{paths{"f1", "f2"}}, // or [f1 f3]
 			inoRemovedCount: 1,
 			inoRemovedBytes: 1,
-			nlinkCounts: map[int][]string{
-				1: []string{"f1"},
-				2: []string{"f2", "f3"},
+			nlinkCounts: map[int]paths{
+				1: paths{"f1"},
+				2: paths{"f2", "f3"},
 			},
 		},
 		{
@@ -424,106 +426,106 @@ func TestRunLinkingTableTests(t *testing.T) {
 			opts:            SetupOptions(LinkingEnabled),
 			c:               pathContents{},
 			l:               existingLinks{},
-			linkedPaths:     [][]string{},
+			lp:              linkedPaths{},
 			inoRemovedCount: 0,
 			inoRemovedBytes: 0,
-			nlinkCounts:     map[int][]string{},
+			nlinkCounts:     map[int]paths{},
 		},
 		{
 			name:            "testname: 'One File'",
 			opts:            SetupOptions(LinkingEnabled),
 			c:               pathContents{"f1": "X"},
 			l:               existingLinks{},
-			linkedPaths:     [][]string{},
+			lp:              linkedPaths{},
 			inoRemovedCount: 0,
 			inoRemovedBytes: 0,
-			nlinkCounts:     map[int][]string{1: []string{"f1"}},
+			nlinkCounts:     map[int]paths{1: paths{"f1"}},
 		},
 		{
 			name:            "testname: 'Two Equal Files'",
 			opts:            SetupOptions(LinkingEnabled),
 			c:               pathContents{"f1": "X", "f2": "X"},
 			l:               existingLinks{},
-			linkedPaths:     [][]string{[]string{"f1", "f2"}},
+			lp:              linkedPaths{paths{"f1", "f2"}},
 			inoRemovedCount: 1,
 			inoRemovedBytes: 1,
-			nlinkCounts:     map[int][]string{2: []string{"f1", "f2"}},
+			nlinkCounts:     map[int]paths{2: paths{"f1", "f2"}},
 		},
 		{
 			name:            "testname: 'Two Unequal Files'",
 			opts:            SetupOptions(LinkingEnabled),
 			c:               pathContents{"f1": "X", "f2": "Y"},
 			l:               existingLinks{},
-			linkedPaths:     [][]string{[]string{}},
+			lp:              linkedPaths{paths{}},
 			inoRemovedCount: 0,
 			inoRemovedBytes: 0,
-			nlinkCounts:     map[int][]string{1: []string{"f1", "f2"}},
+			nlinkCounts:     map[int]paths{1: paths{"f1", "f2"}},
 		},
 		{
 			name:            "testname: 'Two Equal Files One Existing Link'",
 			opts:            SetupOptions(LinkingEnabled),
 			c:               pathContents{"f1": "X", "f2": "X"},
-			l:               existingLinks{"f2": []string{"f3"}},
-			linkedPaths:     [][]string{[]string{"f1", "f2"}},
+			l:               existingLinks{"f2": paths{"f3"}},
+			lp:              linkedPaths{paths{"f1", "f2"}}, // or [f1 f3]
 			inoRemovedCount: 1,
 			inoRemovedBytes: 1,
-			nlinkCounts:     map[int][]string{3: []string{"f1", "f2", "f3"}},
+			nlinkCounts:     map[int]paths{3: paths{"f1", "f2", "f3"}},
 		},
 		{
 			name:            "testname: 'Two Groups of Equal Files'",
 			opts:            SetupOptions(LinkingEnabled),
 			c:               pathContents{"f1": "X", "f2": "X", "f3": "YY", "f4": "YY", "f5": "YY"},
 			l:               existingLinks{},
-			linkedPaths:     [][]string{[]string{"f1", "f2"}, []string{"f3", "f4", "f5"}},
+			lp:              linkedPaths{paths{"f1", "f2"}, paths{"f3", "f4", "f5"}},
 			inoRemovedCount: 3,
 			inoRemovedBytes: 5,
-			nlinkCounts: map[int][]string{
-				2: []string{"f1", "f2"},
-				3: []string{"f3", "f4", "f5"},
+			nlinkCounts: map[int]paths{
+				2: paths{"f1", "f2"},
+				3: paths{"f3", "f4", "f5"},
 			},
 		},
 		{
 			name:            "testname: 'One File With Two Existing Links'",
 			opts:            SetupOptions(LinkingEnabled),
 			c:               pathContents{"f1": "X"},
-			l:               existingLinks{"f1": []string{"f2", "f3"}},
-			linkedPaths:     [][]string{[]string{}},
+			l:               existingLinks{"f1": paths{"f2", "f3"}},
+			lp:              linkedPaths{paths{}},
 			inoRemovedCount: 0,
 			inoRemovedBytes: 0,
-			nlinkCounts:     map[int][]string{3: []string{"f1", "f2", "f3"}},
+			nlinkCounts:     map[int]paths{3: paths{"f1", "f2", "f3"}},
 		},
 		{
 			name:            "testname: 'Two Files With One Existing Link'",
 			opts:            SetupOptions(LinkingEnabled),
 			c:               pathContents{"f1": "X", "f2": "X"},
-			l:               existingLinks{"f1": []string{"f3"}},
-			linkedPaths:     [][]string{[]string{"f1", "f2"}},
+			l:               existingLinks{"f1": paths{"f3"}},
+			lp:              linkedPaths{paths{"f1", "f2"}},
 			inoRemovedCount: 1,
 			inoRemovedBytes: 1,
-			nlinkCounts:     map[int][]string{3: []string{"f1", "f2", "f3"}},
+			nlinkCounts:     map[int]paths{3: paths{"f1", "f2", "f3"}},
 		},
 		{
 			name:            "testname: 'Equal Filenames Only'",
 			opts:            SetupOptions(LinkingEnabled, SameName),
 			c:               pathContents{"A/f1": "X", "B/f1": "X", "B/f2": "X"},
-			l:               existingLinks{"A/f1": []string{"A/f0", "A/f3", "B/a0", "B/f100"}},
-			linkedPaths:     [][]string{[]string{"A/f1", "B/f1"}},
+			l:               existingLinks{"A/f1": paths{"A/f0", "A/f3", "B/a0", "B/f100"}},
+			lp:              linkedPaths{paths{"A/f1", "B/f1"}},
 			inoRemovedCount: 1,
 			inoRemovedBytes: 1,
-			nlinkCounts:     map[int][]string{6: []string{"A/f1", "B/f1", "A/f0", "A/f3", "B/a0", "B/f100"}},
+			nlinkCounts:     map[int]paths{6: paths{"A/f1", "B/f1", "A/f0", "A/f3", "B/a0", "B/f100"}},
 		},
 		{
 			name: "testname: 'Equal Filenames No Removed Inodes test'",
 			opts: SetupOptions(LinkingEnabled, SameName),
 			c:    pathContents{"A/f1": "X", "B/f1": "X", "B/f2": "X"},
 			l: existingLinks{
-				"A/f1": []string{"A/f0", "A/f3"},
+				"A/f1": paths{"A/f0", "A/f3"},
 			},
-			linkedPaths:     [][]string{[]string{"A/f1", "B/f1"}},
+			lp:              linkedPaths{paths{"A/f1", "B/f1"}},
 			inoRemovedCount: 1,
 			inoRemovedBytes: 1,
-			nlinkCounts: map[int][]string{
-				4: []string{"A/f1", "B/f1", "A/f0", "A/f3"},
+			nlinkCounts: map[int]paths{
+				4: paths{"A/f1", "B/f1", "A/f0", "A/f3"},
 			},
 		},
 		{
@@ -531,14 +533,14 @@ func TestRunLinkingTableTests(t *testing.T) {
 			opts: SetupOptions(LinkingEnabled, SameName),
 			c:    pathContents{"A/f1": "X", "B/f1": "X", "B/f2": "X"},
 			l: existingLinks{
-				"A/f1": []string{"A/f0", "A/f3"},
-				"B/f1": []string{"B/a0", "B/f100"},
+				"A/f1": paths{"A/f0", "A/f3"},
+				"B/f1": paths{"B/a0", "B/f100"},
 			},
-			linkedPaths:     [][]string{[]string{"A/f1", "B/f1"}},
+			lp:              linkedPaths{paths{"A/f1", "B/f1"}},
 			inoRemovedCount: 0,
 			inoRemovedBytes: 0,
-			nlinkCounts: map[int][]string{
-				4: []string{"A/f1", "B/f1"},
+			nlinkCounts: map[int]paths{
+				4: paths{"A/f1", "B/f1"},
 			},
 		},
 	}
@@ -551,8 +553,8 @@ func TestRunLinkingTableTests(t *testing.T) {
 			for src, dsts := range tst.l {
 				simpleLinkMaker(t, src, dsts...)
 			}
-			result := simpleRun(tst.name, t, tst.opts, numNonEmpty(tst.linkedPaths), ".")
-			for _, l := range tst.linkedPaths {
+			result := simpleRun(tst.name, t, tst.opts, numNonEmpty(tst.lp), ".")
+			for _, l := range tst.lp {
 				verifyLinkPaths(tst.name, t, result, l)
 			}
 			// Note the values of the result, reporting what could be done, and the
@@ -609,7 +611,7 @@ func TestRunTwoDifferentTimes(t *testing.T) {
 		t.Fatalf("Failure to set time on test file: 'f2'\n")
 	}
 	result := simpleRun(name, t, opts, 0, ".")
-	verifyLinkPaths(name, t, result, []string{})
+	verifyLinkPaths(name, t, result, paths{})
 	verifyInodeCounts(name, t, result, 0, 0, 1, "f1", "f2")
 	verifyContents(name, t, m)
 }
@@ -630,7 +632,7 @@ func TestRunTwoDifferentTimesIgnoreTime(t *testing.T) {
 		t.Fatalf("Failure to set time on test file: 'f2'\n")
 	}
 	result := simpleRun(name, t, opts, 1, ".")
-	verifyLinkPaths(name, t, result, []string{"f1", "f2"})
+	verifyLinkPaths(name, t, result, paths{"f1", "f2"})
 	verifyInodeCounts(name, t, result, 1, 1, 2, "f1", "f2")
 	verifyContents(name, t, m)
 }
@@ -652,7 +654,7 @@ func TestRunIgnorePerm(t *testing.T) {
 		t.Fatalf("Couldn't set file 'f2' mode to '0755': %v", err)
 	}
 	result := simpleRun(name, t, opts, 1, ".")
-	verifyLinkPaths(name, t, result, []string{"f1", "f2"})
+	verifyLinkPaths(name, t, result, paths{"f1", "f2"})
 	verifyInodeCounts(name, t, result, 1, 1, 2, "f1", "f2")
 	verifyContents(name, t, m)
 }
@@ -669,7 +671,7 @@ func TestRunExcludeFiles(t *testing.T) {
 	m := pathContents{"f1": "X", "f2": "X", "f3.ext": "X", "prefix_f4": "X"}
 	simpleFileMaker(t, m)
 	result := simpleRun(name, t, opts, 1, ".")
-	verifyLinkPaths(name, t, result, []string{"f1", "f2"})
+	verifyLinkPaths(name, t, result, paths{"f1", "f2"})
 	verifyInodeCounts(name, t, result, 1, 1, 2, "f1", "f2")
 	verifyContents(name, t, m)
 }
@@ -686,7 +688,7 @@ func TestRunExcludeDirs(t *testing.T) {
 	m := pathContents{"Aetc/f1": "X", "preB/f2": "X", "etcA/f1": "X", "Bpre/f2": "X"}
 	simpleFileMaker(t, m)
 	result := simpleRun(name, t, opts, 1, ".")
-	verifyLinkPaths(name, t, result, []string{"etcA/f1", "Bpre/f2"})
+	verifyLinkPaths(name, t, result, paths{"etcA/f1", "Bpre/f2"})
 	verifyInodeCounts(name, t, result, 1, 1, 2, "etcA/f1", "Bpre/f2")
 	verifyContents(name, t, m)
 }
@@ -703,7 +705,7 @@ func TestRunIncludeFiles(t *testing.T) {
 	m := pathContents{"f1": "X", "f2": "X", "f3.ext": "X", "prefix_f4": "X"}
 	simpleFileMaker(t, m)
 	result := simpleRun(name, t, opts, 1, ".")
-	verifyLinkPaths(name, t, result, []string{"f3.ext", "prefix_f4"})
+	verifyLinkPaths(name, t, result, paths{"f3.ext", "prefix_f4"})
 	verifyInodeCounts(name, t, result, 1, 1, 2, "f3.ext", "prefix_f4")
 	verifyContents(name, t, m)
 }
@@ -721,7 +723,7 @@ func TestRunReincludeExcludedFiles(t *testing.T) {
 	m := pathContents{"f1": "X", "f2": "X", "f3.ext": "X", "prefix_f4": "X"}
 	simpleFileMaker(t, m)
 	result := simpleRun(name, t, opts, 1, ".")
-	verifyLinkPaths(name, t, result, []string{"f1", "f2", "prefix_f4"})
+	verifyLinkPaths(name, t, result, paths{"f1", "f2", "prefix_f4"})
 	verifyInodeCounts(name, t, result, 2, 2, 3, "f1", "f2", "prefix_f4")
 	verifyContents(name, t, m)
 }
@@ -737,7 +739,7 @@ func TestRunMinMaxSize(t *testing.T) {
 	m := pathContents{"f1": "X", "f2": "X", "f3": "YY", "f4": "YY", "f5": "ZZZ", "f6": "ZZZ"}
 	simpleFileMaker(t, m)
 	result := simpleRun(name, t, opts, 1, ".")
-	verifyLinkPaths(name, t, result, []string{"f3", "f4"})
+	verifyLinkPaths(name, t, result, paths{"f3", "f4"})
 	verifyInodeCounts(name, t, result, 1, 2, 2, "f3", "f4")
 	verifyContents(name, t, m)
 }
@@ -753,7 +755,7 @@ func TestRunExcludedMinMaxSize(t *testing.T) {
 	m := pathContents{"f1": "X", "f2": "X", "f5": "ZZZ", "f6": "ZZZ"}
 	simpleFileMaker(t, m)
 	result := simpleRun(name, t, opts, 0, ".")
-	verifyLinkPaths(name, t, result, []string{})
+	verifyLinkPaths(name, t, result, paths{})
 	verifyInodeCounts(name, t, result, 0, 0, 1, "f1", "f2", "f5", "f6")
 	verifyContents(name, t, m)
 }
@@ -769,7 +771,7 @@ func TestRunZeroMinSize(t *testing.T) {
 	m := pathContents{"f1": "", "f2": ""}
 	simpleFileMaker(t, m)
 	result := simpleRun(name, t, opts, 1, ".")
-	verifyLinkPaths(name, t, result, []string{"f1", "f2"})
+	verifyLinkPaths(name, t, result, paths{"f1", "f2"})
 	verifyInodeCounts(name, t, result, 1, 0, 2, "f1", "f2")
 	verifyContents(name, t, m)
 }
@@ -815,7 +817,7 @@ func TestRunEqualXAttrs(t *testing.T) {
 	}
 
 	result := simpleRun(name, t, opts, 1, ".")
-	verifyLinkPaths(name, t, result, []string{"f1", "f2"})
+	verifyLinkPaths(name, t, result, paths{"f1", "f2"})
 	verifyInodeCounts(name, t, result, 1, 1, 2, "f1", "f2")
 	verifyContents(name, t, m)
 }
@@ -838,7 +840,7 @@ func TestRunUnequalXAttrs(t *testing.T) {
 	}
 
 	result := simpleRun(name, t, opts, 0, ".")
-	verifyLinkPaths(name, t, result, []string{})
+	verifyLinkPaths(name, t, result, paths{})
 	verifyInodeCounts(name, t, result, 0, 0, 1, "f1", "f2")
 	verifyContents(name, t, m)
 }
@@ -864,7 +866,7 @@ func TestRunEqualXAttrsIgnoreXAttr(t *testing.T) {
 	}
 
 	result := simpleRun(name, t, opts, 1, ".")
-	verifyLinkPaths(name, t, result, []string{"f1", "f2"})
+	verifyLinkPaths(name, t, result, paths{"f1", "f2"})
 	verifyInodeCounts(name, t, result, 1, 1, 2, "f1", "f2")
 	verifyContents(name, t, m)
 }
@@ -894,9 +896,9 @@ func TestRunLinearVsDigestSearch(t *testing.T) {
 		name := fmt.Sprintf("testname: 'Linear Vs Digest Search' val=%v", i)
 		opts.SearchThresh = i
 		result := simpleRun(name, t, opts, 6, ".")
-		verifyLinkPaths(name, t, result, []string{"f1", "f2"})
-		verifyLinkPaths(name, t, result, []string{"f3", "f4"})
-		verifyLinkPaths(name, t, result, []string{"f5", "f6"})
+		verifyLinkPaths(name, t, result, paths{"f1", "f2"})
+		verifyLinkPaths(name, t, result, paths{"f3", "f4"})
+		verifyLinkPaths(name, t, result, paths{"f5", "f6"})
 		verifyInodeCounts(name, t, result, 30, 33, 1)
 		verifyContents(name, t, m)
 	}
