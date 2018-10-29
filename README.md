@@ -138,8 +138,8 @@ Contributions are welcome, including bug reports, suggestions, and code patches/
 ## Build
 
 ```
-go test -short ./...
-go test ./...  # Could take a minute
+go test ./...
+go test -tags slowtests ./...  # Could take a minute
 go install ./...  # installs to GOPATH/bin
 
 or

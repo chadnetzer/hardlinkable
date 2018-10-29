@@ -34,8 +34,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chadnetzer/hardlinkable/internal/inode"
-
 	"github.com/pkg/xattr"
 )
 
@@ -328,18 +326,6 @@ func nlinkVal(pathname string) uint32 {
 		return 0
 	}
 	return uint32(statT.Nlink)
-}
-
-func inoVal(pathname string) uint64 {
-	l, err := os.Lstat(pathname)
-	if err != nil {
-		return 0
-	}
-	statT, ok := l.Sys().(*syscall.Stat_t)
-	if !ok {
-		return 0
-	}
-	return uint64(statT.Ino)
 }
 
 func verifyLinkPaths(name string, t *testing.T, r *Results, p paths) bool {
@@ -926,58 +912,6 @@ func TestRunLinearVsDigestSearch(t *testing.T) {
 		verifyLinkPaths(name, t, result, paths{"f5", "f6"})
 		verifyInodeCounts(name, t, result, 30, 33, 1)
 		verifyContents(name, t, m)
-	}
-}
-
-func TestMaxNlinks(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping MaxNlink test in short mode")
-	} else {
-		t.Log("Use -short option to skip MaxNlinks test")
-	}
-	topdir := setUp("Run", t)
-	defer os.RemoveAll(topdir)
-
-	m := pathContents{"f1": "X"}
-	simpleFileMaker(t, m)
-
-	N := inode.MaxNlinkVal("f1")
-	if N > (1<<15 - 1) {
-		t.Skip("Skipping MaxNlink test because Nlink max is greater than 32767")
-	}
-
-	opts := SetupOptions(LinkingEnabled)
-
-	m = pathContents{}
-	for i := 0; i < int(N+100); i++ {
-		filename := fmt.Sprintf("n%v", i)
-		m[filename] = "Y"
-	}
-	simpleFileMaker(t, m)
-
-	name := "testname: 'MaxNlinks'"
-	simpleRun(name, t, opts, 2, ".")
-	verifyContents(name, t, m)
-
-	counts := make(map[int]int)
-	for i := 0; i < int(2*N+100); i++ {
-		filename := fmt.Sprintf("n%v", i)
-		n := int(inoVal(filename))
-		counts[n]++
-	}
-
-	foundNlinks := []int{}
-	for _, v := range counts {
-		foundNlinks = append(foundNlinks, v)
-	}
-	sort.Ints(foundNlinks)
-	expectedNlinks := []int{100, int(N), int(N)}
-
-	for i, v := range foundNlinks {
-		if v != expectedNlinks[i] {
-			t.Errorf("Nlink and leftover counts, expected: %v, got: %v", expectedNlinks, foundNlinks)
-			break
-		}
 	}
 }
 
