@@ -228,7 +228,7 @@ func init() {
 	// rootCmd represents the base command when called without any subcommands
 	rootCmd = &cobra.Command{
 		Use:     "hardlinkable [OPTIONS] dir1 [dir2...] [files...]",
-		Version: "1.0.2 - 2018-10-28 (Oct 28 2018)",
+		Version: "1.0.3 - 2018-10-28 (Oct 28 2018)",
 		Short:   "A tool to save space by hardlinking identical files",
 		Long: `A tool to scan directories and report on the space that could be saved
 by hardlinking identical files.  It can also perform the linking.`,
