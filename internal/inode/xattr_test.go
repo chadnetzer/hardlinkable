@@ -58,7 +58,7 @@ func TestEqualXAttrs(t *testing.T) {
 		defer os.Remove(f2.Name())
 	}
 
-	if eq, errX1 := EqualXAttrs(f1.Name(), f2.Name()); !eq || err != nil {
+	if eq, errX1 := EqualXAttrs(f1.Name(), f2.Name()); !eq || errX1 != nil {
 		t.Errorf("Unexpected Xattr mismatch for files %s and %s.  Should have no attributes: %v", f1.Name(), f2.Name(), errX1)
 	}
 
@@ -67,7 +67,7 @@ func TestEqualXAttrs(t *testing.T) {
 		t.Fatalf("Couldn't LSet key 'a' to 'a1' on file1 %v: %v", f1, err)
 	}
 
-	if eq, errX2 := EqualXAttrs(f1.Name(), f2.Name()); eq || err != nil {
+	if eq, errX2 := EqualXAttrs(f1.Name(), f2.Name()); eq || errX2 != nil {
 		t.Errorf("Unexpected Xattr match or error for files %s and %s.: %v", f1.Name(), f2.Name(), errX2)
 	}
 
@@ -76,7 +76,7 @@ func TestEqualXAttrs(t *testing.T) {
 		t.Fatalf("Couldn't LSet key 'a' to 'a1' on file2 %v: %v", f1, err)
 	}
 
-	if eq, errX3 := EqualXAttrs(f1.Name(), f2.Name()); !eq || err != nil {
+	if eq, errX3 := EqualXAttrs(f1.Name(), f2.Name()); !eq || errX3 != nil {
 		t.Errorf("Unexpected Xattr mismatch or error for files %s and %s.: %v", f1.Name(), f2.Name(), errX3)
 	}
 
@@ -85,7 +85,7 @@ func TestEqualXAttrs(t *testing.T) {
 		t.Fatalf("Couldn't LSet key 'b' to 'b1' on file %v: %v", f1, err)
 	}
 
-	if eq, errX4 := EqualXAttrs(f1.Name(), f2.Name()); eq || err != nil {
+	if eq, errX4 := EqualXAttrs(f1.Name(), f2.Name()); eq || errX4 != nil {
 		t.Errorf("Unexpected Xattr match or error for files %s and %s.: %v", f1.Name(), f2.Name(), errX4)
 	}
 }
